@@ -1,4 +1,6 @@
 # code-learning-platform-be
+
+```text
 code-learning-platform-be/
 ├── src/
 │   ├── index.js
@@ -8,6 +10,7 @@ code-learning-platform-be/
 ├── .gitignore
 ├── Dockerfile
 └── README.md
+```
 
 
 # CodeStep: Deep Learning Through Teaching

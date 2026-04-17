@@ -1,0 +1,20 @@
+{
+  "name": "code-learning-platform-be",
+  "version": "1.0.0",
+  "private": true,
+  
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "mongodb": "^5.7.0",
+    "mongoose": "^7.3.4",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

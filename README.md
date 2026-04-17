@@ -12,6 +12,12 @@ code-learning-platform-be/
 └── README.md
 ```
 
+# How to run local:
+```text
+yarn (Install package)
+yarn dev (Run)
+Ctrl + C (Terminate)
+```
 
 # CodeStep: Deep Learning Through Teaching
 

@@ -10,20 +10,29 @@ const app = express();
 
 // Connect to MongoDB
 mongoose
-  .connect(dbString)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+    .connect(dbString)
+    .then(() => console.log("MongoDB connected"))
+    .catch((err) => console.error("MongoDB connection error:", err));
 
-// Basic get API endpoint
-app.get("/api/hello", (req, res) => {
-  res.json({
-    success: true,
-    message: "Hello world"
-  });
+const userSchema = new mongoose.Schema({
+    name: String,
+    age: Number
 });
 
-const PORT = process.env.PORT || 3000;
+// Connection to the "MyCollection" collection in the "MyDB" database
+const dt = mongoose.model("data", userSchema, "MyCollection");
+
+// Basic get API endpoint
+app.get("/api/getdata", async (req, res) => {
+    const dt = await dt.find();
+    res.json({
+        success: true,
+        data: dt
+    });
+});
+
+const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Server running at http://localhost:${PORT}`);
 });

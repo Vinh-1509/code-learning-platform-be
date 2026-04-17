@@ -9,7 +9,6 @@ const dbString = process.env.DB_STRING.replace("DB_PASSWORD", process.env.DB_PAS
 const app = express();
 
 // Connect to MongoDB
-mongoose.connect(dbString);
 mongoose
   .connect(dbString)
   .then(() => console.log("MongoDB connected"))

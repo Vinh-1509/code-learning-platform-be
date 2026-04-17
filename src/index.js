@@ -2,7 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 dotenv.config();
-// DB_STRING=`mongodb://code-learning-platform-BE_DB:DB_PASSWORD@ac-xb2lqn7-shard-00-00.hwob9gg.mongodb.net:27017,ac-xb2lqn7-shard-00-01.hwob9gg.mongodb.net:27017,ac-xb2lqn7-shard-00-02.hwob9gg.mongodb.net:27017/?ssl=true&replicaSet=atlas-d10z9c-shard-0&authSource=admin&appName=CodeLearningPlatformBE`
+// DB_STRING=`mongodb://code-learning-platform-BE_DB:DB_PASSWORD@ac-xb2lqn7-shard-00-00.hwob9gg.mongodb.net:27017,ac-xb2lqn7-shard-00-01.hwob9gg.mongodb.net:27017,ac-xb2lqn7-shard-00-02.hwob9gg.mongodb.net:27017/MyDB?ssl=true&replicaSet=atlas-d10z9c-shard-0&authSource=admin&appName=CodeLearningPlatformBE`
 // DB_PASSWORD=RitoGGWP
 const dbString = process.env.DB_STRING.replace("DB_PASSWORD", process.env.DB_PASSWORD);
 
@@ -20,11 +20,11 @@ const userSchema = new mongoose.Schema({
 });
 
 // Connection to the "MyCollection" collection in the "MyDB" database
-const dt = mongoose.model("data", userSchema, "MyCollection");
+const Data = mongoose.model("Data", userSchema, "MyCollection");
 
 // Basic get API endpoint
 app.get("/api/getdata", async (req, res) => {
-    const dt = await dt.find();
+    const dt = await Data.find();
     res.json({
         success: true,
         data: dt

@@ -1,14 +1,18 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const connectDB = async () => {
-    try {
-        const dbString = process.env.DB_STRING?.replace("DB_PASSWORD", process.env.DB_PASSWORD || "") || "";
-        await mongoose.connect(dbString);
-        console.log("✅ MongoDB connected");
-    } catch (err) {
-        console.error("❌ MongoDB connection error:", err);
-        process.exit(1);
-    }
+  try {
+    const dbString =
+      process.env.DB_STRING?.replace(
+        'DB_PASSWORD',
+        process.env.DB_PASSWORD || '',
+      ) || '';
+    await mongoose.connect(dbString);
+    console.log('✅ MongoDB connected');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  }
 };
 
 export default connectDB;

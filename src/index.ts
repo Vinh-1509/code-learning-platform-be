@@ -1,8 +1,8 @@
-import express, { Express, Request, Response } from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import connectDB from "./config/mongodb";
-import dataRoutes from "./routes/data.routes";
+import express, { Express, Request, Response } from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import connectDB from './config/mongodb';
+import dataRoutes from './routes/data.routes';
 
 dotenv.config();
 
@@ -16,15 +16,15 @@ app.use(cors());
 app.use(express.json());
 
 // Core API Routes
-app.use("/api", dataRoutes);
+app.use('/api', dataRoutes);
 
 // Health check endpoint
-app.get("/", (req: Request, res: Response) => {
-    res.json({ message: "CodeStep BE is running 🚀" });
+app.get('/', (req: Request, res: Response) => {
+  res.json({ message: 'CodeStep BE is running 🚀' });
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

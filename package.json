@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
-    "prepare": "husky"
+    "prepare": "husky",
+    "preinstall": "node -e \"if(process.env.npm_config_user_agent && !process.env.npm_config_user_agent.includes('yarn')) { console.error('--------------------------------------------------'); console.error('ERROR: Please use YARN to install dependencies!'); console.error('--------------------------------------------------'); process.exit(1); }\""
   },
   "lint-staged": {
     "*.{js,ts}": [

@@ -20,12 +20,12 @@ CodeStep is an AI-driven educational platform designed to help absolute beginner
 
 Beginners often fall into a cycle of "rote learning" where they can pass exercises but fail to apply logic in real-world scenarios.
 
-| Challenge                | Impact on Learners                                                                                                 |
-| :----------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| **Syntax vs. Logic Gap** | Users copy-paste code or use trial-and-error until tests pass without understanding _why_.                         |
-| **Knowledge Decay**      | Without a structured review system, foundational concepts are forgotten within 48 hours.                           |
-| **Motivation Loss**      | Complex environment setups (compilers, IDEs) and hard-to-debug errors create high friction for absolute beginners. |
-| **Lack of Context**      | Difficulty translating abstract programming concepts into practical, logical steps.                                |
+| Challenge | Impact on Learners |
+| :-- | :-- |
+| **Syntax vs. Logic Gap** | Users copy-paste code or use trial-and-error until tests pass without understanding _why_. |
+| **Knowledge Decay** | Without a structured review system, foundational concepts are forgotten within 48 hours. |
+| **Motivation Loss** | Complex environment setups (compilers, IDEs) and hard-to-debug errors create high friction for absolute beginners. |
+| **Lack of Context** | Difficulty translating abstract programming concepts into practical, logical steps. |
 
 ---
 

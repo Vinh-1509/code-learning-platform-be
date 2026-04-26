@@ -22,15 +22,15 @@ code-learning-platform-be/
 
 ## Directory Structure Explanation
 
-| Directory          | Description                                                         |
-| :----------------- | :------------------------------------------------------------------ |
-| **`config/`**      | Database connections, external API configurations.                  |
-| **`controllers/`** | Logic for handling requests and returning responses.                |
+| Directory | Description |
+| :-- | :-- |
+| **`config/`** | Database connections, external API configurations. |
+| **`controllers/`** | Logic for handling requests and returning responses. |
 | **`middlewares/`** | Functions that run before controllers (e.g., Auth, Error handling). |
-| **`models/`**      | Data schemas (Mongoose) and TypeScript interfaces.                  |
-| **`routes/`**      | Mapping of URL paths to specific controllers.                       |
-| **`utils/`**       | Common utility functions used across the project.                   |
-| **`index.ts`**     | The main application setup and server initialization.               |
+| **`models/`** | Data schemas (Mongoose) and TypeScript interfaces. |
+| **`routes/`** | Mapping of URL paths to specific controllers. |
+| **`utils/`** | Common utility functions used across the project. |
+| **`index.ts`** | The main application setup and server initialization. |
 
 # Setup and Run
 
@@ -40,8 +40,7 @@ code-learning-platform-be/
     yarn install
     ```
 
-2.  **Environment Variables**:
-    Copy `.env.example` to `.env` and fill in your credentials.
+2.  **Environment Variables**: Copy `.env.example` to `.env` and fill in your credentials.
 
     ```bash
     cp .env.example .env
@@ -86,12 +85,12 @@ CodeStep is an AI-driven educational platform designed to help absolute beginner
 
 Beginners often fall into a cycle of "rote learning" where they can pass exercises but fail to apply logic in real-world scenarios.
 
-| Challenge                | Impact on Learners                                                                         |
-| :----------------------- | :----------------------------------------------------------------------------------------- |
+| Challenge | Impact on Learners |
+| :-- | :-- |
 | **Syntax vs. Logic Gap** | Users copy-paste code or use trial-and-error until tests pass without understanding _why_. |
-| **Knowledge Decay**      | Without a structured review system, foundational concepts are forgotten within 48 hours.   |
-| **Motivation Loss**      | Complex environment setups (compilers, IDEs) create high friction for absolute beginners.  |
-| **Lack of Context**      | Difficulty translating abstract programming concepts into practical, logical steps.        |
+| **Knowledge Decay** | Without a structured review system, foundational concepts are forgotten within 48 hours. |
+| **Motivation Loss** | Complex environment setups (compilers, IDEs) create high friction for absolute beginners. |
+| **Lack of Context** | Difficulty translating abstract programming concepts into practical, logical steps. |
 
 ---
 

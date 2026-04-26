@@ -6,9 +6,6 @@ import dataRoutes from './routes/data.routes';
 
 dotenv.config();
 
-// Initialize Database connection
-connectDB();
-
 const app: Express = express();
 
 // Middlewares
@@ -20,11 +17,24 @@ app.use('/api', dataRoutes);
 
 // Health check endpoint
 app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'CodeStep BE is running 🚀' });
+  res.json({ message: 'CodeStep BE is running' });
 });
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+async function bootstrap() {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+}
+
+bootstrap().catch((err) => {
+  console.error(err);
 });

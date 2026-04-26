@@ -35,6 +35,8 @@ async function bootstrap() {
   }
 }
 
+console.log('Hello');
+
 bootstrap().catch((err) => {
   console.error(err);
 });

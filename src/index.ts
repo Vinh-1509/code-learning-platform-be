@@ -5,7 +5,7 @@ import connectDB from './config/mongodb';
 import dataRoutes from './routes/data.routes';
 
 dotenv.config();
-console.log(a);
+
 const app: Express = express();
 
 // Middlewares

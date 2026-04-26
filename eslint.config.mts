@@ -40,6 +40,7 @@ export default tseslint.config(
       'prettier/prettier': 'error',
 
       // Clean Code
+      'no-undef': 'error',
       'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 0 }],
       'prefer-const': 'error',
       eqeqeq: ['error', 'always'],

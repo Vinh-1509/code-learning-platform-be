@@ -7,10 +7,15 @@ const connectDB = async () => {
         'DB_PASSWORD',
         process.env.DB_PASSWORD || '',
       ) || '';
+
+    if (!dbString) {
+      throw new Error('DB_STRING is not defined');
+    }
+
     await mongoose.connect(dbString);
-    console.log('✅ MongoDB connected');
+    console.log('MongoDB connected');
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('MongoDB connection error:', err);
     process.exit(1);
   }
 };

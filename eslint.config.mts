@@ -14,13 +14,16 @@ export default tseslint.config(
       'Dockerfile',
       '**/*.md',
       'eslint.config.*',
+      '.prettierrc',
+      'tsconfig.*.json',
+      '.env*',
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
 
   {
-    files: ['**/*.{ts, js, tsx, jsx}'],
+    files: ['**/*.{ts,tsx}'],
 
     plugins: {
       prettier: prettierPlugin,
@@ -56,6 +59,10 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/require-await': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
     },
   },
   eslintConfigPrettier,

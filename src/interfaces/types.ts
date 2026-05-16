@@ -44,5 +44,4 @@ export interface UserResponse {
   fullName?: string;
   selectedLanguage?: string[];
   createdAt: Date;
-  updatedAt: Date;
 }

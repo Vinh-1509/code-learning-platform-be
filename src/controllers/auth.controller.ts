@@ -1,5 +1,6 @@
 import { Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
+import { Types } from 'mongoose';
 import User from '../models/user.model';
 import { ENV } from '../config/env';
 import {
@@ -8,6 +9,10 @@ import {
   LoginPayload,
   UserResponse,
 } from '../interfaces/types';
+
+const jwtOptions: SignOptions = {
+  expiresIn: ENV.JWT_EXPIRES_IN as SignOptions['expiresIn'],
+};
 
 export const register = async (
   req: AuthRequest,
@@ -64,10 +69,14 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
+    const userId =
+      user._id instanceof Types.ObjectId
+        ? user._id.toString()
+        : String(user._id);
     const access_token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId, email: user.email },
       ENV.JWT_SECRET,
-      { expiresIn: ENV.JWT_EXPIRES_IN },
+      jwtOptions,
     );
 
     res.json({ access_token });
@@ -90,12 +99,16 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
+    const userId =
+      user._id instanceof Types.ObjectId
+        ? user._id.toString()
+        : String(user._id);
     const response: UserResponse = {
-      _id: user._id.toString(),
+      _id: userId,
       email: user.email,
-      username: user.username,
-      fullName: user.fullName,
-      selectedLanguage: user.selectedLanguage,
+      username: user.username || undefined,
+      fullName: user.fullName || undefined,
+      selectedLanguage: user.selectedLanguage || [],
       createdAt: user.createdAt,
     };
 

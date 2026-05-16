@@ -1,0 +1,111 @@
+import { Response } from 'express';
+import jwt from 'jsonwebtoken';
+import User from '../models/user.model';
+import { ENV } from '../config/env';
+import {
+  AuthRequest,
+  RegisterPayload,
+  LoginPayload,
+  UserResponse,
+} from '../interfaces/types';
+
+export const register = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { email, password, username, fullName } = req.body as RegisterPayload;
+
+    if (!email || !password) {
+      res.status(400).json({ message: 'Email and password are required' });
+      return;
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(409).json({ message: 'Email already registered' });
+      return;
+    }
+
+    const user = new User({
+      email,
+      password,
+      username: username || email.split('@')[0],
+      fullName: fullName || '',
+    });
+
+    await user.save();
+
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const login = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body as LoginPayload;
+
+    if (!email || !password) {
+      res.status(400).json({ message: 'Email and password are required' });
+      return;
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(401).json({ message: 'Invalid credentials' });
+      return;
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      res.status(401).json({ message: 'Invalid credentials' });
+      return;
+    }
+
+    const access_token = jwt.sign(
+      { userId: user._id, email: user.email },
+      ENV.JWT_SECRET,
+      { expiresIn: ENV.JWT_EXPIRES_IN },
+    );
+
+    res.json({ access_token });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authenticated' });
+      return;
+    }
+
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const response: UserResponse = {
+      _id: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      fullName: user.fullName,
+      selectedLanguage: user.selectedLanguage,
+      createdAt: user.createdAt,
+    };
+
+    res.json(response);
+  } catch (err) {
+    console.error('GetMe error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const logout = (req: AuthRequest, res: Response): void => {
+  res.json({ message: 'Logged out successfully' });
+};

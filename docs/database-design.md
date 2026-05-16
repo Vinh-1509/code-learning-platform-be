@@ -1,320 +1,254 @@
-# Database Design — CodeStep Learning Platform
+# Database Design
 
-## 1. ERD Diagram
-
-```mermaid
-erDiagram
-    users ||--o{ user_lesson_progress : "tracks"
-    users ||--o{ user_milestone_progress : "tracks"
-    users ||--o{ exercise_attempt : "makes"
-    users ||--o{ repetition_schedule : "scheduled by"
-    users ||--o{ user_weakness : "has"
-
-    roadmaps ||--o{ milestone : "contains"
-    milestone ||--o{ lessons : "contains"
-    lessons ||--o{ exercises : "has"
-
-    exercises }o--o{ exercise_tag : "tagged with"
-    exercises ||--o{ exercise_attempt : "receives"
-    exercises ||--o{ repetition_schedule : "scheduled in"
-
-    exercise_tag ||--o{ user_weakness : "referenced by"
-
-    lessons ||--o{ user_lesson_progress : "tracked in"
-    milestone ||--o{ user_milestone_progress : "tracked in"
-
-    users {
-        ObjectId _id PK
-        string username
-        string email
-        string password
-        string fullName
-        string[] selectedLanguage
-        string verifyToken
-        timestamp tokenExpires
-        timestamp createdAt
-    }
-
-    roadmaps {
-        ObjectId _id PK
-        string language
-        string title
-        text description
-    }
-
-    milestone {
-        ObjectId _id PK
-        ObjectId roadmapId FK
-        string title
-        int order
-        text description
-    }
-
-    lessons {
-        ObjectId _id PK
-        ObjectId milestoneId FK
-        string language
-        string title
-        json content
-        int order
-    }
-
-    exercises {
-        ObjectId _id PK
-        ObjectId lessonId FK
-        ObjectId[] tagId FK
-        string language
-        string type
-        string title
-        text instruction
-        json data
-        text feynman_question
-        text feynman_prompt
-        json correct_answer
-        text explaination
-        json hints
-        int order
-    }
-
-    exercise_tag {
-        ObjectId _id PK
-        string name
-        string description
-    }
-
-    user_lesson_progress {
-        ObjectId _id PK
-        ObjectId userId FK
-        ObjectId lessonId FK
-        json blocksProgress
-        json chatHistory
-        double completionPercentage
-        boolean isCompleted
-        timestamp lastAccessed
-    }
-
-    user_milestone_progress {
-        ObjectId _id PK
-        ObjectId userId FK
-        ObjectId milestoneId FK
-        double completionPercentage
-        string status
-        timestamp updatedAt
-    }
-
-    exercise_attempt {
-        ObjectId _id PK
-        ObjectId userId FK
-        ObjectId exerciseId FK
-        boolean isPassed
-        boolean isFeynmanPassed
-        json userAnswer
-        json chatHistory
-        int attemptNumber
-        timestamp attemptedAt
-    }
-
-    repetition_schedule {
-        ObjectId _id PK
-        ObjectId userId FK
-        ObjectId exerciseId FK
-        timestamp nextReviewDate
-        timestamp passReviewDate
-        int interval
-        int step
-        string status
-    }
-
-    user_weakness {
-        ObjectId _id PK
-        ObjectId userId FK
-        ObjectId tagId FK
-        int totalAttempts
-        int failAttempts
-        boolean isWeak
-        timestamp updateAt
-    }
-
-    language_info {
-        ObjectId _id PK
-        string language
-        text info
-    }
-```
+> **Database:** MongoDB (NoSQL) All primary keys use `ObjectId`. Timestamps use BSON `timestamp` type.
 
 ---
 
-## 2. Entity List
+## Table of Contents
 
-| Collection | Description |
-| --- | --- |
-| `users` | Platform accounts. Stores profile metadata, credentials, and language preferences set during onboarding. |
-| `language_info` | Static reference content (pros, cons, use cases) displayed on the language selection page during onboarding. |
-| `roadmaps` | Top-level learning path per language. Generated once and shared across all users who select that language. |
-| `milestone` | A named learning stage within a roadmap (e.g. "Variables & Types", "Control Flow"). Milestones group related lessons and gate progression. |
-| `lessons` | Individual lessons within a milestone, delivered as sequential Learning Blocks. Each block pairs theory with an interactive task. |
-| `exercises` | Interactive tasks (drag-and-drop or fill-in-the-blank) attached to lesson blocks. Includes the Feynman verification prompt and pre-authored hints. |
-| `exercise_tag` | Taxonomy of knowledge concepts (e.g. "loops", "pointers", "OOP") used to tag exercises and drive weakness tracking. |
-| `user_lesson_progress` | Per-user per-lesson progress. Tracks block-level completion state and overall lesson completion percentage. |
-| `user_milestone_progress` | Aggregated per-user per-milestone progress. Used to render the roadmap and manage locked/unlocked state. |
-| `exercise_attempt` | Records each attempt a user makes on an exercise, including the submitted answer and Feynman pass/fail outcome. |
-| `repetition_schedule` | Drives the spaced repetition system for the Daily Question feature. Stores the next review date and interval for each user/exercise pair. |
-| `user_weakness` | Aggregates failure data per knowledge tag per user. Used to rank and surface recommended exercises on the Practice page. |
-
----
-
-## 3. Relationship Summary
-
-| Relationship | Type | Description |
-| --- | --- | --- |
-| `roadmaps` → `milestone` | One-to-Many | A roadmap contains multiple ordered milestones. |
-| `milestone` → `lessons` | One-to-Many | A milestone contains multiple ordered lessons. |
-| `lessons` → `exercises` | One-to-Many | A lesson may contain multiple exercises, one per block. |
-| `exercises` ↔ `exercise_tag` | Many-to-Many | An exercise can carry multiple tags; a tag applies to many exercises. Modelled as an embedded `tagId[]` array on `exercises`. |
-| `users` → `user_lesson_progress` | One-to-Many | A user has one progress record per lesson they have interacted with. |
-| `users` → `user_milestone_progress` | One-to-Many | A user has one progress record per milestone on their roadmap. |
-| `users` → `exercise_attempt` | One-to-Many | A user submits one or more attempts per exercise over time. |
-| `users` → `repetition_schedule` | One-to-Many | A user has one SRS schedule record per exercise they have completed. |
-| `users` → `user_weakness` | One-to-Many | A user has one weakness record per knowledge tag they have been assessed against. |
-| `exercises` → `exercise_attempt` | One-to-Many | An exercise receives attempts from many users over time. |
-| `exercises` → `repetition_schedule` | One-to-Many | An exercise may be scheduled for review for many users independently. |
-| `exercise_tag` → `user_weakness` | One-to-Many | A tag is referenced by one weakness record per user. |
+1. [User & Authentication](#1-user--authentication)
+   - [users](#11-users)
+   - [verify](#12-verify)
+   - [refresh_tokens](#13-refresh_tokens)
+   - [language_info](#14-language_info)
+2. [Roadmap Structure](#2-roadmap-structure)
+   - [roadmaps](#21-roadmaps)
+   - [milestone](#22-milestone)
+   - [lessons](#23-lessons)
+   - [blocks](#24-blocks)
+3. [User Progress](#3-user-progress)
+   - [user_lesson_progress](#31-user_lesson_progress)
+   - [user_milestone_progress](#32-user_milestone_progress)
+4. [Exercise System](#4-exercise-system)
+   - [exercise_tag](#41-exercise_tag)
+   - [exercises](#42-exercises)
+   - [exercise_attempt](#43-exercise_attempt)
+   - [user_tag_stats](#44-user_tag_stats)
+5. [Spaced Repetition](#5-spaced-repetition)
+   - [repetition_schedule](#51-repetition_schedule)
+6. [Relationships Overview](#6-relationships-overview)
 
 ---
 
-## 4. Collection Definitions
+## 1. User & Authentication
 
-### 4.1 `users`
+### 1.1 `users`
 
-Stores application-level account data and onboarding preferences.
+Stores core account information for each registered user.
 
-| Field | Type | Constraints | Description |
+| Field              | Type      | Constraints | Note              |
+| ------------------ | --------- | ----------- | ----------------- |
+| `_id`              | ObjectId  | PK          |                   |
+| `email`            | string    | unique      | Dùng để đăng nhập |
+| `password`         | string    |             | Lưu hash password |
+| `username`         | string    | unique      |                   |
+| `fullName`         | string    |             |                   |
+| `selectedLanguage` | string[]  |             | C++ hoặc Java     |
+| `createdAt`        | timestamp |             |                   |
+
+---
+
+### 1.2 `verify`
+
+Stores email verification tokens generated during registration.
+
+| Field | Type | Constraints | Note |
 | --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK | Unique user identifier. |
-| `username` | `string` | NOT NULL, UNIQUE | Chosen display handle. |
-| `email` | `string` | NOT NULL, UNIQUE | Used for login and verification. |
-| `password` | `string` | NOT NULL | Bcrypt-hashed credential. Never store plaintext. |
-| `fullName` | `string` | NOT NULL | User's full display name. |
-| `selectedLanguage` | `string[]` | NOT NULL | Languages chosen during onboarding. Values: `"cpp"` \| `"java"`. |
-| `verifyToken` | `string` |  | Email verification token or OTP. |
-| `tokenExpires` | `timestamp` |  | Expiry time for `verifyToken`. |
-| `createdAt` | `timestamp` | NOT NULL, DEFAULT now | Account creation time. |
+| `_id` | ObjectId | PK |  |
+| `userId` | ObjectId | ref: `users._id` (1-to-1) |  |
+| `verifyToken` | string |  | Mã token hoặc OTP |
+| `tokenExpires` | timestamp |  | Thời gian hết hạn của token |
 
 ---
 
-### 4.2 `language_info`
+### 1.3 `refresh_tokens`
 
-Static reference data shown on the language selection screen. Seeded once; not user-specific.
+Stores hashed refresh tokens. MongoDB TTL Index on `expiresAt` auto-deletes expired records.
 
-| Field | Type | Constraints | Description |
+| Field | Type | Constraints | Note |
 | --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `language` | `string` | NOT NULL, UNIQUE | Language identifier: `"cpp"` \| `"java"`. |
-| `info` | `text` | NOT NULL | Markdown content covering pros, cons, and common use cases. |
+| `_id` | ObjectId | PK |  |
+| `userId` | ObjectId | ref: `users._id` |  |
+| `token` | string | unique | Lưu Refresh Token đã được mã hóa hoặc hash |
+| `expiresAt` | timestamp |  | Đúng 24h sau khi login. MongoDB TTL Index sẽ dựa vào đây để tự xóa |
+| `createdAt` | timestamp | default: `now()` |  |
 
 ---
 
-### 4.3 `roadmaps`
+### 1.4 `language_info`
 
-Top-level curriculum definition per language. Shared across all users; not user-specific.
+Static content describing each supported programming language.
 
-| Field | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `language` | `string` | NOT NULL, UNIQUE | `"cpp"` \| `"java"`. |
-| `title` | `string` | NOT NULL | Display title (e.g. `"C++ Learning Roadmap"`). |
-| `description` | `text` |  | Summary shown on the roadmap page. |
-
----
-
-### 4.4 `milestone`
-
-A named learning stage within a roadmap. Groups related lessons and gates progression.
-
-| Field | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `roadmapId` | `ObjectId` | NOT NULL, FK → `roadmaps._id` | The roadmap this milestone belongs to. |
-| `title` | `string` | NOT NULL | Stage name (e.g. `"Control Flow"`). |
-| `order` | `int` | NOT NULL | Sequential position within the roadmap. |
-| `description` | `text` |  | Summary shown when the user hovers over the milestone node. |
+| Field      | Type     | Constraints | Note |
+| ---------- | -------- | ----------- | ---- |
+| `_id`      | ObjectId | PK          |      |
+| `language` | string   |             |      |
+| `info`     | text     |             |      |
 
 ---
 
-### 4.5 `lessons`
+## 2. Roadmap Structure
 
-Individual lessons delivered as sequential Learning Blocks. Each block pairs a theory card with an interactive exercise.
+### 2.1 `roadmaps`
 
-| Field | Type | Constraints | Description |
+Top-level learning path for each programming language.
+
+| Field         | Type     | Constraints | Note                |
+| ------------- | -------- | ----------- | ------------------- |
+| `_id`         | ObjectId | PK          |                     |
+| `language`    | string   | unique      | C++/Java            |
+| `title`       | string   |             | Ví dụ: Lộ trình C++ |
+| `description` | text     |             |                     |
+
+---
+
+### 2.2 `milestone`
+
+A major learning chapter within a roadmap.
+
+| Field         | Type     | Constraints         | Note       |
+| ------------- | -------- | ------------------- | ---------- |
+| `_id`         | ObjectId | PK                  |            |
+| `roadmapId`   | ObjectId | ref: `roadmaps._id` |            |
+| `title`       | string   |                     |            |
+| `order`       | int      |                     | Thứ tự học |
+| `description` | text     |                     |            |
+
+---
+
+### 2.3 `lessons`
+
+An individual lesson belonging to a milestone, made up of an ordered array of blocks.
+
+| Field         | Type       | Constraints          | Note            |
+| ------------- | ---------- | -------------------- | --------------- |
+| `_id`         | ObjectId   | PK                   |                 |
+| `milestoneId` | ObjectId   | ref: `milestone._id` |                 |
+| `title`       | string     |                      |                 |
+| `blocks`      | ObjectId[] | ref: `blocks._id`    | Array of blocks |
+| `order`       | int        |                      |                 |
+
+---
+
+### 2.4 `blocks`
+
+Atomic content unit inside a lesson. Supports mixed content types and Feynman questioning.
+
+| Field | Type | Constraints | Note |
 | --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `milestoneId` | `ObjectId` | NOT NULL, FK → `milestone._id` | The milestone this lesson belongs to. |
-| `language` | `string` | NOT NULL | `"cpp"` \| `"java"`. |
-| `title` | `string` | NOT NULL | Lesson display name. |
-| `content` | `json` | NOT NULL | Ordered array of Learning Block objects. See schema below. |
-| `order` | `int` | NOT NULL | Sequence position within the milestone. |
+| `_id` | ObjectId | PK |  |
+| `lessonId` | ObjectId | ref: `lessons._id` (1-to-1) |  |
+| `content` | json |  | See structure below |
+| `feynmanQuestion` | text |  | Câu hỏi sẽ hỏi |
+| `feynmanPrompt` | text |  | Prompt cho AI |
 
-**`content` block schema:**
+**`content` structure:**
 
 ```json
 [
+  { "type": "theory", "data": { "order": 1, "text": "...", "image": "..." } },
   {
-    "blockId": "b1",
-    "theory": {
-      "text": "Markdown content",
-      "image": "https://cdn.example.com/visual.png"
-    },
-    "exampleCode": {
-      "code": "int a = 5;",
-      "explanation": "Declares an integer variable."
-    },
-    "practice": {
-      "exerciseId": "<ObjectId>",
-      "requiredToPass": true
-    },
-    "feynmanQuestion": "Why do we use a for loop here instead of while?",
-    "feynmanPrompt": "System prompt for AI Feynman evaluator...",
-    "order": 1
+    "type": "code",
+    "data": { "order": 1, "code": "...", "explanation": "..." }
+  },
+  {
+    "type": "practice",
+    "data": { "order": 1, "exerciseId": "...", "required": true }
   }
 ]
 ```
 
 ---
 
-### 4.6 `exercise_tag`
+## 3. User Progress
 
-Taxonomy of knowledge concepts. Used to tag exercises and drive weakness detection.
+### 3.1 `user_lesson_progress`
 
-| Field | Type | Constraints | Description |
+Tracks a user's progress through each individual lesson, including per-block state and Feynman chat history.
+
+| Field | Type | Constraints | Note |
 | --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `name` | `string` | NOT NULL, UNIQUE | Concept label (e.g. `"loops"`, `"pointers"`, `"OOP"`). |
-| `description` | `string` |  | Human-readable explanation of what this tag covers. |
+| `_id` | ObjectId | PK |  |
+| `userId` | ObjectId | ref: `users._id` |  |
+| `lessonId` | ObjectId | ref: `lessons._id` |  |
+| `blockProgress` | json[] |  | See structure below |
+| `chatHistory` | json |  | See structure below |
+| `completionPercentage` | double |  | Tính bằng: (số block isFeynmanPassed / tổng số block) \* 100 |
+| `isCompleted` | boolean | default: `false` |  |
+| `lastAccessed` | timestamp |  |  |
+
+**`blockProgress` item structure:**
+
+```json
+{
+  "blockId": "ObjectId",
+  "isFeynmanPassed": false,
+  "state": "locked | active | completed"
+}
+```
+
+**`chatHistory` structure:**
+
+```json
+{
+  "chatHistory": [{ "role": "assistant", "content": "..." }]
+}
+```
 
 ---
 
-### 4.7 `exercises`
+### 3.2 `user_milestone_progress`
 
-Interactive tasks attached to lesson blocks. Supports drag-and-drop and fill-in-the-blank formats. Also used as standalone free-practice items.
+Tracks a user's overall progress through each milestone (large learning unit).
 
-| Field | Type | Constraints | Description |
+| Field | Type | Constraints | Note |
 | --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `lessonId` | `ObjectId` | FK → `lessons._id`, NULLABLE | The lesson this exercise belongs to. `null` for free-practice exercises not tied to a lesson. |
-| `tagId` | `ObjectId[]` | NOT NULL | Array of tag IDs → `exercise_tag._id`. |
-| `language` | `string` | NOT NULL | `"cpp"` \| `"java"`. |
-| `type` | `string` | NOT NULL | `"drag_drop"` \| `"fill_blank"`. |
-| `title` | `string` | NOT NULL | Display title. |
-| `instruction` | `text` | NOT NULL | Task description shown to the user. |
-| `data` | `json` | NOT NULL | Exercise-specific display payload. See schema below. |
-| `feynman_question` | `text` |  | Opening question asked by the AI after submission. |
-| `feynman_prompt` | `text` |  | System prompt for the Feynman AI evaluator. |
-| `correct_answer` | `json` | NOT NULL | Expected answer used for validation (e.g. `{ "input_1": "int", "input_2": "10" }`). |
-| `explaination` | `text` |  | Shown to the user after an incorrect submission. |
-| `hints` | `json` |  | Ordered hint array. See schema below. |
-| `order` | `int` | NOT NULL | Position within the lesson. |
+| `_id` | ObjectId | PK |  |
+| `userId` | ObjectId | ref: `users._id` |  |
+| `milestoneId` | ObjectId | ref: `milestone._id` |  |
+| `completionPercentage` | double | default: `0` | Tỉ lệ % hoàn thành |
+| `status` | string |  | `Locked` / `Active` / `Completed` |
+| `updatedAt` | timestamp |  |  |
 
-**`data` schema:**
+---
+
+## 4. Exercise System
+
+### 4.1 `exercise_tag`
+
+Taxonomy tags used to categorise exercises (e.g. hashing, loops, OOP).
+
+| Field         | Type     | Constraints | Note                         |
+| ------------- | -------- | ----------- | ---------------------------- |
+| `_id`         | ObjectId | PK          |                              |
+| `name`        | string   |             | Tag of exercise e.g. hashing |
+| `description` | string   |             |                              |
+
+---
+
+### 4.2 `exercises`
+
+Stores exercise definitions. `lessonId` is null for standalone free-practice exercises.
+
+| Field | Type | Constraints | Note |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | PK |  |
+| `lessonId` | ObjectId | ref: `lessons._id` | Null nếu là bài tập luyện tập tự do |
+| `tagId` | ObjectId[] | ref: `exercise_tag._id` | Mảng chứa nhiều tag |
+| `language` | string |  | `C++` \| `Java` |
+| `type` | string |  | `fill_blank` \| `drag_drop` |
+| `level` | string |  | `hard` \| `medium` \| `easy` |
+| `title` | string |  |  |
+| `instruction` | text |  |  |
+| `data` | json |  | See structure below |
+| `feynmanQuestion` | text |  |  |
+| `feynmanPrompt` | text |  | Prompt để AI gen |
+| `correctAnswer` | json |  | `{ "input_1": "int", "input_2": "10" }` |
+| `explanation` | text |  | Giải thích chi tiết sau khi làm xong |
+| `hints` | json |  | `{ "1": "Gợi ý về lý thuyết", "2": "Gợi ý về logic" }` |
+| `order` | int |  |  |
+
+**`data` structure:**
 
 ```json
 {
@@ -324,106 +258,103 @@ Interactive tasks attached to lesson blocks. Supports drag-and-drop and fill-in-
 }
 ```
 
-**`hints` schema:**
+> `options` is used for `drag_drop` type exercises.
 
-```json
-{ "1": "Gợi ý về lý thuyết", "2": "Gợi ý về logic" }
+---
+
+### 4.3 `exercise_attempt`
+
+Records every submission a user makes for an exercise, including Feynman chat history per attempt.
+
+| Field | Type | Constraints | Note |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | PK |  |
+| `userId` | ObjectId | ref: `users._id` |  |
+| `exerciseId` | ObjectId | ref: `exercises._id` |  |
+| `isPassed` | boolean |  | Vượt qua bài tập logic |
+| `isFeynmanPassed` | boolean |  | Vượt qua vòng giải thích với AI |
+| `hintLevel` | int |  |  |
+| `userAnswer` | json |  | Đáp án user đã nộp: `{ "input_1": "float" }` – Dùng để AI chỉ ra lỗi sai |
+| `chatHistory` | json |  | Lưu hội thoại Feynman của riêng bài tập này |
+| `attemptNumber` | int |  |  |
+| `attemptedAt` | timestamp | default: `now()` |  |
+
+---
+
+### 4.4 `user_tag_stats`
+
+Aggregates per-user performance per tag to surface weak areas.
+
+| Field           | Type      | Constraints             | Note |
+| --------------- | --------- | ----------------------- | ---- |
+| `_id`           | ObjectId  | PK                      |      |
+| `userId`        | ObjectId  | ref: `users._id`        |      |
+| `tagId`         | ObjectId  | ref: `exercise_tag._id` |      |
+| `totalAttempts` | int       |                         |      |
+| `failAttempts`  | int       |                         |      |
+| `isWeak`        | boolean   |                         |      |
+| `updateAt`      | timestamp |                         |      |
+
+---
+
+## 5. Spaced Repetition
+
+### 5.1 `repetition_schedule`
+
+Drives the spaced-repetition (SM-2-style) review system. Interval doubles on pass, halves on fail.
+
+| Field | Type | Constraints | Note |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | PK |  |
+| `userId` | ObjectId | ref: `users._id` |  |
+| `exerciseId` | ObjectId | ref: `exercises._id` |  |
+| `nextReviewDate` | timestamp |  |  |
+| `passReviewDate` | timestamp |  |  |
+| `interval` | int |  | Số ngày lặp lại |
+| `step` | int |  | Số ngày + thêm: đúng × 2, sai ÷ 2 |
+| `status` | string |  | `Learning` / `Reviewing` / `Mastered` |
+
+---
+
+## 6. Relationships Overview
+
+```
+users ──────────────────────────────────────────────────────────────┐
+  │  1                                                               │
+  ├─── 0..1 ── verify                                               │
+  ├─── *    ── refresh_tokens                                        │
+  ├─── *    ── user_lesson_progress ──── 1 ── lessons               │
+  ├─── *    ── user_milestone_progress ─ 1 ── milestone             │
+  ├─── *    ── exercise_attempt ──────── 1 ── exercises             │
+  ├─── *    ── user_tag_stats ────────── 1 ── exercise_tag          │
+  └─── *    ── repetition_schedule ───── 1 ── exercises             │
+                                                                     │
+roadmaps ─── * ── milestone ─── * ── lessons ─── * ── blocks        │
+                                         │                           │
+                                         └─── * ── exercises ────────┘
+                                                       │
+                                              * ── exercise_tag (many-to-many)
 ```
 
----
+**Reference summary:**
 
-### 4.8 `user_lesson_progress`
-
-Tracks a user's block-by-block progress through a lesson.
-
-| Field | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `userId` | `ObjectId` | NOT NULL, FK → `users._id` |  |
-| `lessonId` | `ObjectId` | NOT NULL, FK → `lessons._id` |  |
-| `blocksProgress` | `json` | NOT NULL | Array of per-block state objects. See schema below. |
-| `chatHistory` | `json` |  | AI conversation history for this lesson. See schema below. |
-| `completionPercentage` | `double` | NOT NULL, DEFAULT 0 | `(số block isFeynmanPassed / tổng số block) × 100`. |
-| `isCompleted` | `boolean` | NOT NULL, DEFAULT false | True when all blocks are Feynman-passed. |
-| `lastAccessed` | `timestamp` |  | Updated on every session entry. |
-
-**`blocksProgress` schema:**
-
-```json
-[
-  { "blockIndex": 0, "isFeynmanPassed": true },
-  { "blockIndex": 1, "isFeynmanPassed": false }
-]
-```
-
-**`chatHistory` schema:**
-
-```json
-[{ "role": "assistant", "content": "..." }]
-```
-
----
-
-### 4.9 `user_milestone_progress`
-
-Aggregated progress per user per milestone. Used to render the roadmap and control node lock state.
-
-| Field | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `userId` | `ObjectId` | NOT NULL, FK → `users._id` |  |
-| `milestoneId` | `ObjectId` | NOT NULL, FK → `milestone._id` |  |
-| `completionPercentage` | `double` | NOT NULL, DEFAULT 0 | Aggregated from all child `user_lesson_progress` records. |
-| `status` | `string` | NOT NULL | `"locked"` \| `"active"` \| `"completed"`. |
-| `updatedAt` | `timestamp` | NOT NULL | Updated whenever a child lesson progress changes. |
-
----
-
-### 4.10 `exercise_attempt`
-
-Records each attempt a user makes on an exercise, including the submitted answer and Feynman outcome.
-
-| Field | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `userId` | `ObjectId` | NOT NULL, FK → `users._id` |  |
-| `exerciseId` | `ObjectId` | NOT NULL, FK → `exercises._id` |  |
-| `isPassed` | `boolean` | NOT NULL | Whether the submitted answer matched `correct_answer`. |
-| `isFeynmanPassed` | `boolean` | NOT NULL | Whether the AI Feynman evaluator accepted the user's explanation. |
-| `userAnswer` | `json` | NOT NULL | Snapshot of the user's submission (e.g. `{ "input_1": "float" }`). Passed to the AI for targeted error feedback. |
-| `chatHistory` | `json` |  | Feynman conversation history for this specific attempt. |
-| `attemptNumber` | `int` | NOT NULL | Increments per retry for this user/exercise pair. |
-| `attemptedAt` | `timestamp` | NOT NULL, DEFAULT now |  |
-
----
-
-### 4.11 `repetition_schedule`
-
-Drives the spaced repetition system for the Daily Question feature. One record per user per completed exercise.
-
-| Field | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `userId` | `ObjectId` | NOT NULL, FK → `users._id` |  |
-| `exerciseId` | `ObjectId` | NOT NULL, FK → `exercises._id` |  |
-| `nextReviewDate` | `timestamp` | NOT NULL | When this exercise re-appears in the daily queue. |
-| `passReviewDate` | `timestamp` |  | Timestamp of the last successful review. |
-| `interval` | `int` | NOT NULL | Current review interval in days. |
-| `step` | `int` | NOT NULL | Internal step counter: correct `× 2`, incorrect `÷ 2`. |
-| `status` | `string` | NOT NULL | `"learning"` \| `"reviewing"` \| `"mastered"`. |
-
----
-
-### 4.12 `user_weakness`
-
-Aggregates failure data per knowledge tag per user. Updated on every exercise attempt. Used to rank and highlight exercises on the Practice page.
-
-| Field | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| `_id` | `ObjectId` | PK |  |
-| `userId` | `ObjectId` | NOT NULL, FK → `users._id` |  |
-| `tagId` | `ObjectId` | NOT NULL, FK → `exercise_tag._id` |  |
-| `totalAttempts` | `int` | NOT NULL, DEFAULT 0 | Total exercise attempts involving this tag. |
-| `failAttempts` | `int` | NOT NULL, DEFAULT 0 | Number of those attempts that were not passed. |
-| `isWeak` | `boolean` | NOT NULL | Whether this tag is considered a weakness for the user. |
-| `updateAt` | `timestamp` | NOT NULL | Updated on every relevant `exercise_attempt` write. |
+| From                                  | Field | To                 |
+| ------------------------------------- | ----- | ------------------ |
+| `verify.userId`                       | →     | `users._id`        |
+| `refresh_tokens.userId`               | →     | `users._id`        |
+| `milestone.roadmapId`                 | →     | `roadmaps._id`     |
+| `lessons.milestoneId`                 | →     | `milestone._id`    |
+| `lessons.blocks[]`                    | →     | `blocks._id`       |
+| `blocks.lessonId`                     | →     | `lessons._id`      |
+| `exercises.lessonId`                  | →     | `lessons._id`      |
+| `exercises.tagId[]`                   | ↔     | `exercise_tag._id` |
+| `user_lesson_progress.userId`         | →     | `users._id`        |
+| `user_lesson_progress.lessonId`       | →     | `lessons._id`      |
+| `user_milestone_progress.userId`      | →     | `users._id`        |
+| `user_milestone_progress.milestoneId` | →     | `milestone._id`    |
+| `exercise_attempt.userId`             | →     | `users._id`        |
+| `exercise_attempt.exerciseId`         | →     | `exercises._id`    |
+| `user_tag_stats.userId`               | →     | `users._id`        |
+| `user_tag_stats.tagId`                | →     | `exercise_tag._id` |
+| `repetition_schedule.userId`          | →     | `users._id`        |
+| `repetition_schedule.exerciseId`      | →     | `exercises._id`    |

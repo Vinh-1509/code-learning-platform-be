@@ -29,8 +29,12 @@ const userSchema = new Schema<IUser>(
       type: [String],
       default: [],
     },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  { timestamps: true },
+  { timestamps: false },
 );
 
 // Hash password before saving

@@ -9,6 +9,7 @@ import {
   LoginPayload,
   UserResponse,
 } from '../interfaces/types';
+import { validateEmail, validatePassword } from '../utils/validators';
 
 const jwtOptions: SignOptions = {
   expiresIn: ENV.JWT_EXPIRES_IN as SignOptions['expiresIn'],
@@ -23,6 +24,20 @@ export const register = async (
 
     if (!email || !password) {
       res.status(400).json({ message: 'Email and password are required' });
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      res.status(400).json({ message: 'Invalid email format' });
+      return;
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      res.status(400).json({
+        message: 'Password does not meet requirements',
+        errors: passwordValidation.errors,
+      });
       return;
     }
 

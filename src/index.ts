@@ -2,7 +2,6 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/mongodb';
-import dataRoutes from './routes/data.routes';
 import authRoutes from './routes/auth.routes';
 
 dotenv.config();
@@ -15,7 +14,6 @@ app.use(express.json());
 
 // Core API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api', dataRoutes);
 
 // Health check endpoint
 app.get('/', (req: Request, res: Response) => {

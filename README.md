@@ -1,102 +1,343 @@
-# code-learning-platform-be
+# CodeStep — Backend (code-learning-platform-be)
 
-```text
-code-learning-platform-be/
-├── src/
-│   ├── config/         # Configuration files (DB, etc.)
-│   ├── controllers/    # Request handlers & Business logic
-│   ├── middlewares/    # Express middlewares (auth, validation)
-│   ├── models/         # Mongoose models & Types
-│   ├── routes/         # API Route definitions
-│   ├── utils/          # Helper functions & Utilities
-│   └── index.ts        # Entry point
-├── dist/               # Compiled JavaScript (ignored by git)
-├── tsconfig.json       # TypeScript configuration
-├── package.json
-├── .env                # Private environment variables
-├── .env.example        # Template for environment variables
-├── .gitignore
-├── Dockerfile
-└── README.md
-```
+Backend for CodeStep, an AI-powered personalized learning platform designed to help beginners master **C++** and **Java** through conceptual understanding rather than rote memorization. The platform uses the **Feynman Technique** to validate learning: _"If you can explain it simply, you understand it."_
 
-## Directory Structure Explanation
+## Quick Links
 
-| Directory | Description |
-| :-- | :-- |
-| **`config/`** | Database connections, external API configurations. |
-| **`controllers/`** | Logic for handling requests and returning responses. |
-| **`middlewares/`** | Functions that run before controllers (e.g., Auth, Error handling). |
-| **`models/`** | Data schemas (Mongoose) and TypeScript interfaces. |
-| **`routes/`** | Mapping of URL paths to specific controllers. |
-| **`utils/`** | Common utility functions used across the project. |
-| **`index.ts`** | The main application setup and server initialization. |
-
-# Setup and Run
-
-1.  **Install dependencies**:
-
-    ```bash
-    yarn install
-    ```
-
-2.  **Environment Variables**: Copy `.env.example` to `.env` and fill in your credentials.
-
-    ```bash
-    cp .env.example .env
-    ```
-
-3.  **Run in Development** (Hot-reload with `ts-node`):
-
-    ```bash
-    yarn dev
-    ```
-
-4.  **Build for Production**:
-
-    ```bash
-    yarn build
-    ```
-
-5.  **Run Production Build**:
-    ```bash
-    yarn start
-    ```
-
-# CodeStep: Deep Learning Through Teaching
-
-CodeStep is an AI-driven educational platform designed to help absolute beginners master **C++** and **Java** using the **Feynman Technique**. Unlike traditional platforms that focus on syntax or passing test cases, CodeStep ensures users truly understand the logic behind their code by requiring them to "teach" it to an AI.
+- **Platform Overview**: See [docs/platform-overview.md](docs/platform-overview.md)
+- **API Design**: See [docs/api-design.md](docs/api-design.md)
+- **Database Design**: See [docs/database-design.md](docs/database-design.md)
 
 ---
 
 ## Table of Contents
 
-- [1. The Problem Statement](#-1-the-problem-statement)
-- [2. The CodeStep Solution](#-2-the-codestep-solution)
-- [3. Target Audience](#-3-target-audience)
-- [4. Core Features](#-4-core-features)
-- [5. The Learning Journey](#-5-the-learning-journey)
-- [6. Technical Architecture](#-7-technical-architecture)
-- [7. MVP Implementation Priority](#-8-mvp-implementation-priority)
+1. [What is CodeStep?](#what-is-codestep)
+2. [Features](#features)
+3. [Tech Stack](#tech-stack)
+4. [Directory Structure](#directory-structure)
+5. [Setup & Run](#setup--run)
+6. [API Overview](#api-overview)
+7. [Environment Variables](#environment-variables)
 
 ---
 
-## 1. The Problem Statement: The "Surface-Level" Trap
+## What is CodeStep?
 
-Beginners often fall into a cycle of "rote learning" where they can pass exercises but fail to apply logic in real-world scenarios.
+CodeStep is an AI-powered **personalized learning platform** for programming beginners. The platform's philosophy is:
 
-| Challenge | Impact on Learners |
-| :-- | :-- |
-| **Syntax vs. Logic Gap** | Users copy-paste code or use trial-and-error until tests pass without understanding _why_. |
-| **Knowledge Decay** | Without a structured review system, foundational concepts are forgotten within 48 hours. |
-| **Motivation Loss** | Complex environment setups (compilers, IDEs) create high friction for absolute beginners. |
-| **Lack of Context** | Difficulty translating abstract programming concepts into practical, logical steps. |
+> **"Learning how to think" before "Learning how to code."**
+
+### Target Users
+
+- **Beginners** — no prior programming experience
+- **Students with weak foundations** — need to rebuild core programming thinking
+- Learners who understand syntax but struggle with logic and problem-solving
+
+### Supported Languages
+
+- **C++** — Build strong foundations in low-level programming
+- **Java** — Object-oriented programming and design patterns
 
 ---
 
-## 2. The CodeStep Solution: The Feynman Method
+## Features
 
-CodeStep leverages the **Feynman Technique**: _If you want to master a concept, explain it to someone else in simple terms._
+### ✅ Block-based Learning System
+
+A split-screen interface delivering curriculum through sequential **Learning Blocks**:
+
+- **Left pane**: Theory, sample code, code flow visualizations (Markdown-rendered)
+- **Right pane**: Interactive tasks (drag-and-drop, fill-in-the-blank)
+- **Progression**: Locked → Active → Completed (auto-unlocks after completion)
+- **Hint System**: Progressive hints (Conceptual → Positional/Constraint)
+
+### ✅ AI Error Explanation
+
+When users submit incorrect answers:
+
+- AI analyzes the specific error
+- Provides targeted, clear explanation of what went wrong
+- Helps learners understand the concept, not just fix the output
+
+### ✅ AI Feynman Validation
+
+After completing each exercise:
+
+- Users must explain their reasoning to an AI "beginner" chatbot
+- Example: _"Why use a for loop here instead of a while loop?"_
+- Next block unlocks only when explanation is accepted
+- Ensures conceptual understanding, not just memorization
+
+### ✅ Adaptive Learning & Practice
+
+- **Daily Question Page** (Nice to have): Spaced repetition system
+  - Correct answers → interval doubles
+  - Incorrect answers → interval halves
+- **Dedicated Practice Page** (Critical): User-selected exercises
+  - System tracks weakness tags across all activity
+  - Recommends exercises based on weak areas
+
+---
+
+## Tech Stack
+
+| Layer                | Technology                                  |
+| -------------------- | ------------------------------------------- |
+| **Runtime**          | Node.js (TypeScript)                        |
+| **Framework**        | Express 4.19.2                              |
+| **Database**         | MongoDB (Atlas M0 Free Tier, AWS Singapore) |
+| **ORM/Schema**       | Mongoose 9.6.2                              |
+| **Authentication**   | JWT (jsonwebtoken 9.0.3)                    |
+| **Password Hashing** | bcryptjs 3.0.3                              |
+| **Type Safety**      | TypeScript, Strict Mode                     |
+| **Dev Tools**        | ts-node, nodemon, ESLint, Prettier, Husky   |
+
+---
+
+## Directory Structure
+
+```text
+code-learning-platform-be/
+├── src/
+│   ├── config/         # Configuration (env, database, external APIs)
+│   ├── controllers/    # Business logic & request handlers
+│   ├── interfaces/     # TypeScript types & request interfaces
+│   ├── middleware/     # Express middlewares (auth, validation, etc.)
+│   ├── models/         # Mongoose schemas & data models
+│   ├── routes/         # API route definitions
+│   ├── services/       # (Future) Business service layer
+│   ├── integrations/   # (Future) External API integrations
+│   └── index.ts        # Server entry point
+├── docs/
+│   ├── platform-overview.md    # Platform vision & features
+│   ├── api-design.md           # Complete API specification
+│   ├── database-design.md      # MongoDB schema design
+│   └── milestones.md           # Project milestones & roadmap
+├── dist/               # Compiled JavaScript (git-ignored)
+├── tsconfig.json       # TypeScript configuration
+├── package.json
+├── .env                # Environment variables (git-ignored)
+├── .env.example        # Template for .env
+├── Dockerfile
+└── README.md
+```
+
+### Directory Breakdown
+
+| Directory | Purpose |
+| --- | --- |
+| **`config/`** | Database connection, environment setup, external API configs |
+| **`controllers/`** | Request handlers, business logic, response formatting |
+| **`interfaces/`** | TypeScript types, DTOs, request/response shapes |
+| **`middleware/`** | Auth, validation, error handling, CORS |
+| **`models/`** | Mongoose schemas, data validation |
+| **`routes/`** | API endpoint definitions |
+| **`services/`** | (Future) Reusable business logic across controllers |
+| **`integrations/`** | (Future) OpenAI, email services, webhooks |
+
+---
+
+## Setup & Run
+
+### Prerequisites
+
+- **Node.js** (v16+) and **Yarn** (package manager)
+- **MongoDB** connection string (Atlas or local)
+
+### 1. Install Dependencies
+
+```bash
+yarn install
+```
+
+### 2. Configure Environment
+
+Copy `.env.example` to `.env` and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+
+Required environment variables:
+
+```env
+PORT=3000
+DB_STRING=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+JWT_SECRET=your-super-secret-key-here
+REFRESH_SECRET=your-refresh-secret-key
+JWT_EXPIRES_IN=24h
+REFRESH_EXPIRES_IN=7d
+```
+
+### 3. Run in Development
+
+Hot-reload with automatic restart:
+
+```bash
+yarn dev
+```
+
+Server runs at `http://localhost:3000`
+
+### 4. Build for Production
+
+```bash
+yarn build
+```
+
+Outputs compiled JavaScript to `dist/`
+
+### 5. Run Production Build
+
+```bash
+yarn start
+```
+
+---
+
+## API Overview
+
+**Base URL**: `/api`
+
+All endpoints (except auth) require:
+
+```
+Authorization: Bearer <access_token>
+```
+
+### Authentication Endpoints (PUBLIC)
+
+| Method | Endpoint                    | Description                |
+| ------ | --------------------------- | -------------------------- |
+| `POST` | `/api/auth/register`        | Create new user account    |
+| `POST` | `/api/auth/login`           | Login and get access token |
+| `POST` | `/api/auth/refresh`         | Refresh access token       |
+| `POST` | `/api/auth/forgot-password` | Request password reset     |
+| `POST` | `/api/auth/reset-password`  | Reset password with token  |
+| `POST` | `/api/auth/verify-email`    | Verify email address       |
+
+### Protected Endpoints (REQUIRES AUTH)
+
+| Method | Endpoint           | Description              |
+| ------ | ------------------ | ------------------------ |
+| `GET`  | `/api/auth/me`     | Get current user profile |
+| `POST` | `/api/auth/logout` | Logout user              |
+
+**Full API documentation**: See [docs/api-design.md](docs/api-design.md)
+
+---
+
+## Environment Variables
+
+```env
+# Server
+PORT=3000
+
+# Database
+DB_STRING=<mongodb_connection_string>
+
+# JWT
+JWT_SECRET=<your_jwt_secret_key>
+JWT_EXPIRES_IN=24h
+REFRESH_SECRET=<your_refresh_secret>
+REFRESH_EXPIRES_IN=7d
+
+# (Future) External Services
+OPENAI_API_KEY=<openai_key>
+SENDGRID_API_KEY=<sendgrid_key>
+```
+
+---
+
+## Development Scripts
+
+```bash
+# Development (with hot-reload)
+yarn dev
+
+# Type checking
+yarn tsc
+
+# Linting
+yarn lint
+yarn lint:fix
+
+# Code formatting
+yarn format
+
+# Building
+yarn build
+
+# Production
+yarn start
+```
+
+---
+
+## Project Structure & Architecture
+
+### Database
+
+MongoDB with Mongoose for schema modeling and validation.
+
+**Key Collections**:
+
+- `users` — User accounts, authentication
+- `verify` — Email verification tokens
+- `refresh_tokens` — JWT refresh tokens with TTL
+- `roadmaps` — Learning paths for each language
+- `exercises` — Programming exercises with test cases
+- `user_lesson_progress` — Track user's learning progress
+
+See [docs/database-design.md](docs/database-design.md) for complete schema.
+
+### Request Flow
+
+```
+Request → CORS/JSON Middleware → Route → Auth Middleware (if needed) → Controller → Service Layer → Database → Response
+```
+
+### Authentication Flow
+
+1. User registers with email/password
+2. Password hashed with bcryptjs
+3. User logs in → JWT access token issued
+4. Client sends token in `Authorization: Bearer <token>` header
+5. `authMiddleware` verifies token, attaches user to request
+6. Protected routes access `req.user.id` and `req.user.email`
+
+---
+
+## Code Quality
+
+- **TypeScript**: Strict mode enabled for type safety
+- **ESLint**: Enforces code style
+- **Prettier**: Auto-formats code
+- **Husky**: Pre-commit hooks run lint & format
+
+Run manually:
+
+```bash
+yarn lint:fix
+yarn format
+```
+
+---
+
+## Team
+
+- **Vinh Luong**
+- **Minh**
+- **An**
+- **Quan**
+- **Vinh Vu**
+
+---
+
+## License
+
+Private project. See organization for license details.
 
 The platform acts as the student, and the user acts as the teacher.
 

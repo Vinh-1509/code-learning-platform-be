@@ -1,8 +1,6 @@
 # API Design
 
-> **Base URL:** `/api`
-> `isAuth: Yes` — requires a valid `Authorization: Bearer <access_token>` header.
-> Priority levels: **HIGH** | **LOW**
+> **Base URL:** `/api` `isAuth: Yes` — requires a valid `Authorization: Bearer <access_token>` header. Priority levels: **HIGH** | **LOW**
 
 ---
 
@@ -22,16 +20,16 @@
 
 > Login, Register, Password Reset, Logout
 
-| Method | Endpoint | isAuth | Priority |
-|---|---|---|---|
-| POST | `/api/auth/register` | No | HIGH |
-| POST | `/api/auth/login` | No | HIGH |
-| POST | `/api/auth/logout` | Yes | HIGH |
-| POST | `/api/auth/refresh` | No | HIGH |
-| GET | `/api/auth/me` | Yes | LOW |
-| POST | `/api/auth/forgot-password` | No | LOW |
-| POST | `/api/auth/reset-password` | No | LOW |
-| POST | `/api/auth/verify-email` | No | LOW |
+| Method | Endpoint                    | isAuth | Priority |
+| ------ | --------------------------- | ------ | -------- |
+| POST   | `/api/auth/register`        | No     | HIGH     |
+| POST   | `/api/auth/login`           | No     | HIGH     |
+| POST   | `/api/auth/logout`          | Yes    | HIGH     |
+| POST   | `/api/auth/refresh`         | No     | HIGH     |
+| GET    | `/api/auth/me`              | Yes    | LOW      |
+| POST   | `/api/auth/forgot-password` | No     | LOW      |
+| POST   | `/api/auth/reset-password`  | No     | LOW      |
+| POST   | `/api/auth/verify-email`    | No     | LOW      |
 
 ---
 
@@ -40,6 +38,7 @@
 Create a new user. Email must be unique. Password is hashed before storing.
 
 **Request Body:**
+
 ```json
 {
   "email": "alice@example.com",
@@ -48,6 +47,7 @@ Create a new user. Email must be unique. Password is hashed before storing.
 ```
 
 **Response `201`:**
+
 ```json
 {
   "message": "User registered successfully"
@@ -55,6 +55,7 @@ Create a new user. Email must be unique. Password is hashed before storing.
 ```
 
 **Error responses:**
+
 ```json
 { "message": "Email and password are required" }   // 400
 { "message": "Email already registered" }          // 409
@@ -68,6 +69,7 @@ Create a new user. Email must be unique. Password is hashed before storing.
 Check if email exists in DB, check hashed password, return tokens to user if all checks pass.
 
 **Request Body:**
+
 ```json
 {
   "email": "alice@example.com",
@@ -76,6 +78,7 @@ Check if email exists in DB, check hashed password, return tokens to user if all
 ```
 
 **Response `200`:**
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -84,6 +87,7 @@ Check if email exists in DB, check hashed password, return tokens to user if all
 ```
 
 **Error responses:**
+
 ```json
 { "message": "Email and password are required" }  // 400
 { "message": "Invalid credentials" }              // 401
@@ -96,6 +100,7 @@ Check if email exists in DB, check hashed password, return tokens to user if all
 Log user out. Server deletes the refresh token from DB.
 
 **Request Body:**
+
 ```json
 {
   "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -103,6 +108,7 @@ Log user out. Server deletes the refresh token from DB.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "message": "Logged out successfully"
@@ -116,6 +122,7 @@ Log user out. Server deletes the refresh token from DB.
 Generate a new access token using a valid refresh token.
 
 **Request Body:**
+
 ```json
 {
   "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -123,6 +130,7 @@ Generate a new access token using a valid refresh token.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -130,8 +138,9 @@ Generate a new access token using a valid refresh token.
 ```
 
 **Error responses:**
+
 ```json
-{ "message": "Invalid refresh token" }  // 401
+{ "message": "Invalid refresh token" } // 401
 ```
 
 ---
@@ -141,6 +150,7 @@ Generate a new access token using a valid refresh token.
 Get current authenticated user info.
 
 **Response `200`:**
+
 ```json
 {
   "_id": "64f1a2b3c4d5e6f7a8b9c0d1",
@@ -159,6 +169,7 @@ Get current authenticated user info.
 Generate a reset token and send it via email. Always returns the same message for security (prevents email enumeration).
 
 **Request Body:**
+
 ```json
 {
   "email": "alice@example.com"
@@ -166,6 +177,7 @@ Generate a reset token and send it via email. Always returns the same message fo
 ```
 
 **Response `200`:**
+
 ```json
 {
   "message": "If that email exists, a reset link has been sent"
@@ -179,6 +191,7 @@ Generate a reset token and send it via email. Always returns the same message fo
 Validate the reset token and update the password (hashed).
 
 **Request Body:**
+
 ```json
 {
   "reset_pw_token": "a1b2c3d4e5f6...",
@@ -187,6 +200,7 @@ Validate the reset token and update the password (hashed).
 ```
 
 **Response `200`:**
+
 ```json
 {
   "message": "Password reset successfully"
@@ -194,8 +208,9 @@ Validate the reset token and update the password (hashed).
 ```
 
 **Error responses:**
+
 ```json
-{ "message": "Invalid or expired token" }  // 400
+{ "message": "Invalid or expired token" } // 400
 ```
 
 ---
@@ -205,6 +220,7 @@ Validate the reset token and update the password (hashed).
 Verify user email using the token sent during registration.
 
 **Request Body:**
+
 ```json
 {
   "verify_token": "a1b2c3d4e5f6..."
@@ -212,6 +228,7 @@ Verify user email using the token sent during registration.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "message": "Email verified successfully"
@@ -219,21 +236,22 @@ Verify user email using the token sent during registration.
 ```
 
 **Error responses:**
+
 ```json
-{ "message": "Invalid or expired token" }  // 400
+{ "message": "Invalid or expired token" } // 400
 ```
 
 ---
 
 ## 2. Practice System
 
-| Method | Endpoint | isAuth | Priority |
-|---|---|---|---|
-| GET | `/api/practice/exercises` | Yes | HIGH |
-| GET | `/api/practice/exercises/:exerciseId` | Yes | HIGH |
-| POST | `/api/practice/exercises/:exerciseId/submit` | Yes | HIGH |
-| POST | `/api/practice/exercises/:exerciseId/hint` | Yes | HIGH |
-| GET | `/api/practice/exercises/:exerciseId/history` | Yes | HIGH |
+| Method | Endpoint                                      | isAuth | Priority |
+| ------ | --------------------------------------------- | ------ | -------- |
+| GET    | `/api/practice/exercises`                     | Yes    | HIGH     |
+| GET    | `/api/practice/exercises/:exerciseId`         | Yes    | HIGH     |
+| POST   | `/api/practice/exercises/:exerciseId/submit`  | Yes    | HIGH     |
+| POST   | `/api/practice/exercises/:exerciseId/hint`    | Yes    | HIGH     |
+| GET    | `/api/practice/exercises/:exerciseId/history` | Yes    | HIGH     |
 
 ---
 
@@ -243,16 +261,17 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `q` | string | Keyword search |
-| `topic` | string | Filter by tag/topic (e.g. `hashing`) |
-| `difficulty` | string | `easy` \| `medium` \| `hard` |
-| `language` | string | `C++` \| `Java` |
-| `page` | int | Page number (default: 1) |
-| `limit` | int | Results per page (default: 10) |
+| Parameter    | Type   | Description                          |
+| ------------ | ------ | ------------------------------------ |
+| `q`          | string | Keyword search                       |
+| `topic`      | string | Filter by tag/topic (e.g. `hashing`) |
+| `difficulty` | string | `easy` \| `medium` \| `hard`         |
+| `language`   | string | `C++` \| `Java`                      |
+| `page`       | int    | Page number (default: 1)             |
+| `limit`      | int    | Results per page (default: 10)       |
 
 **Response `200`:**
+
 ```json
 {
   "total": 42,
@@ -265,9 +284,7 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
       "language": "C++",
       "type": "fill_blank",
       "level": "easy",
-      "tags": [
-        { "_id": "64f1a2b3c4d5e6f7a8b9c0e1", "name": "variables" }
-      ],
+      "tags": [{ "_id": "64f1a2b3c4d5e6f7a8b9c0e1", "name": "variables" }],
       "instruction": "Fill in the correct data type for the variable below."
     }
   ]
@@ -281,6 +298,7 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
 Get details of a specific exercise. **Does NOT include `correctAnswer`.**
 
 **Response `200`:**
+
 ```json
 {
   "_id": "64f1a2b3c4d5e6f7a8b9c0d2",
@@ -309,6 +327,7 @@ Get details of a specific exercise. **Does NOT include `correctAnswer`.**
 Submit an answer and get a result. On pass, spaced repetition schedule is updated.
 
 **Request Body:**
+
 ```json
 {
   "answer": { "input_1": "int" }
@@ -316,6 +335,7 @@ Submit an answer and get a result. On pass, spaced repetition schedule is update
 ```
 
 **Response `200` — correct:**
+
 ```json
 {
   "correct": true,
@@ -324,6 +344,7 @@ Submit an answer and get a result. On pass, spaced repetition schedule is update
 ```
 
 **Response `200` — wrong:**
+
 ```json
 {
   "correct": false,
@@ -338,6 +359,7 @@ Submit an answer and get a result. On pass, spaced repetition schedule is update
 Request a hint. Tracks and increments hint usage level.
 
 **Response `200`:**
+
 ```json
 {
   "hintLevel": 1,
@@ -352,6 +374,7 @@ Request a hint. Tracks and increments hint usage level.
 Get the user's past attempts and answers for a specific exercise.
 
 **Response `200`:**
+
 ```json
 [
   {
@@ -381,16 +404,16 @@ Get the user's past attempts and answers for a specific exercise.
 
 ## 3. AI Feynman
 
-| Method | Endpoint | isAuth | Priority |
-|---|---|---|---|
-| GET | `/api/feynman/block/:blockId/question` | Yes | HIGH |
-| POST | `/api/feynman/block/:blockId/chat` | Yes | HIGH |
-| GET | `/api/feynman/block/:blockId/history` | Yes | HIGH |
-| GET | `/api/feynman/block/:blockId/stats` | Yes | HIGH |
-| GET | `/api/feynman/exercise/:exerciseId/question` | Yes | HIGH |
-| POST | `/api/feynman/exercise/:exerciseId/chat` | Yes | LOW |
-| GET | `/api/feynman/exercise/:exerciseId/history` | Yes | LOW |
-| GET | `/api/feynman/exercise/:exerciseId/stats` | Yes | LOW |
+| Method | Endpoint                                     | isAuth | Priority |
+| ------ | -------------------------------------------- | ------ | -------- |
+| GET    | `/api/feynman/block/:blockId/question`       | Yes    | HIGH     |
+| POST   | `/api/feynman/block/:blockId/chat`           | Yes    | HIGH     |
+| GET    | `/api/feynman/block/:blockId/history`        | Yes    | HIGH     |
+| GET    | `/api/feynman/block/:blockId/stats`          | Yes    | HIGH     |
+| GET    | `/api/feynman/exercise/:exerciseId/question` | Yes    | HIGH     |
+| POST   | `/api/feynman/exercise/:exerciseId/chat`     | Yes    | LOW      |
+| GET    | `/api/feynman/exercise/:exerciseId/history`  | Yes    | LOW      |
+| GET    | `/api/feynman/exercise/:exerciseId/stats`    | Yes    | LOW      |
 
 ---
 
@@ -399,6 +422,7 @@ Get the user's past attempts and answers for a specific exercise.
 Fetch `feynmanQuestion` from the `blocks` table.
 
 **Response `200`:**
+
 ```json
 {
   "blockId": "64f1a2b3c4d5e6f7a8b9c0b1",
@@ -413,6 +437,7 @@ Fetch `feynmanQuestion` from the `blocks` table.
 Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFeynmanPassed: true` if criteria are met.
 
 **Request Body:**
+
 ```json
 {
   "message": "A pointer is like an address. It stores where a value lives in memory, not the value itself."
@@ -420,6 +445,7 @@ Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFe
 ```
 
 **Response `200`:**
+
 ```json
 {
   "reply": "Great analogy! That is exactly right. Can you tell me what happens when you dereference a pointer?",
@@ -428,6 +454,7 @@ Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFe
 ```
 
 **Response `200` — when passed:**
+
 ```json
 {
   "reply": "Excellent explanation! You clearly understand this concept.",
@@ -442,13 +469,23 @@ Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFe
 Fetch the `chatHistory` array for this block from the user's progress record.
 
 **Response `200`:**
+
 ```json
 {
   "blockId": "64f1a2b3c4d5e6f7a8b9c0b1",
   "chatHistory": [
-    { "role": "assistant", "content": "Can you explain what a pointer is as if you were teaching a 10-year-old?" },
-    { "role": "user",      "content": "A pointer stores a memory address, not a value." },
-    { "role": "assistant", "content": "Correct! What happens when you dereference it?" }
+    {
+      "role": "assistant",
+      "content": "Can you explain what a pointer is as if you were teaching a 10-year-old?"
+    },
+    {
+      "role": "user",
+      "content": "A pointer stores a memory address, not a value."
+    },
+    {
+      "role": "assistant",
+      "content": "Correct! What happens when you dereference it?"
+    }
   ]
 }
 ```
@@ -460,6 +497,7 @@ Fetch the `chatHistory` array for this block from the user's progress record.
 Check `isFeynmanPassed` in `user_lesson_progress` for the current user.
 
 **Response `200`:**
+
 ```json
 {
   "blockId": "64f1a2b3c4d5e6f7a8b9c0b1",
@@ -474,6 +512,7 @@ Check `isFeynmanPassed` in `user_lesson_progress` for the current user.
 Fetch `feynmanQuestion` from the `exercises` table.
 
 **Response `200`:**
+
 ```json
 {
   "exerciseId": "64f1a2b3c4d5e6f7a8b9c0d2",
@@ -488,6 +527,7 @@ Fetch `feynmanQuestion` from the `exercises` table.
 Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFeynmanPassed: true` if criteria are met.
 
 **Request Body:**
+
 ```json
 {
   "message": "Because C++ needs to know how much memory to allocate for the variable."
@@ -495,6 +535,7 @@ Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFe
 ```
 
 **Response `200`:**
+
 ```json
 {
   "reply": "Exactly right! Memory allocation is the key reason. Can you give an example?",
@@ -509,12 +550,19 @@ Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFe
 Fetch the `chatHistory` for this exercise from `exercise_attempt`.
 
 **Response `200`:**
+
 ```json
 {
   "exerciseId": "64f1a2b3c4d5e6f7a8b9c0d2",
   "chatHistory": [
-    { "role": "assistant", "content": "Why do we declare a variable type in C++?" },
-    { "role": "user",      "content": "So the compiler knows how much memory to allocate." },
+    {
+      "role": "assistant",
+      "content": "Why do we declare a variable type in C++?"
+    },
+    {
+      "role": "user",
+      "content": "So the compiler knows how much memory to allocate."
+    },
     { "role": "assistant", "content": "Perfect! That is exactly correct." }
   ]
 }
@@ -527,6 +575,7 @@ Fetch the `chatHistory` for this exercise from `exercise_attempt`.
 Check `isFeynmanPassed` in `exercise_attempt` for the current user.
 
 **Response `200`:**
+
 ```json
 {
   "exerciseId": "64f1a2b3c4d5e6f7a8b9c0d2",
@@ -538,10 +587,10 @@ Check `isFeynmanPassed` in `exercise_attempt` for the current user.
 
 ## 4. Repetition
 
-| Method | Endpoint | isAuth | Priority |
-|---|---|---|---|
-| GET | `/api/repetition/daily-tasks` | Yes | LOW |
-| GET | `/api/repetition/:exerciseId/stats` | Yes | LOW |
+| Method | Endpoint                            | isAuth | Priority |
+| ------ | ----------------------------------- | ------ | -------- |
+| GET    | `/api/repetition/daily-tasks`       | Yes    | LOW      |
+| GET    | `/api/repetition/:exerciseId/stats` | Yes    | LOW      |
 
 ---
 
@@ -550,6 +599,7 @@ Check `isFeynmanPassed` in `exercise_attempt` for the current user.
 Fetch exercises where `nextReviewDate <= now()`. Returns count breakdown by status.
 
 **Response `200`:**
+
 ```json
 {
   "summary": {
@@ -578,6 +628,7 @@ Fetch exercises where `nextReviewDate <= now()`. Returns count breakdown by stat
 Retrieve the Spaced Repetition status and next review date for a specific exercise.
 
 **Response `200`:**
+
 ```json
 {
   "exerciseId": "64f1a2b3c4d5e6f7a8b9c0d2",
@@ -592,11 +643,11 @@ Retrieve the Spaced Repetition status and next review date for a specific exerci
 
 ## 5. Tag Stats
 
-| Method | Endpoint | isAuth | Priority |
-|---|---|---|---|
-| GET | `/api/tags/weakness` | Yes | HIGH |
-| GET | `/api/tags/:tagId/info` | Yes | HIGH |
-| GET | `/api/tags/:tagId/exercises` | Yes | HIGH |
+| Method | Endpoint                     | isAuth | Priority |
+| ------ | ---------------------------- | ------ | -------- |
+| GET    | `/api/tags/weakness`         | Yes    | HIGH     |
+| GET    | `/api/tags/:tagId/info`      | Yes    | HIGH     |
+| GET    | `/api/tags/:tagId/exercises` | Yes    | HIGH     |
 
 ---
 
@@ -605,6 +656,7 @@ Retrieve the Spaced Repetition status and next review date for a specific exerci
 Retrieve all tags where `isWeak: true`, with attempt stats.
 
 **Response `200`:**
+
 ```json
 [
   {
@@ -625,6 +677,7 @@ Retrieve all tags where `isWeak: true`, with attempt stats.
 Deep dive into a specific tag with failure rate and performance metrics.
 
 **Response `200`:**
+
 ```json
 {
   "_id": "64f1a2b3c4d5e6f7a8b9c0e1",
@@ -646,12 +699,13 @@ Retrieve exercises for a tag. Supports limiting and sorting.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `limit` | int | Max results (default: 10) |
-| `sort` | string | `level` \| `order` |
+| Parameter | Type   | Description               |
+| --------- | ------ | ------------------------- |
+| `limit`   | int    | Max results (default: 10) |
+| `sort`    | string | `level` \| `order`        |
 
 **Response `200`:**
+
 ```json
 [
   {
@@ -669,13 +723,13 @@ Retrieve exercises for a tag. Supports limiting and sorting.
 
 ## 6. Learning System
 
-| Method | Endpoint | isAuth | Priority |
-|---|---|---|---|
-| GET | `/api/learning/milestones` | Yes | HIGH |
-| GET | `/api/learning/milestones/:milestoneId` | Yes | HIGH |
-| GET | `/api/learning/milestones/:milestoneId/lessons` | Yes | HIGH |
-| GET | `/api/learning/lessons/:lessonId` | Yes | HIGH |
-| POST | `/api/learning/blocks/:blockId/complete` | Yes | HIGH |
+| Method | Endpoint                                        | isAuth | Priority |
+| ------ | ----------------------------------------------- | ------ | -------- |
+| GET    | `/api/learning/milestones`                      | Yes    | HIGH     |
+| GET    | `/api/learning/milestones/:milestoneId`         | Yes    | HIGH     |
+| GET    | `/api/learning/milestones/:milestoneId/lessons` | Yes    | HIGH     |
+| GET    | `/api/learning/lessons/:lessonId`               | Yes    | HIGH     |
+| POST   | `/api/learning/blocks/:blockId/complete`        | Yes    | HIGH     |
 
 ---
 
@@ -684,6 +738,7 @@ Retrieve exercises for a tag. Supports limiting and sorting.
 Get list of milestones with user progress attached.
 
 **Response `200`:**
+
 ```json
 [
   {
@@ -716,6 +771,7 @@ Get list of milestones with user progress attached.
 Get details of a specific milestone with user progress.
 
 **Response `200`:**
+
 ```json
 {
   "_id": "64f1a2b3c4d5e6f7a8b9c0a1",
@@ -737,6 +793,7 @@ Get details of a specific milestone with user progress.
 Get all lessons belonging to the milestone with progress state.
 
 **Response `200`:**
+
 ```json
 [
   {
@@ -767,6 +824,7 @@ Get all lessons belonging to the milestone with progress state.
 Get full lesson content with all blocks embedded. Block state reflects current user progress.
 
 **Response `200`:**
+
 ```json
 {
   "_id": "64f1a2b3c4d5e6f7a8b9c0c1",
@@ -837,6 +895,7 @@ Get full lesson content with all blocks embedded. Block state reflects current u
 Mark a block as completed and update lesson/milestone progress percentages.
 
 **Response `200`:**
+
 ```json
 {
   "message": "Block marked as completed",
@@ -851,12 +910,12 @@ Mark a block as completed and update lesson/milestone progress percentages.
 
 ## 7. Other
 
-| Method | Endpoint | isAuth | Priority |
-|---|---|---|---|
-| GET | `/api/languages` | Yes | HIGH |
-| GET | `/api/languages/:languageId` | Yes | HIGH |
-| POST | `/api/languages/select` | Yes | HIGH |
-| GET | `/api/dashboard` | Yes | HIGH |
+| Method | Endpoint                     | isAuth | Priority |
+| ------ | ---------------------------- | ------ | -------- |
+| GET    | `/api/languages`             | Yes    | HIGH     |
+| GET    | `/api/languages/:languageId` | Yes    | HIGH     |
+| POST   | `/api/languages/select`      | Yes    | HIGH     |
+| GET    | `/api/dashboard`             | Yes    | HIGH     |
 
 ---
 
@@ -865,6 +924,7 @@ Mark a block as completed and update lesson/milestone progress percentages.
 Get all available languages.
 
 **Response `200`:**
+
 ```json
 [
   { "_id": "64f1a2b3c4d5e6f7a8b9c0d9", "language": "C++" },
@@ -879,6 +939,7 @@ Get all available languages.
 Get full info for a specific language (`c-plus-plus` or `java`).
 
 **Response `200`:**
+
 ```json
 {
   "_id": "64f1a2b3c4d5e6f7a8b9c0d9",
@@ -894,6 +955,7 @@ Get full info for a specific language (`c-plus-plus` or `java`).
 Set the primary learning language for the authenticated user's profile.
 
 **Request Body:**
+
 ```json
 {
   "language": "C++"
@@ -901,6 +963,7 @@ Set the primary learning language for the authenticated user's profile.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "message": "Language updated successfully",
@@ -915,6 +978,7 @@ Set the primary learning language for the authenticated user's profile.
 Get general dashboard summary for the authenticated user.
 
 **Response `200`:**
+
 ```json
 {
   "user": {

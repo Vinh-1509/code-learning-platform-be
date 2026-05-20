@@ -25,7 +25,7 @@
 | POST   | `/api/auth/register`        | No     | HIGH     |
 | POST   | `/api/auth/login`           | No     | HIGH     |
 | POST   | `/api/auth/logout`          | Yes    | HIGH     |
-| POST   | `/api/auth/refresh`         | No     | HIGH     |
+| POST   | `/api/auth/refresh`         | No     | LOW      |
 | GET    | `/api/auth/me`              | Yes    | LOW      |
 | POST   | `/api/auth/forgot-password` | No     | LOW      |
 | POST   | `/api/auth/reset-password`  | No     | LOW      |

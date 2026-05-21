@@ -41,10 +41,20 @@ const seed = async () => {
       {
         language: 'C++',
         info: 'C++ is a general-purpose programming language supporting procedural, object-oriented, and generic programming. Widely used for systems programming and competitive programming.',
+        strengths: ['Performance', 'Memory Control', 'Hardware Access'],
+        challenges: ['Manual Memory', 'Complex Syntax'],
+        useCases: ['Game Engines', 'Operating Systems', 'Embedded Systems'],
       },
       {
         language: 'Java',
         info: 'Java is a high-level, class-based, object-oriented language designed to have as few implementation dependencies as possible. Runs on the JVM and is widely used in enterprise applications.',
+        strengths: ['Clean OOP', 'Rich Ecosystem', 'Platform Independent'],
+        challenges: ['Verbose Code', 'Memory Heavy'],
+        useCases: [
+          'Android Development',
+          'Enterprise Backend',
+          'Big Data Systems',
+        ],
       },
     ]);
     console.log('✓ language_info created: C++, Java');

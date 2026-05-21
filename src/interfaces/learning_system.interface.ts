@@ -17,6 +17,9 @@ export interface ILanguageInfoResponse {
   _id: string;
   language: string;
   info: string;
+  strengths: string[];
+  challenges: string[];
+  useCases: string[];
 }
 
 // ─── Milestone ───────────────────────────────────────────────────────────────

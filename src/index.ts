@@ -1,8 +1,10 @@
+import './types/express-augmentation';
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/mongodb';
 import authRoutes from './routes/auth.routes';
+import learningSystemRoutes from './routes/learning_system.routes';
 
 dotenv.config();
 
@@ -14,6 +16,7 @@ app.use(express.json());
 
 // Core API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api', learningSystemRoutes);
 
 // Health check endpoint
 app.get('/', (req: Request, res: Response) => {

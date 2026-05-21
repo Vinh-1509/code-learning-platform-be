@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { ENV } from '../config/env';
-import { AuthRequest } from '../interfaces/types';
+import { AuthRequest, JwtUser } from '../interfaces/auth.interface';
 
 export const authMiddleware = (
   req: AuthRequest,
@@ -21,10 +21,11 @@ export const authMiddleware = (
       email: string;
     };
 
-    req.user = {
+    const user: JwtUser = {
       id: decoded.userId,
       email: decoded.email,
     };
+    req.user = user;
 
     next();
   } catch {

@@ -137,7 +137,7 @@ Atomic content unit inside a lesson. Supports mixed content types and Feynman qu
 | Field | Type | Constraints | Note |
 | --- | --- | --- | --- |
 | `_id` | ObjectId | PK |  |
-| `lessonId` | ObjectId | ref: `lessons._id` (1-to-1) |  |
+| `lessonId` | ObjectId | ref: `lessons._id` (many blocks-to-1 lesson) |  |
 | `content` | json |  | See structure below |
 | `feynmanQuestion` | text |  | Câu hỏi sẽ hỏi |
 | `feynmanPrompt` | text |  | Prompt cho AI |

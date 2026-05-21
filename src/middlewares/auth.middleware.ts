@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { ENV } from '../config/env';
-import { AuthRequest } from '../interfaces/types';
+import { AuthRequest } from '../interfaces/auth.interface';
 
 export const authMiddleware = (
   req: AuthRequest,

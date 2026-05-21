@@ -8,7 +8,7 @@ import {
   RegisterPayload,
   LoginPayload,
   UserResponse,
-} from '../interfaces/types';
+} from '../interfaces/auth.interface';
 import { validateEmail, validatePassword } from '../utils/validators';
 
 const jwtOptions: SignOptions = {

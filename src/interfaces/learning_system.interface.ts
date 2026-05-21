@@ -1,6 +1,26 @@
 import { Types, Document } from 'mongoose';
 
-//Milestone interface
+// ─── Roadmap & Language ──────────────────────────────────────────────────────
+
+export interface IRoadmap extends Document {
+  language: string;
+  title: string;
+  description?: string;
+}
+
+export interface IRoadmapResponse {
+  id: string;
+  language: string;
+}
+
+export interface ILanguageInfoResponse {
+  id: string;
+  language: string;
+  info: string;
+}
+
+// ─── Milestone ───────────────────────────────────────────────────────────────
+
 export interface IMilestone extends Document {
   roadmapId: Types.ObjectId;
   title: string;
@@ -13,9 +33,15 @@ export interface MilestoneResponse {
   title: string;
   order: number;
   description?: string;
+  progress: {
+    status: 'Locked' | 'Active' | 'Completed';
+    completionPercentage: number;
+    updatedAt?: Date;
+  };
 }
 
-//Block interface
+// ─── Lesson & Block ──────────────────────────────────────────────────────────
+
 export interface ITheoryContent {
   type: 'theory';
   data: {
@@ -36,12 +62,9 @@ export interface ICodeContent {
 
 export interface IPracticeContent {
   type: 'practice';
-
   data: {
     order: number;
-
     exerciseId: Types.ObjectId;
-
     required: boolean;
   };
 }
@@ -55,7 +78,14 @@ export interface IBlock extends Document {
   feynmanPrompt?: string;
 }
 
-//Lesson interface
+export interface IBlockResponse {
+  id: string;
+  content: BlockContent[];
+  feynmanQuestion?: string;
+  state: 'locked' | 'active' | 'completed';
+  isFeynmanPassed: boolean;
+}
+
 export interface ILesson extends Document {
   milestoneId: Types.ObjectId;
   title: string;
@@ -65,8 +95,48 @@ export interface ILesson extends Document {
 
 export interface ILessonResponse {
   id: string;
-  milestoneId: string;
   title: string;
-  blocks: IBlock[];
   order: number;
+  blocks: IBlockResponse[];
+  progress: {
+    completionPercentage: number;
+    isCompleted: boolean;
+    lastAccessed?: Date;
+  };
+}
+
+export interface ILessonSummaryResponse {
+  id: string;
+  title: string;
+  order: number;
+  progress: {
+    isCompleted: boolean;
+    completionPercentage: number;
+  };
+}
+
+// ─── User Progress ───────────────────────────────────────────────────────────
+
+export interface IBlockProgress {
+  blockId: Types.ObjectId;
+  isFeynmanPassed: boolean;
+  state: 'locked' | 'active' | 'completed';
+}
+
+export interface IUserLessonProgress extends Document {
+  userId: Types.ObjectId;
+  lessonId: Types.ObjectId;
+  blockProgress: IBlockProgress[];
+  chatHistory: { role: 'user' | 'assistant'; content: string }[];
+  completionPercentage: number;
+  isCompleted: boolean;
+  lastAccessed?: Date;
+}
+
+export interface IUserMilestoneProgress extends Document {
+  userId: Types.ObjectId;
+  milestoneId: Types.ObjectId;
+  completionPercentage: number;
+  status: 'Locked' | 'Active' | 'Completed';
+  updatedAt?: Date;
 }

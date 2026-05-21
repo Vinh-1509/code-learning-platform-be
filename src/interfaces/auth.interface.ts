@@ -12,12 +12,14 @@ export interface IUser extends Document {
   comparePassword(password: string): Promise<boolean>;
 }
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-  };
+/** Payload attached to req.user after JWT verification in authMiddleware */
+export interface JwtUser {
+  id: string;
+  email: string;
 }
+
+/** Semantic alias: route expects authMiddleware; shape comes from express.d.ts augmentation */
+export type AuthRequest = Request;
 
 export interface RegisterPayload {
   email: string;

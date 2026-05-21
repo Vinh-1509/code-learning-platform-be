@@ -9,12 +9,12 @@ export interface IRoadmap extends Document {
 }
 
 export interface IRoadmapResponse {
-  id: string;
+  _id: string;
   language: string;
 }
 
 export interface ILanguageInfoResponse {
-  id: string;
+  _id: string;
   language: string;
   info: string;
 }
@@ -29,7 +29,7 @@ export interface IMilestone extends Document {
 }
 
 export interface MilestoneResponse {
-  id: string;
+  _id: string;
   title: string;
   order: number;
   description?: string;
@@ -79,7 +79,7 @@ export interface IBlock extends Document {
 }
 
 export interface IBlockResponse {
-  id: string;
+  _id: string;
   content: BlockContent[];
   feynmanQuestion?: string;
   state: 'locked' | 'active' | 'completed';
@@ -94,7 +94,7 @@ export interface ILesson extends Document {
 }
 
 export interface ILessonResponse {
-  id: string;
+  _id: string;
   title: string;
   order: number;
   blocks: IBlockResponse[];
@@ -106,7 +106,7 @@ export interface ILessonResponse {
 }
 
 export interface ILessonSummaryResponse {
-  id: string;
+  _id: string;
   title: string;
   order: number;
   progress: {

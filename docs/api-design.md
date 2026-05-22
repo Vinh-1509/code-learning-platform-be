@@ -936,7 +936,7 @@ Get all available languages.
 
 ### GET `/api/languages/:languageId`
 
-Get full info for a specific language (`c-plus-plus` or `java`).
+Get full info for a specific language including strengths, challenges, and use cases.
 
 **Response `200`:**
 
@@ -944,7 +944,10 @@ Get full info for a specific language (`c-plus-plus` or `java`).
 {
   "_id": "64f1a2b3c4d5e6f7a8b9c0d9",
   "language": "C++",
-  "info": "C++ is a general-purpose programming language created by Bjarne Stroustrup. It supports object-oriented, procedural, and generic programming styles."
+  "info": "C++ is a general-purpose programming language created by Bjarne Stroustrup. It supports object-oriented, procedural, and generic programming styles.",
+  "strengths": ["Performance", "Memory Control", "Hardware Access"],
+  "challenges": ["Manual Memory", "Complex Syntax"],
+  "useCases": ["Game Engines", "Operating Systems", "Embedded Systems"]
 }
 ```
 

@@ -64,9 +64,12 @@ export const getLanguageById = async (
     }).lean();
 
     res.json({
-      _id: roadmap._id,
+      _id: languageInfo?._id,
       language: roadmap.language,
       info: languageInfo?.info ?? roadmap.description ?? '',
+      strengths: languageInfo?.strengths ?? [],
+      challenges: languageInfo?.challenges ?? [],
+      useCases: languageInfo?.useCases ?? [],
     });
   } catch {
     res.status(500).json({ message: 'Failed to fetch language' });

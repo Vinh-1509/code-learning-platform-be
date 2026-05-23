@@ -23,6 +23,37 @@ function authUserId(req: Request): string {
   return req.user!.id;
 }
 
+/**
+ * Helper: Enrich roadmap data with language info details (batched query)
+ */
+async function enrichLanguagesWithDetails(
+  roadmaps: Array<{
+    _id: Types.ObjectId;
+    language: string;
+    description?: string;
+  }>,
+) {
+  const languages = roadmaps.map((r) => r.language);
+
+  // Single batched query instead of N+1
+  const languageInfos = await LanguageInfo.find({
+    language: { $in: languages },
+  }).lean();
+
+  const infoMap = Object.fromEntries(
+    languageInfos.map((li) => [li.language, li]),
+  );
+
+  return roadmaps.map((r) => ({
+    _id: r._id,
+    language: r.language,
+    info: infoMap[r.language]?.info ?? r.description ?? '',
+    strengths: infoMap[r.language]?.strengths ?? [],
+    challenges: infoMap[r.language]?.challenges ?? [],
+    useCases: infoMap[r.language]?.useCases ?? [],
+  }));
+}
+
 // ─── Languages APIs ──────────────────────────────────────────────────────────
 
 /**
@@ -35,11 +66,13 @@ export const getAllLanguages = async (
   try {
     const roadmaps = await Roadmap.find(
       { language: { $in: SUPPORTED_LANGUAGES } },
-      { language: 1 },
+      { language: 1, description: 1 },
     )
       .sort({ language: 1 })
       .lean();
-    res.json(roadmaps.map((r) => ({ _id: r._id, language: r.language })));
+
+    const languagesWithDetails = await enrichLanguagesWithDetails(roadmaps);
+    res.json(languagesWithDetails);
   } catch {
     res.status(500).json({ message: 'Failed to fetch languages' });
   }
@@ -53,24 +86,16 @@ export const getLanguageById = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const roadmap = await Roadmap.findById(req.params.languageId).lean();
+    const roadmap = await Roadmap.findById(req.params.languageId)
+      .select('language description')
+      .lean();
     if (!roadmap) {
       res.status(404).json({ message: 'Language not found' });
       return;
     }
 
-    const languageInfo = await LanguageInfo.findOne({
-      language: roadmap.language,
-    }).lean();
-
-    res.json({
-      _id: languageInfo?._id,
-      language: roadmap.language,
-      info: languageInfo?.info ?? roadmap.description ?? '',
-      strengths: languageInfo?.strengths ?? [],
-      challenges: languageInfo?.challenges ?? [],
-      useCases: languageInfo?.useCases ?? [],
-    });
+    const enriched = await enrichLanguagesWithDetails([roadmap]);
+    res.json(enriched[0]);
   } catch {
     res.status(500).json({ message: 'Failed to fetch language' });
   }
@@ -249,6 +274,7 @@ export const getLessonsByMilestone = async (
 ): Promise<void> => {
   try {
     const milestoneId = String(req.params.milestoneId);
+    const userId = authUserId(req);
 
     const milestone = await Milestone.findById(milestoneId).lean();
     if (!milestone) {
@@ -256,28 +282,59 @@ export const getLessonsByMilestone = async (
       return;
     }
 
+    // Get milestone progress to check if it's locked
+    const milestoneProgress = await UserMilestoneProgress.findOne({
+      userId,
+      milestoneId,
+    }).lean();
+
     const lessons = await Lesson.find({ milestoneId })
       .sort({ order: 1 })
       .lean();
 
-    const lessonsWithProgress = await Promise.all(
-      lessons.map(async (lesson) => {
-        const progress = await UserLessonProgress.findOne({
-          userId: authUserId(req),
-          lessonId: lesson._id,
-        }).lean();
+    // Batch fetch all lesson progress in a single query (no N+1)
+    const allProgress = await UserLessonProgress.find({
+      userId,
+      lessonId: { $in: lessons.map((l) => l._id) },
+    }).lean();
 
-        return {
-          _id: lesson._id,
-          title: lesson.title,
-          order: lesson.order,
-          progress: {
-            isCompleted: progress?.isCompleted ?? false,
-            completionPercentage: progress?.completionPercentage ?? 0,
-          },
-        };
-      }),
+    const progressMap = Object.fromEntries(
+      allProgress.map((p) => [p.lessonId.toString(), p]),
     );
+
+    const lessonsWithProgress = lessons.map((lesson, index) => {
+      const progress = progressMap[lesson._id.toString()];
+
+      // Determine lesson status
+      let status: 'completed' | 'active' | 'locked' = 'locked';
+
+      if (progress?.isCompleted) {
+        status = 'completed';
+      } else if (milestoneProgress?.status === 'Active') {
+        // First lesson is active if milestone is active
+        if (index === 0) {
+          status = 'active';
+        } else {
+          // Check if previous lesson is completed (cached lookup, not a new query)
+          const previousLesson = lessons[index - 1];
+          const previousProgress = progressMap[previousLesson._id.toString()];
+          if (previousProgress?.isCompleted) {
+            status = 'active';
+          }
+        }
+      }
+
+      return {
+        _id: lesson._id,
+        title: lesson.title,
+        order: lesson.order,
+        progress: {
+          status,
+          isCompleted: progress?.isCompleted ?? false,
+          completionPercentage: progress?.completionPercentage ?? 0,
+        },
+      };
+    });
 
     res.json(lessonsWithProgress);
   } catch {

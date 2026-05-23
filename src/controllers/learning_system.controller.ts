@@ -9,6 +9,7 @@ import {
   UserLessonProgress,
 } from '../models/learning_system.model';
 import { LanguageInfo } from '../models/language_info.model';
+import { ILanguageInfoResponse } from '../interfaces/learning_system.interface';
 import User from '../models/user.model';
 import {
   SUPPORTED_LANGUAGES,
@@ -34,12 +35,17 @@ async function enrichLanguagesWithDetails(
   }>,
 ) {
   const languages = roadmaps.map((r) => r.language);
-  const languageInfos = await LanguageInfo.find({
+
+  // 1. Fetch and cast using your existing interface
+  const languageInfos = (await LanguageInfo.find({
     language: { $in: languages },
-  }).lean();
-  const infoMap = Object.fromEntries(
+  }).lean()) as unknown as ILanguageInfoResponse[];
+
+  // 2. Strongly type the map so ESLint knows exactly what properties exist
+  const infoMap: Record<string, ILanguageInfoResponse> = Object.fromEntries(
     languageInfos.map((li) => [li.language, li]),
   );
+
   return roadmaps.map((r) => ({
     _id: r._id,
     language: r.language,

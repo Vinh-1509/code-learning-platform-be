@@ -34,16 +34,12 @@ async function enrichLanguagesWithDetails(
   }>,
 ) {
   const languages = roadmaps.map((r) => r.language);
-
-  // Single batched query instead of N+1
   const languageInfos = await LanguageInfo.find({
     language: { $in: languages },
   }).lean();
-
   const infoMap = Object.fromEntries(
     languageInfos.map((li) => [li.language, li]),
   );
-
   return roadmaps.map((r) => ({
     _id: r._id,
     language: r.language,
@@ -54,11 +50,73 @@ async function enrichLanguagesWithDetails(
   }));
 }
 
+/**
+ * SECURITY HELPER: Verify if a user is legally allowed to access/modify a lesson.
+ * Checks if the parent Milestone is unlocked AND if the previous Lesson is completed.
+ */
+async function verifyLessonAccess(
+  userId: string,
+  lessonId: Types.ObjectId | string,
+  milestoneId: Types.ObjectId | string,
+): Promise<{ allowed: boolean; reason?: string }> {
+  // Changed 'let' to 'const'
+  const milestoneProgress = await UserMilestoneProgress.findOne({
+    userId,
+    milestoneId,
+  }).lean();
+
+  // 1. Enforce Milestone Lock
+  if (!milestoneProgress) {
+    const milestone = await Milestone.findById(milestoneId).lean();
+    if (!milestone) return { allowed: false, reason: 'Milestone not found' };
+
+    const isFirst = await isFirstMilestoneInRoadmap(
+      milestoneId.toString(),
+      milestone.roadmapId,
+    );
+
+    if (isFirst) {
+      // Just create it in the DB; no need to assign it to a variable
+      await UserMilestoneProgress.create({
+        userId,
+        milestoneId,
+        completionPercentage: 0,
+        status: 'Active',
+      });
+    } else {
+      return { allowed: false, reason: 'Milestone is locked' };
+    }
+  } else if (milestoneProgress.status === 'Locked') {
+    return { allowed: false, reason: 'Milestone is locked' };
+  }
+
+  // 2. Enforce Previous Lesson Lock
+  const allLessons = await Lesson.find({ milestoneId })
+    .sort({ order: 1 })
+    .select('_id')
+    .lean();
+
+  const lessonIndex = allLessons.findIndex(
+    (l) => l._id.toString() === lessonId.toString(),
+  );
+
+  if (lessonIndex > 0) {
+    const prevLessonId = allLessons[lessonIndex - 1]._id;
+    const prevLessonProgress = await UserLessonProgress.findOne({
+      userId,
+      lessonId: prevLessonId,
+    }).lean();
+
+    if (!prevLessonProgress || !prevLessonProgress.isCompleted) {
+      return { allowed: false, reason: 'Previous lesson is not completed' };
+    }
+  }
+
+  return { allowed: true };
+}
+
 // ─── Languages APIs ──────────────────────────────────────────────────────────
 
-/**
- * GET /api/languages
- */
 export const getAllLanguages = async (
   _req: Request,
   res: Response,
@@ -70,7 +128,6 @@ export const getAllLanguages = async (
     )
       .sort({ language: 1 })
       .lean();
-
     const languagesWithDetails = await enrichLanguagesWithDetails(roadmaps);
     res.json(languagesWithDetails);
   } catch {
@@ -78,9 +135,6 @@ export const getAllLanguages = async (
   }
 };
 
-/**
- * GET /api/languages/:languageId
- */
 export const getLanguageById = async (
   req: Request,
   res: Response,
@@ -93,7 +147,6 @@ export const getLanguageById = async (
       res.status(404).json({ message: 'Language not found' });
       return;
     }
-
     const enriched = await enrichLanguagesWithDetails([roadmap]);
     res.json(enriched[0]);
   } catch {
@@ -101,16 +154,12 @@ export const getLanguageById = async (
   }
 };
 
-/**
- * POST /api/languages/select
- */
 export const selectLanguage = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
   try {
     const { language } = req.body as { language: string };
-
     if (!language || typeof language !== 'string') {
       res.status(400).json({ message: 'Language is required' });
       return;
@@ -123,13 +172,11 @@ export const selectLanguage = async (
       res.status(400).json({ message: 'Language must be C++ or Java' });
       return;
     }
-
     const roadmap = await Roadmap.findOne({ language }).lean();
     if (!roadmap) {
       res.status(404).json({ message: 'Language not found' });
       return;
     }
-
     const user = await User.findByIdAndUpdate(
       authUserId(req),
       { selectedLanguage: [language] },
@@ -139,7 +186,6 @@ export const selectLanguage = async (
       res.status(404).json({ message: 'User not found' });
       return;
     }
-
     res.json({
       message: 'Language updated successfully',
       selectedLanguage: user.selectedLanguage,
@@ -151,9 +197,6 @@ export const selectLanguage = async (
 
 // ─── Learning APIs ────────────────────────────────────────────────────────────
 
-/**
- * GET /api/learning/milestones
- */
 export const getMilestones = async (
   req: Request,
   res: Response,
@@ -164,7 +207,6 @@ export const getMilestones = async (
       res.status(400).json({ message: 'No language selected' });
       return;
     }
-
     const roadmap = await Roadmap.findOne({
       language: user.selectedLanguage[0],
     }).lean();
@@ -174,11 +216,9 @@ export const getMilestones = async (
         .json({ message: 'Roadmap not found for selected language' });
       return;
     }
-
     const milestones = await Milestone.find({ roadmapId: roadmap._id })
       .sort({ order: 1 })
       .lean();
-
     const milestonesWithProgress = await Promise.all(
       milestones.map(async (milestone, index) => {
         let progress = await UserMilestoneProgress.findOne({
@@ -207,39 +247,31 @@ export const getMilestones = async (
         };
       }),
     );
-
     res.json(milestonesWithProgress);
   } catch {
     res.status(500).json({ message: 'Failed to fetch milestones' });
   }
 };
 
-/**
- * GET /api/learning/milestones/:milestoneId
- */
 export const getMilestoneById = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
   try {
     const milestoneId = String(req.params.milestoneId);
-
     const milestone = await Milestone.findById(milestoneId).lean();
     if (!milestone) {
       res.status(404).json({ message: 'Milestone not found' });
       return;
     }
-
     const isFirst = await isFirstMilestoneInRoadmap(
       milestoneId,
       milestone.roadmapId,
     );
-
     let progress = await UserMilestoneProgress.findOne({
       userId: authUserId(req),
       milestoneId,
     });
-
     if (!progress) {
       progress = await UserMilestoneProgress.create({
         userId: authUserId(req),
@@ -248,7 +280,6 @@ export const getMilestoneById = async (
         status: isFirst ? 'Active' : 'Locked',
       });
     }
-
     res.json({
       _id: milestone._id,
       title: milestone.title,
@@ -265,9 +296,6 @@ export const getMilestoneById = async (
   }
 };
 
-/**
- * GET /api/learning/milestones/:milestoneId/lessons
- */
 export const getLessonsByMilestone = async (
   req: Request,
   res: Response,
@@ -275,47 +303,34 @@ export const getLessonsByMilestone = async (
   try {
     const milestoneId = String(req.params.milestoneId);
     const userId = authUserId(req);
-
     const milestone = await Milestone.findById(milestoneId).lean();
     if (!milestone) {
       res.status(404).json({ message: 'Milestone not found' });
       return;
     }
-
-    // Get milestone progress to check if it's locked
     const milestoneProgress = await UserMilestoneProgress.findOne({
       userId,
       milestoneId,
     }).lean();
-
     const lessons = await Lesson.find({ milestoneId })
       .sort({ order: 1 })
       .lean();
-
-    // Batch fetch all lesson progress in a single query (no N+1)
     const allProgress = await UserLessonProgress.find({
       userId,
       lessonId: { $in: lessons.map((l) => l._id) },
     }).lean();
-
     const progressMap = Object.fromEntries(
       allProgress.map((p) => [p.lessonId.toString(), p]),
     );
-
     const lessonsWithProgress = lessons.map((lesson, index) => {
       const progress = progressMap[lesson._id.toString()];
-
-      // Determine lesson status
       let status: 'completed' | 'active' | 'locked' = 'locked';
-
       if (progress?.isCompleted) {
         status = 'completed';
       } else if (milestoneProgress?.status === 'Active') {
-        // First lesson is active if milestone is active
         if (index === 0) {
           status = 'active';
         } else {
-          // Check if previous lesson is completed (cached lookup, not a new query)
           const previousLesson = lessons[index - 1];
           const previousProgress = progressMap[previousLesson._id.toString()];
           if (previousProgress?.isCompleted) {
@@ -323,7 +338,6 @@ export const getLessonsByMilestone = async (
           }
         }
       }
-
       return {
         _id: lesson._id,
         title: lesson.title,
@@ -335,45 +349,49 @@ export const getLessonsByMilestone = async (
         },
       };
     });
-
     res.json(lessonsWithProgress);
   } catch {
     res.status(500).json({ message: 'Failed to fetch lessons' });
   }
 };
 
-/**
- * GET /api/learning/lessons/:lessonId
- */
 export const getLessonById = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
   try {
     const lessonId = String(req.params.lessonId);
-
     const lesson = await Lesson.findById(lessonId).populate('blocks').lean();
     if (!lesson) {
       res.status(404).json({ message: 'Lesson not found' });
       return;
     }
 
+    // --- SECURITY/LOGIC FIX START ---
+    const access = await verifyLessonAccess(
+      authUserId(req),
+      lesson._id,
+      lesson.milestoneId,
+    );
+    if (!access.allowed) {
+      res.status(403).json({ message: `Forbidden: ${access.reason}` });
+      return;
+    }
+    // --- SECURITY/LOGIC FIX END ---
+
     const populatedBlocks = lesson.blocks as unknown as {
       _id: Types.ObjectId;
       content: unknown[];
       feynmanQuestion?: string;
     }[];
-
     const blockIds = populatedBlocks.map((b) => b._id);
     const progress = await getOrCreateLessonProgress(
       authUserId(req),
       lesson._id,
       blockIds,
     );
-
     progress.lastAccessed = new Date();
     await progress.save();
-
     const blocksWithProgress = populatedBlocks.map((block) => {
       const blockProg = progress.blockProgress.find(
         (bp) => bp.blockId.toString() === String(block._id),
@@ -386,7 +404,6 @@ export const getLessonById = async (
         isFeynmanPassed: blockProg?.isFeynmanPassed ?? false,
       };
     });
-
     res.json({
       _id: lesson._id,
       title: lesson.title,
@@ -403,34 +420,40 @@ export const getLessonById = async (
   }
 };
 
-/**
- * POST /api/learning/blocks/:blockId/complete
- */
 export const completeBlock = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
   try {
     const blockId = String(req.params.blockId);
-
     const block = await Block.findById(blockId).lean();
     if (!block) {
       res.status(404).json({ message: 'Block not found' });
       return;
     }
-
     const lesson = await Lesson.findById(block.lessonId).lean();
     if (!lesson) {
       res.status(404).json({ message: 'Lesson not found' });
       return;
     }
 
+    // --- SECURITY/LOGIC FIX START ---
+    const access = await verifyLessonAccess(
+      authUserId(req),
+      lesson._id,
+      lesson.milestoneId,
+    );
+    if (!access.allowed) {
+      res.status(403).json({ message: `Forbidden: ${access.reason}` });
+      return;
+    }
+    // --- SECURITY/LOGIC FIX END ---
+
     const lessonProgress = await getOrCreateLessonProgress(
       authUserId(req),
       block.lessonId,
       lesson.blocks,
     );
-
     const blockIndex = lesson.blocks.findIndex(
       (bid) => bid.toString() === blockId,
     );
@@ -442,14 +465,35 @@ export const completeBlock = async (
     let currentBp = lessonProgress.blockProgress.find(
       (bp) => bp.blockId.toString() === blockId,
     );
+
     if (!currentBp) {
       currentBp = {
         blockId: block._id,
         isFeynmanPassed: false,
-        state: 'locked',
+        state: blockIndex === 0 ? 'active' : 'locked',
       };
       lessonProgress.blockProgress.push(currentBp);
     }
+
+    if (currentBp.state === 'locked') {
+      res.status(403).json({
+        message:
+          'Forbidden: Cannot complete a locked block. Complete previous blocks first.',
+      });
+      return;
+    }
+
+    if (currentBp.state === 'completed') {
+      res.json({
+        message: 'Block already completed',
+        lessonProgress: {
+          completionPercentage: lessonProgress.completionPercentage,
+          isCompleted: lessonProgress.isCompleted,
+        },
+      });
+      return;
+    }
+
     currentBp.state = 'completed';
 
     if (blockIndex < lesson.blocks.length - 1) {
@@ -465,7 +509,9 @@ export const completeBlock = async (
         };
         lessonProgress.blockProgress.push(nextBp);
       }
-      nextBp.state = 'active';
+      if (nextBp.state === 'locked') {
+        nextBp.state = 'active';
+      }
     }
 
     const { completionPercentage, isCompleted } = recalcLessonCompletion(
@@ -480,9 +526,7 @@ export const completeBlock = async (
       authUserId(req),
       lesson.milestoneId,
     );
-
     const milestone = await Milestone.findById(lesson.milestoneId).lean();
-
     let milestoneProgress = await UserMilestoneProgress.findOne({
       userId: authUserId(req),
       milestoneId: lesson.milestoneId,

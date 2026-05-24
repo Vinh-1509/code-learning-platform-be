@@ -98,16 +98,13 @@ const seed = async () => {
         'Hiểu và áp dụng các nguyên tắc OOP: class, inheritance, polymorphism, encapsulation',
     });
     console.log(
-      `✓ Milestones created: ${String(milestone1._id)}, ${String(
-        milestone2._id,
-      )}`,
+      `✓ Milestones created: ${String(milestone1._id)}, ${String(milestone2._id)}`,
     );
 
     // ─── Insert Lessons ──────────────────────────────────────────────────────
 
     console.log('\n📖 Creating Lessons...');
 
-    // Milestone 1 - Lesson 1
     const lesson1_1 = await Lesson.create({
       milestoneId: milestone1._id,
       title: 'Variables and Data Types',
@@ -115,7 +112,6 @@ const seed = async () => {
       blocks: [],
     });
 
-    // Milestone 1 - Lesson 2
     const lesson1_2 = await Lesson.create({
       milestoneId: milestone1._id,
       title: 'Control Flow and Loops',
@@ -123,7 +119,6 @@ const seed = async () => {
       blocks: [],
     });
 
-    // Milestone 2 - Lesson 1
     const lesson2_1 = await Lesson.create({
       milestoneId: milestone2._id,
       title: 'Classes and Objects',
@@ -131,7 +126,6 @@ const seed = async () => {
       blocks: [],
     });
 
-    // Milestone 2 - Lesson 2
     const lesson2_2 = await Lesson.create({
       milestoneId: milestone2._id,
       title: 'Inheritance and Polymorphism',
@@ -139,59 +133,10 @@ const seed = async () => {
       blocks: [],
     });
 
-    console.log(`✓ Lessons created: 4 lessons`);
+    console.log('✓ Lessons created: 4 lessons');
 
-    // ─── Insert Blocks ───────────────────────────────────────────────────────
+    // ─── Insert Exercises (must exist before practice blocks) ────────────────
 
-    console.log('\n🧩 Creating Blocks...');
-
-    // Lesson 1.1 - Theory Block
-    const block1_1_1 = await Block.create({
-      lessonId: lesson1_1._id,
-      content: asBlockContent([
-        {
-          type: 'theory',
-          data: {
-            order: 1,
-            text: 'Variables là những vùng bộ nhớ dùng để lưu trữ dữ liệu. Mỗi biến có một tên (identifier) và kiểu dữ liệu (data type).',
-          },
-        },
-      ]),
-      feynmanQuestion: 'Giải thích biến trong C++ bằng những từ của chính bạn',
-      feynmanPrompt:
-        'Hãy kiểm tra xem người dùng có thực sự hiểu khái niệm biến không',
-    });
-
-    // Lesson 1.1 - Code Block
-    const block1_1_2 = await Block.create({
-      lessonId: lesson1_1._id,
-      content: asBlockContent([
-        {
-          type: 'code',
-          data: {
-            order: 2,
-            code: `#include <iostream>
-using namespace std;
-
-int main() {
-  int age = 25;
-  double height = 1.75;
-  string name = "John";
-  cout << "Name: " << name << endl;
-  cout << "Age: " << age << endl;
-  cout << "Height: " << height << endl;
-  return 0;
-}`,
-            explanation:
-              'Ví dụ này tạo ra ba biến: age (số nguyên), height (số thập phân), và name (chuỗi ký tự). Chúng được sử dụng để lưu trữ thông tin cá nhân.',
-          },
-        },
-      ]),
-      feynmanQuestion: 'Làm thế nào mã này khai báo và sử dụng các biến?',
-      feynmanPrompt: 'Yêu cầu người dùng giải thích từng dòng khai báo biến',
-    });
-
-    // Lesson 1.1 - Exercises (before practice blocks so IDs are valid)
     console.log('\n💪 Creating Exercises for lesson 1.1...');
 
     const exercise1 = await Exercise.create({
@@ -259,12 +204,43 @@ int main() {
       order: 2,
     });
 
-    console.log(`✓ Exercises created: 2 exercises`);
+    console.log('✓ Exercises created: 2 exercises');
 
-    // Lesson 1.1 - Practice blocks (one exercise per block)
-    const block1_1_3 = await Block.create({
+    // ─── Insert Blocks (combined theory + code + practice per block) ─────────
+
+    console.log('\n🧩 Creating Blocks...');
+
+    // ── Lesson 1.1: Variables and Data Types ──────────────────────────────────
+    const block1_1 = await Block.create({
       lessonId: lesson1_1._id,
       content: asBlockContent([
+        {
+          type: 'theory',
+          data: {
+            order: 1,
+            text: 'Variables là những vùng bộ nhớ dùng để lưu trữ dữ liệu. Mỗi biến có một tên (identifier) và kiểu dữ liệu (data type). C++ là ngôn ngữ kiểu tĩnh, nghĩa là bạn phải khai báo kiểu dữ liệu trước khi sử dụng biến.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 2,
+            code: `#include <iostream>
+using namespace std;
+
+int main() {
+  int age = 25;
+  double height = 1.75;
+  string name = "John";
+  cout << "Name: " << name << endl;
+  cout << "Age: " << age << endl;
+  cout << "Height: " << height << endl;
+  return 0;
+}`,
+            explanation:
+              'Ví dụ này tạo ra ba biến: age (số nguyên), height (số thập phân), và name (chuỗi ký tự). Chúng được sử dụng để lưu trữ thông tin cá nhân.',
+          },
+        },
         {
           type: 'practice',
           data: {
@@ -273,14 +249,6 @@ int main() {
             required: true,
           },
         },
-      ]),
-      feynmanQuestion: 'Hãy tạo các biến để lưu thông tin của bạn',
-      feynmanPrompt: 'Hướng dẫn người dùng tạo một chương trình khai báo biến',
-    });
-
-    const block1_1_4 = await Block.create({
-      lessonId: lesson1_1._id,
-      content: asBlockContent([
         {
           type: 'practice',
           data: {
@@ -290,31 +258,22 @@ int main() {
           },
         },
       ]),
-      feynmanQuestion: 'Làm thế nào để in ra các biến đã khai báo?',
-      feynmanPrompt: 'Hướng dẫn người dùng sử dụng cout để in từng giá trị',
+      feynmanQuestion: 'Giải thích biến trong C++ bằng những từ của chính bạn',
+      feynmanPrompt:
+        'Hãy kiểm tra xem người dùng có thực sự hiểu khái niệm biến không',
     });
 
-    // Lesson 1.2 - Theory Block
-    const block1_2_1 = await Block.create({
+    // ── Lesson 1.2: Control Flow and Loops ───────────────────────────────────
+    const block1_2 = await Block.create({
       lessonId: lesson1_2._id,
       content: asBlockContent([
         {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Điều khiển luồng (Control Flow) cho phép bạn quyết định những phần mã nào sẽ được thực thi. Có ba loại chính: if-else, switch-case, và vòng lặp.',
+            text: 'Điều khiển luồng (Control Flow) cho phép bạn quyết định những phần mã nào sẽ được thực thi. Có ba loại chính: if-else để rẽ nhánh, switch-case cho nhiều trường hợp, và vòng lặp (for, while) để lặp lại.',
           },
         },
-      ]),
-      feynmanQuestion: 'Tại sao chúng ta cần các câu lệnh điều khiển?',
-      feynmanPrompt:
-        'Kiểm tra xem người dùng có hiểu lợi ích của việc sử dụng if-else không',
-    });
-
-    // Lesson 1.2 - Code Block
-    const block1_2_2 = await Block.create({
-      lessonId: lesson1_2._id,
-      content: asBlockContent([
         {
           type: 'code',
           data: {
@@ -337,31 +296,22 @@ int main() {
           },
         },
       ]),
-      feynmanQuestion: 'Giải thích cách hoạt động của vòng lặp for này',
-      feynmanPrompt: 'Yêu cầu người dùng mô tả từng bước lặp',
+      feynmanQuestion: 'Tại sao chúng ta cần các câu lệnh điều khiển luồng?',
+      feynmanPrompt:
+        'Kiểm tra xem người dùng có hiểu lợi ích của việc sử dụng if-else và vòng lặp không',
     });
 
-    // Lesson 2.1 - Theory Block
-    const block2_1_1 = await Block.create({
+    // ── Lesson 2.1: Classes and Objects ──────────────────────────────────────
+    const block2_1 = await Block.create({
       lessonId: lesson2_1._id,
       content: asBlockContent([
         {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Một class là một khuôn mẫu (template) để tạo ra các objects. Nó chứa các thuộc tính (attributes) và phương thức (methods).',
+            text: 'Một class là một khuôn mẫu (template) để tạo ra các objects. Nó chứa các thuộc tính (attributes) mô tả trạng thái và phương thức (methods) mô tả hành vi. Object là một instance cụ thể được tạo ra từ class đó.',
           },
         },
-      ]),
-      feynmanQuestion: 'Class là gì và nó khác gì với object?',
-      feynmanPrompt:
-        'Kiểm tra sự hiểu biết về sự khác biệt giữa class và instance',
-    });
-
-    // Lesson 2.1 - Code Block
-    const block2_1_2 = await Block.create({
-      lessonId: lesson2_1._id,
-      content: asBlockContent([
         {
           type: 'code',
           data: {
@@ -375,7 +325,7 @@ private:
   int age;
 public:
   Student(string n, int a) : name(n), age(a) {}
-  
+
   void display() {
     cout << "Name: " << name << ", Age: " << age << endl;
   }
@@ -391,31 +341,22 @@ int main() {
           },
         },
       ]),
-      feynmanQuestion: 'Giải thích cấu trúc của class này',
+      feynmanQuestion: 'Class là gì và nó khác gì với object?',
       feynmanPrompt:
-        'Yêu cầu người dùng mô tả constructor và các phương thức công khai',
+        'Kiểm tra sự hiểu biết về sự khác biệt giữa class definition và instance',
     });
 
-    // Lesson 2.2 - Theory Block
-    const block2_2_1 = await Block.create({
+    // ── Lesson 2.2: Inheritance and Polymorphism ──────────────────────────────
+    const block2_2 = await Block.create({
       lessonId: lesson2_2._id,
       content: asBlockContent([
         {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Inheritance cho phép một class kế thừa các thuộc tính và phương thức từ class khác. Polymorphism cho phép các object của các class khác nhau phản ứng theo những cách khác nhau với cùng một thông điệp.',
+            text: 'Inheritance cho phép một class kế thừa các thuộc tính và phương thức từ class khác, giúp tái sử dụng code. Polymorphism cho phép các object của các class khác nhau phản ứng theo những cách khác nhau với cùng một lời gọi phương thức, thông qua virtual functions.',
           },
         },
-      ]),
-      feynmanQuestion: 'Giải thích khái niệm inheritance và polymorphism',
-      feynmanPrompt: 'Kiểm tra xem người dùng có thể đưa ra ví dụ thực tế',
-    });
-
-    // Lesson 2.2 - Code Block
-    const block2_2_2 = await Block.create({
-      lessonId: lesson2_2._id,
-      content: asBlockContent([
         {
           type: 'code',
           data: {
@@ -452,27 +393,24 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Dog và Cat kế thừa từ Animal. Mỗi class ghi đè (override) phương thức sound() để phát ra âm thanh khác nhau. Đây là ví dụ của polymorphism.',
+              'Dog và Cat kế thừa từ Animal. Mỗi class ghi đè (override) phương thức sound() để phát ra âm thanh khác nhau. Đây là ví dụ của polymorphism qua virtual functions.',
           },
         },
       ]),
       feynmanQuestion: 'Tại sao chúng ta sử dụng virtual functions ở đây?',
-      feynmanPrompt: 'Yêu cầu người dùng giải thích lợi ích của polymorphism',
+      feynmanPrompt:
+        'Yêu cầu người dùng giải thích lợi ích của polymorphism và cho ví dụ thực tế',
     });
 
-    console.log(`✓ C++ blocks created: 10 blocks`);
+    console.log('✓ C++ blocks created: 4 blocks');
 
-    // Update lesson blocks arrays with block IDs
-    console.log('\n🔗 Linking blocks to lessons...');
-    lesson1_1.blocks = [
-      block1_1_1._id,
-      block1_1_2._id,
-      block1_1_3._id,
-      block1_1_4._id,
-    ];
-    lesson1_2.blocks = [block1_2_1._id, block1_2_2._id];
-    lesson2_1.blocks = [block2_1_1._id, block2_1_2._id];
-    lesson2_2.blocks = [block2_2_1._id, block2_2_2._id];
+    // ─── Link blocks to C++ lessons ──────────────────────────────────────────
+
+    console.log('\n🔗 Linking blocks to C++ lessons...');
+    lesson1_1.blocks = [block1_1._id];
+    lesson1_2.blocks = [block1_2._id];
+    lesson2_1.blocks = [block2_1._id];
+    lesson2_2.blocks = [block2_2._id];
 
     await Promise.all([
       lesson1_1.save(),
@@ -480,9 +418,9 @@ int main() {
       lesson2_1.save(),
       lesson2_2.save(),
     ]);
-    console.log('✓ Blocks linked to lessons');
+    console.log('✓ Blocks linked to C++ lessons');
 
-    // ─── Java roadmap (milestones, lessons, blocks) ──────────────────────────
+    // ─── Java roadmap ────────────────────────────────────────────────────────
 
     console.log('\n☕ Creating Java learning path...');
 
@@ -525,24 +463,17 @@ int main() {
       blocks: [],
     });
 
-    const javaBlock1_1_1 = await Block.create({
+    // ── Java Lesson 1.1: Variables and Types ──────────────────────────────────
+    const javaBlock1_1 = await Block.create({
       lessonId: javaLesson1_1._id,
       content: asBlockContent([
         {
           type: 'theory',
           data: {
             order: 1,
-            text: 'In Java, variables are declared with a type. Primitive types include int, double, boolean, and char.',
+            text: 'In Java, every variable must be declared with a type. Primitive types (int, double, boolean, char) hold values directly, while reference types (String, arrays, objects) hold a reference to memory. Java is statically typed, so type mismatches are caught at compile time.',
           },
         },
-      ]),
-      feynmanQuestion: 'Explain Java variable types in your own words',
-      feynmanPrompt: 'Check understanding of primitives vs reference types',
-    });
-
-    const javaBlock1_1_2 = await Block.create({
-      lessonId: javaLesson1_1._id,
-      content: asBlockContent([
         {
           type: 'code',
           data: {
@@ -550,105 +481,116 @@ int main() {
             code: `public class Main {
   public static void main(String[] args) {
     int age = 25;
+    double height = 1.75;
     String name = "Alice";
-    System.out.println(name + " is " + age);
+    boolean isStudent = true;
+    System.out.println(name + " is " + age + " years old.");
+    System.out.println("Height: " + height);
+    System.out.println("Is student: " + isStudent);
   }
 }`,
-            explanation: 'Declares an int and a String, then prints them.',
+            explanation:
+              'Declares an int, double, String, and boolean, then prints each. Note that String is capitalised — it is a reference type, not a primitive.',
           },
         },
       ]),
-      feynmanQuestion: 'How does this Java program declare and use variables?',
-      feynmanPrompt: 'Ask the user to explain each declaration',
+      feynmanQuestion: 'Explain Java variable types in your own words',
+      feynmanPrompt:
+        'Check understanding of primitives vs reference types and why the distinction matters',
     });
 
-    const javaBlock1_2_1 = await Block.create({
+    // ── Java Lesson 1.2: Control Flow ─────────────────────────────────────────
+    const javaBlock1_2 = await Block.create({
       lessonId: javaLesson1_2._id,
       content: asBlockContent([
         {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Java uses if-else, switch, for, while, and do-while for control flow.',
+            text: 'Java uses if-else for conditional branching, switch for multi-case selection, and for / while / do-while loops for repetition. The enhanced for-each loop is also available for iterating over arrays and collections.',
           },
         },
-      ]),
-      feynmanQuestion: 'Why do we need control flow statements?',
-      feynmanPrompt: 'Verify understanding of branching and loops',
-    });
-
-    const javaBlock1_2_2 = await Block.create({
-      lessonId: javaLesson1_2._id,
-      content: asBlockContent([
         {
           type: 'code',
           data: {
             order: 2,
-            code: `for (int i = 1; i <= 5; i++) {
-  System.out.println(i);
+            code: `public class Main {
+  public static void main(String[] args) {
+    for (int i = 1; i <= 10; i++) {
+      if (i % 2 == 0) {
+        System.out.println(i + " is even");
+      } else {
+        System.out.println(i + " is odd");
+      }
+    }
+  }
 }`,
-            explanation: 'A simple for loop printing numbers 1 through 5.',
+            explanation:
+              'A for loop runs from 1 to 10. Each iteration uses the modulo operator to decide whether the number is even or odd.',
           },
         },
       ]),
-      feynmanQuestion: 'Explain how this for loop works',
-      feynmanPrompt: 'Walk through initialization, condition, and increment',
+      feynmanQuestion: 'Why do we need control flow statements?',
+      feynmanPrompt:
+        'Verify understanding of branching and loops; ask for a real-world analogy',
     });
 
-    const javaBlock2_1_1 = await Block.create({
+    // ── Java Lesson 2.1: Classes and Objects ──────────────────────────────────
+    const javaBlock2_1 = await Block.create({
       lessonId: javaLesson2_1._id,
       content: asBlockContent([
         {
           type: 'theory',
           data: {
             order: 1,
-            text: 'A Java class defines fields and methods. Objects are instances created with new.',
+            text: "A Java class is a blueprint that defines fields (state) and methods (behaviour). An object is a specific instance of a class created with the new keyword. Constructors initialise the object's state when it is created.",
           },
         },
-      ]),
-      feynmanQuestion: 'What is the difference between a class and an object?',
-      feynmanPrompt: 'Check class vs instance understanding',
-    });
-
-    const javaBlock2_1_2 = await Block.create({
-      lessonId: javaLesson2_1._id,
-      content: asBlockContent([
         {
           type: 'code',
           data: {
             order: 2,
             code: `class Person {
-  String name;
-  Person(String name) { this.name = name; }
-  void greet() { System.out.println("Hello, " + name); }
+  private String name;
+  private int age;
+
+  Person(String name, int age) {
+    this.name = name;
+    this.age = age;
+  }
+
+  void greet() {
+    System.out.println("Hello, I'm " + name + " and I'm " + age);
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    Person p = new Person("Alice", 20);
+    p.greet();
+  }
 }`,
             explanation:
-              'A minimal class with a field, constructor, and method.',
+              'A Person class with private fields, a constructor using this to distinguish parameters from fields, and a public method. One object is instantiated and its method called.',
           },
         },
       ]),
-      feynmanQuestion: 'Describe the parts of this Person class',
-      feynmanPrompt: 'Ask about constructor and instance method',
+      feynmanQuestion: 'What is the difference between a class and an object?',
+      feynmanPrompt:
+        'Check class vs instance understanding; ask for an everyday analogy',
     });
 
-    const javaBlock2_2_1 = await Block.create({
+    // ── Java Lesson 2.2: Inheritance and Interfaces ───────────────────────────
+    const javaBlock2_2 = await Block.create({
       lessonId: javaLesson2_2._id,
       content: asBlockContent([
         {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Java supports inheritance with extends and polymorphism via method overriding and interfaces.',
+            text: 'Java supports single inheritance with extends: a subclass inherits fields and methods from its superclass and can override them. Interfaces (interface / implements) define a contract of methods without implementation, enabling a form of multiple inheritance and loose coupling.',
           },
         },
-      ]),
-      feynmanQuestion: 'Explain inheritance and interfaces in Java',
-      feynmanPrompt: 'Request a real-world analogy',
-    });
-
-    const javaBlock2_2_2 = await Block.create({
-      lessonId: javaLesson2_2._id,
-      content: asBlockContent([
         {
           type: 'code',
           data: {
@@ -656,21 +598,45 @@ int main() {
             code: `interface Speakable {
   void speak();
 }
-class Dog implements Speakable {
-  public void speak() { System.out.println("Woof"); }
+
+class Animal {
+  void breathe() {
+    System.out.println("Breathing...");
+  }
+}
+
+class Dog extends Animal implements Speakable {
+  public void speak() {
+    System.out.println("Woof!");
+  }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    Dog dog = new Dog();
+    dog.breathe(); // inherited from Animal
+    dog.speak();   // implemented from Speakable
+  }
 }`,
-            explanation: 'Dog implements Speakable and defines speak().',
+            explanation:
+              'Dog extends Animal to inherit breathe(), and implements Speakable to fulfil the speak() contract. This shows both inheritance and interface implementation working together.',
           },
         },
       ]),
-      feynmanQuestion: 'What does implements mean here?',
-      feynmanPrompt: 'Explain interface contract vs class implementation',
+      feynmanQuestion: 'What is the difference between extends and implements?',
+      feynmanPrompt:
+        'Ask the user to explain interface contracts vs class inheritance and when to use each',
     });
 
-    javaLesson1_1.blocks = [javaBlock1_1_1._id, javaBlock1_1_2._id];
-    javaLesson1_2.blocks = [javaBlock1_2_1._id, javaBlock1_2_2._id];
-    javaLesson2_1.blocks = [javaBlock2_1_1._id, javaBlock2_1_2._id];
-    javaLesson2_2.blocks = [javaBlock2_2_1._id, javaBlock2_2_2._id];
+    console.log('✓ Java blocks created: 4 blocks');
+
+    // ─── Link blocks to Java lessons ─────────────────────────────────────────
+
+    console.log('\n🔗 Linking blocks to Java lessons...');
+    javaLesson1_1.blocks = [javaBlock1_1._id];
+    javaLesson1_2.blocks = [javaBlock1_2._id];
+    javaLesson2_1.blocks = [javaBlock2_1._id];
+    javaLesson2_2.blocks = [javaBlock2_2._id];
 
     await Promise.all([
       javaLesson1_1.save(),
@@ -678,16 +644,18 @@ class Dog implements Speakable {
       javaLesson2_1.save(),
       javaLesson2_2.save(),
     ]);
-    console.log('✓ Java learning path created');
+    console.log('✓ Blocks linked to Java lessons');
+
+    // ─── Done ─────────────────────────────────────────────────────────────────
 
     console.log('\n✨ Seed complete!');
     console.log('\nSummary:');
-    console.log(`  🌐 language_info: 2`);
-    console.log(`  📚 Roadmaps: 2 (C++, Java)`);
-    console.log(`  🎯 Milestones: 4`);
-    console.log(`  📖 Lessons: 8`);
-    console.log(`  🧩 Blocks: 18`);
-    console.log(`  💪 Exercises: 2`);
+    console.log(`  🌐 language_info : 2`);
+    console.log(`  📚 Roadmaps      : 2 (C++, Java)`);
+    console.log(`  🎯 Milestones    : 4`);
+    console.log(`  📖 Lessons       : 8`);
+    console.log(`  🧩 Blocks        : 8  (1 combined block per lesson)`);
+    console.log(`  💪 Exercises     : 2`);
 
     await mongoose.disconnect();
     console.log('✓ Disconnected from MongoDB');

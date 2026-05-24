@@ -213,6 +213,8 @@ const seed = async () => {
     // ── Lesson 1.1: Variables and Data Types ──────────────────────────────────
     const block1_1 = await Block.create({
       lessonId: lesson1_1._id,
+      title: 'What is a Variable?',
+      description: 'Data storage and types',
       content: asBlockContent([
         {
           type: 'theory',
@@ -266,6 +268,8 @@ int main() {
     // ── Lesson 1.2: Control Flow and Loops ───────────────────────────────────
     const block1_2 = await Block.create({
       lessonId: lesson1_2._id,
+      title: 'Control Flow Basics',
+      description: 'If-else, loops, and conditionals',
       content: asBlockContent([
         {
           type: 'theory',
@@ -304,6 +308,8 @@ int main() {
     // ── Lesson 2.1: Classes and Objects ──────────────────────────────────────
     const block2_1 = await Block.create({
       lessonId: lesson2_1._id,
+      title: 'Introduction to Classes',
+      description: 'Class definitions and object creation',
       content: asBlockContent([
         {
           type: 'theory',
@@ -349,6 +355,8 @@ int main() {
     // ── Lesson 2.2: Inheritance and Polymorphism ──────────────────────────────
     const block2_2 = await Block.create({
       lessonId: lesson2_2._id,
+      title: 'Inheritance and Polymorphism',
+      description: 'Class inheritance and virtual methods',
       content: asBlockContent([
         {
           type: 'theory',

@@ -387,6 +387,8 @@ export const getLessonById = async (
 
     const populatedBlocks = lesson.blocks as unknown as {
       _id: Types.ObjectId;
+      title: string;
+      description?: string;
       content: unknown[];
       feynmanQuestion?: string;
     }[];
@@ -404,6 +406,8 @@ export const getLessonById = async (
       );
       return {
         _id: block._id,
+        title: block.title,
+        description: block.description,
         content: block.content,
         feynmanQuestion: block.feynmanQuestion,
         state: blockProg?.state ?? 'locked',

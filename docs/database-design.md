@@ -79,11 +79,14 @@ Stores hashed refresh tokens. MongoDB TTL Index on `expiresAt` auto-deletes expi
 
 Static content describing each supported programming language.
 
-| Field      | Type     | Constraints | Note |
-| ---------- | -------- | ----------- | ---- |
-| `_id`      | ObjectId | PK          |      |
-| `language` | string   |             |      |
-| `info`     | text     |             |      |
+| Field        | Type     | Constraints | Note                        |
+| ------------ | -------- | ----------- | --------------------------- |
+| `_id`        | ObjectId | PK          |                             |
+| `language`   | string   |             |                             |
+| `info`       | text     |             |                             |
+| `strengths`  | string[] |             | e.g. ["Performance", ...]   |
+| `challenges` | string[] |             | e.g. ["Manual Memory", ...] |
+| `useCases`   | string[] |             | e.g. ["Game Engines", ...]  |
 
 ---
 
@@ -138,6 +141,8 @@ Atomic content unit inside a lesson. Supports mixed content types and Feynman qu
 | --- | --- | --- | --- |
 | `_id` | ObjectId | PK |  |
 | `lessonId` | ObjectId | ref: `lessons._id` (many blocks-to-1 lesson) |  |
+| `title` | string |  | Display title |
+| `description` | string |  | Optional summary |
 | `content` | json |  | See structure below |
 | `feynmanQuestion` | text |  | Câu hỏi sẽ hỏi |
 | `feynmanPrompt` | text |  | Prompt cho AI |

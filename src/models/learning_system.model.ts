@@ -64,6 +64,8 @@ const blockContentSchema = new Schema(
 const blockSchema = new Schema<IBlock>(
   {
     lessonId: { type: Schema.Types.ObjectId, required: true, ref: 'Lesson' },
+    title: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
     content: { type: [blockContentSchema], required: true, default: [] },
     feynmanQuestion: { type: String },
     feynmanPrompt: { type: String },

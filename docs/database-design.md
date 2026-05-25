@@ -269,7 +269,7 @@ Stores exercise definitions. `lessonId` is null for standalone free-practice exe
 
 ### 4.3 `exercise_attempt`
 
-Records every submission a user makes for an exercise, including Feynman chat history per attempt.
+Records last submission a user makes for an exercise.
 
 | Field | Type | Constraints | Note |
 | --- | --- | --- | --- |

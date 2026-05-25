@@ -259,7 +259,9 @@ export const requestPracticeHint = async (
 
     const response: HintResponse = {
       hintLevel,
-      hint,
+      hint: hint
+        ? hint
+        : (exercise.hints?.[String(currentHintLevel)] ?? 'No hints available'),
     };
 
     res.json(response);

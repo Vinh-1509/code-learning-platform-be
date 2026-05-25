@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/mongodb';
 import authRoutes from './routes/auth.routes';
 import learningSystemRoutes from './routes/learning_system.routes';
+import exerciseRoutes from './routes/exercise.routes';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 // Core API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', learningSystemRoutes);
+app.use('/api/', exerciseRoutes);
 
 // Health check endpoint
 app.get('/', (req: Request, res: Response) => {

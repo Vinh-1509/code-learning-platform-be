@@ -801,6 +801,7 @@ Get all lessons belonging to the milestone with progress state.
     "title": "Variables and Data Types",
     "order": 1,
     "progress": {
+      "status": "completed",
       "isCompleted": true,
       "completionPercentage": 100
     }
@@ -810,12 +811,15 @@ Get all lessons belonging to the milestone with progress state.
     "title": "Control Flow",
     "order": 2,
     "progress": {
+      "status": "active",
       "isCompleted": false,
       "completionPercentage": 50
     }
   }
 ]
 ```
+
+> `status` is one of `"completed"` | `"active"` | `"locked"`. A lesson is `active` when the milestone is Active and all preceding lessons are completed. It is `locked` when the milestone itself is Locked or the previous lesson is not yet completed.
 
 ---
 
@@ -833,6 +837,8 @@ Get full lesson content with all blocks embedded. Block state reflects current u
   "blocks": [
     {
       "_id": "64f1a2b3c4d5e6f7a8b9c0b1",
+      "title": "What is a Variable?",
+      "description": "Data storage and types",
       "content": [
         {
           "type": "theory",
@@ -865,6 +871,8 @@ Get full lesson content with all blocks embedded. Block state reflects current u
     },
     {
       "_id": "64f1a2b3c4d5e6f7a8b9c0b2",
+      "title": "Variable Types and Memory",
+      "description": "Understanding data types",
       "content": [
         {
           "type": "theory",
@@ -921,14 +929,36 @@ Mark a block as completed and update lesson/milestone progress percentages.
 
 ### GET `/api/languages`
 
-Get all available languages.
+Get all available languages with full details.
 
 **Response `200`:**
 
 ```json
 [
-  { "_id": "64f1a2b3c4d5e6f7a8b9c0d9", "language": "C++" },
-  { "_id": "64f1a2b3c4d5e6f7a8b9c0da", "language": "Java" }
+  {
+    "_id": "64f1a2b3c4d5e6f7a8b9c0d9",
+    "language": "C++",
+    "info": "C++ is a general-purpose programming language created by Bjarne Stroustrup. It supports object-oriented, procedural, and generic programming styles.",
+    "strengths": ["Performance", "Memory Control", "Hardware Access"],
+    "challenges": ["Manual Memory", "Complex Syntax"],
+    "useCases": ["Game Engines", "Operating Systems", "Embedded Systems"]
+  },
+  {
+    "_id": "64f1a2b3c4d5e6f7a8b9c0da",
+    "language": "Java",
+    "info": "Java is a class-based, object-oriented language designed for portability across platforms.",
+    "strengths": [
+      "Platform Independence",
+      "Strong Ecosystem",
+      "Garbage Collection"
+    ],
+    "challenges": ["Verbose Syntax", "Slower Startup"],
+    "useCases": [
+      "Enterprise Applications",
+      "Android Development",
+      "Web Backends"
+    ]
+  }
 ]
 ```
 

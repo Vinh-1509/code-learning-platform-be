@@ -76,6 +76,8 @@ export type BlockContent = ITheoryContent | ICodeContent | IPracticeContent;
 
 export interface IBlock extends Document {
   lessonId: Types.ObjectId;
+  title: string;
+  description?: string;
   content: BlockContent[];
   feynmanQuestion?: string;
   feynmanPrompt?: string;
@@ -83,6 +85,8 @@ export interface IBlock extends Document {
 
 export interface IBlockResponse {
   _id: string;
+  title: string;
+  description?: string;
   content: BlockContent[];
   feynmanQuestion?: string;
   state: 'locked' | 'active' | 'completed';

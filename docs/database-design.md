@@ -169,13 +169,14 @@ Atomic content unit inside a lesson. Supports mixed content types and Feynman qu
 
 ### 3.1 `user_lesson_progress`
 
-Tracks a user's progress through each individual lesson, including per-block state and Feynman chat history.
+Tracks a user's progress through each individual lesson, including lesson/block status and Feynman chat history.
 
 | Field | Type | Constraints | Note |
 | --- | --- | --- | --- |
 | `_id` | ObjectId | PK |  |
 | `userId` | ObjectId | ref: `users._id` |  |
 | `lessonId` | ObjectId | ref: `lessons._id` |  |
+| `status` | string | default: `locked` | `locked` / `active` / `completed` |
 | `blockProgress` | json[] |  | See structure below |
 | `chatHistory` | json |  | See structure below |
 | `completionPercentage` | double |  | Tính bằng: (số block isFeynmanPassed / tổng số block) \* 100 |
@@ -188,7 +189,7 @@ Tracks a user's progress through each individual lesson, including per-block sta
 {
   "blockId": "ObjectId",
   "isFeynmanPassed": false,
-  "state": "locked | active | completed"
+  "status": "locked | active | completed"
 }
 ```
 
@@ -212,7 +213,7 @@ Tracks a user's overall progress through each milestone (large learning unit).
 | `userId` | ObjectId | ref: `users._id` |  |
 | `milestoneId` | ObjectId | ref: `milestone._id` |  |
 | `completionPercentage` | double | default: `0` | Tỉ lệ % hoàn thành |
-| `status` | string |  | `Locked` / `Active` / `Completed` |
+| `status` | string |  | `locked` / `active` / `completed` |
 | `updatedAt` | timestamp |  |  |
 
 ---

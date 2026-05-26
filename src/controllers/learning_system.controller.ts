@@ -87,12 +87,12 @@ async function verifyLessonAccess(
         userId,
         milestoneId,
         completionPercentage: 0,
-        status: 'Active',
+        status: 'active',
       });
     } else {
       return { allowed: false, reason: 'Milestone is locked' };
     }
-  } else if (milestoneProgress.status === 'Locked') {
+  } else if (milestoneProgress.status === 'locked') {
     return { allowed: false, reason: 'Milestone is locked' };
   }
 
@@ -237,7 +237,7 @@ export const getMilestones = async (
             userId: authUserId(req),
             milestoneId: milestone._id,
             completionPercentage: 0,
-            status: index === 0 ? 'Active' : 'Locked',
+            status: index === 0 ? 'active' : 'locked',
           });
         }
 
@@ -283,7 +283,7 @@ export const getMilestoneById = async (
         userId: authUserId(req),
         milestoneId,
         completionPercentage: 0,
-        status: isFirst ? 'Active' : 'Locked',
+        status: isFirst ? 'active' : 'locked',
       });
     }
     res.json({
@@ -333,7 +333,7 @@ export const getLessonsByMilestone = async (
       let status: 'completed' | 'active' | 'locked' = 'locked';
       if (progress?.isCompleted) {
         status = 'completed';
-      } else if (milestoneProgress?.status === 'Active') {
+      } else if (milestoneProgress?.status === 'active') {
         if (index === 0) {
           status = 'active';
         } else {
@@ -410,7 +410,7 @@ export const getLessonById = async (
         description: block.description,
         content: block.content,
         feynmanQuestion: block.feynmanQuestion,
-        state: blockProg?.state ?? 'locked',
+        status: blockProg?.status ?? 'locked',
         isFeynmanPassed: blockProg?.isFeynmanPassed ?? false,
       };
     });
@@ -420,6 +420,7 @@ export const getLessonById = async (
       order: lesson.order,
       blocks: blocksWithProgress,
       progress: {
+        status: progress.status,
         completionPercentage: progress.completionPercentage,
         isCompleted: progress.isCompleted,
         lastAccessed: progress.lastAccessed,
@@ -480,12 +481,12 @@ export const completeBlock = async (
       currentBp = {
         blockId: block._id,
         isFeynmanPassed: false,
-        state: blockIndex === 0 ? 'active' : 'locked',
+        status: blockIndex === 0 ? 'active' : 'locked',
       };
       lessonProgress.blockProgress.push(currentBp);
     }
 
-    if (currentBp.state === 'locked') {
+    if (currentBp.status === 'locked') {
       res.status(403).json({
         message:
           'Forbidden: Cannot complete a locked block. Complete previous blocks first.',
@@ -493,10 +494,11 @@ export const completeBlock = async (
       return;
     }
 
-    if (currentBp.state === 'completed') {
+    if (currentBp.status === 'completed') {
       res.json({
         message: 'Block already completed',
         lessonProgress: {
+          status: lessonProgress.status,
           completionPercentage: lessonProgress.completionPercentage,
           isCompleted: lessonProgress.isCompleted,
         },
@@ -504,7 +506,7 @@ export const completeBlock = async (
       return;
     }
 
-    currentBp.state = 'completed';
+    currentBp.status = 'completed';
 
     if (blockIndex < lesson.blocks.length - 1) {
       const nextBlockId = lesson.blocks[blockIndex + 1];
@@ -515,12 +517,12 @@ export const completeBlock = async (
         nextBp = {
           blockId: nextBlockId,
           isFeynmanPassed: false,
-          state: 'locked',
+          status: 'locked',
         };
         lessonProgress.blockProgress.push(nextBp);
       }
-      if (nextBp.state === 'locked') {
-        nextBp.state = 'active';
+      if (nextBp.status === 'locked') {
+        nextBp.status = 'active';
       }
     }
 
@@ -530,6 +532,7 @@ export const completeBlock = async (
     );
     lessonProgress.completionPercentage = completionPercentage;
     lessonProgress.isCompleted = isCompleted;
+    lessonProgress.status = isCompleted ? 'completed' : 'active';
     await lessonProgress.save();
 
     const averageCompletion = await averageMilestoneLessonCompletion(
@@ -555,17 +558,17 @@ export const completeBlock = async (
         completionPercentage: averageCompletion,
         status:
           averageCompletion === 100
-            ? 'Completed'
+            ? 'completed'
             : isFirst
-              ? 'Active'
-              : 'Locked',
+              ? 'active'
+              : 'locked',
       });
     } else {
       milestoneProgress.completionPercentage = averageCompletion;
       if (averageCompletion === 100) {
-        milestoneProgress.status = 'Completed';
-      } else if (milestoneProgress.status !== 'Locked') {
-        milestoneProgress.status = 'Active';
+        milestoneProgress.status = 'completed';
+      } else if (milestoneProgress.status !== 'locked') {
+        milestoneProgress.status = 'active';
       }
       await milestoneProgress.save();
     }
@@ -577,6 +580,7 @@ export const completeBlock = async (
     res.json({
       message: 'Block marked as completed',
       lessonProgress: {
+        status: lessonProgress.status,
         completionPercentage: lessonProgress.completionPercentage,
         isCompleted: lessonProgress.isCompleted,
       },

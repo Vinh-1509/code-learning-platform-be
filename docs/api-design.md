@@ -780,7 +780,7 @@ Get list of milestones with user progress attached.
     "description": "Variables, types, control flow and functions.",
     "order": 1,
     "progress": {
-      "status": "Active",
+      "status": "active",
       "completionPercentage": 45
     }
   },
@@ -790,7 +790,7 @@ Get list of milestones with user progress attached.
     "description": "Classes, inheritance, polymorphism.",
     "order": 2,
     "progress": {
-      "status": "Locked",
+      "status": "locked",
       "completionPercentage": 0
     }
   }
@@ -812,7 +812,7 @@ Get details of a specific milestone with user progress.
   "description": "Variables, types, control flow and functions.",
   "order": 1,
   "progress": {
-    "status": "Active",
+    "status": "active",
     "completionPercentage": 45,
     "updatedAt": "2024-03-04T14:00:00.000Z"
   }
@@ -823,7 +823,7 @@ Get details of a specific milestone with user progress.
 
 ### GET `/api/learning/milestones/:milestoneId/lessons`
 
-Get all lessons belonging to the milestone with progress state.
+Get all lessons belonging to the milestone with progress status.
 
 **Response `200`:**
 
@@ -852,13 +852,13 @@ Get all lessons belonging to the milestone with progress state.
 ]
 ```
 
-> `status` is one of `"completed"` | `"active"` | `"locked"`. A lesson is `active` when the milestone is Active and all preceding lessons are completed. It is `locked` when the milestone itself is Locked or the previous lesson is not yet completed.
+> `status` is one of `"completed"` | `"active"` | `"locked"`. A lesson is `active` when the milestone is active and all preceding lessons are completed. It is `locked` when the milestone itself is locked or the previous lesson is not yet completed.
 
 ---
 
 ### GET `/api/learning/lessons/:lessonId`
 
-Get full lesson content with all blocks embedded. Block state reflects current user progress.
+Get full lesson content with all blocks embedded. Block status reflects current user progress.
 
 **Response `200`:**
 
@@ -899,7 +899,7 @@ Get full lesson content with all blocks embedded. Block state reflects current u
         }
       ],
       "feynmanQuestion": "Can you explain what a variable is in your own words?",
-      "state": "completed",
+      "status": "completed",
       "isFeynmanPassed": true
     },
     {
@@ -917,11 +917,12 @@ Get full lesson content with all blocks embedded. Block state reflects current u
         }
       ],
       "feynmanQuestion": "What is the difference between int and float?",
-      "state": "active",
+      "status": "active",
       "isFeynmanPassed": false
     }
   ],
   "progress": {
+    "status": "active",
     "completionPercentage": 50,
     "isCompleted": false,
     "lastAccessed": "2024-03-05T09:00:00.000Z"
@@ -941,6 +942,7 @@ Mark a block as completed and update lesson/milestone progress percentages.
 {
   "message": "Block marked as completed",
   "lessonProgress": {
+    "status": "completed",
     "completionPercentage": 100,
     "isCompleted": true
   }
@@ -1114,13 +1116,13 @@ Get general dashboard summary for the authenticated user.
     {
       "_id": "64f1a2b3c4d5e6f7a8b9c0a1",
       "title": "C++ Fundamentals",
-      "status": "Active",
+      "status": "active",
       "completionPercentage": 45
     },
     {
       "_id": "64f1a2b3c4d5e6f7a8b9c0a2",
       "title": "Object Oriented Programming",
-      "status": "Locked",
+      "status": "locked",
       "completionPercentage": 0
     }
   ],

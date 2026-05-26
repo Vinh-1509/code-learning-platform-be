@@ -184,7 +184,9 @@ const seed = async () => {
       level: 'easy',
       data: {
         template: [
-          'cout << "Name: " << name << ____ << age << ____ << score << endl;',
+          'cout << "Name: " << name << ',
+          ' << age << ',
+          ' << score << endl;',
         ],
         placeholders: {
           input_1: 'endl;\\ncout << "Age: "',

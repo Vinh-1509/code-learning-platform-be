@@ -261,31 +261,39 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
 
 **Query Parameters:**
 
-| Parameter    | Type   | Description                          |
-| ------------ | ------ | ------------------------------------ |
-| `q`          | string | Keyword search                       |
-| `topic`      | string | Filter by tag/topic (e.g. `hashing`) |
-| `difficulty` | string | `easy` \| `medium` \| `hard`         |
-| `language`   | string | `C++` \| `Java`                      |
-| `page`       | int    | Page number (default: 1)             |
-| `limit`      | int    | Results per page (default: 10)       |
+| Parameter    | Type   | Description                             |
+| ------------ | ------ | --------------------------------------- |
+| `q`          | string | Keyword search                          |
+| `difficulty` | string | `easy` \| `medium` \| `hard`            |
+| `language`   | string | `C++` \| `Java`                         |
+| `page`       | int    | Page number (default: 1)                |
+| `limit`      | int    | Results per page (default: 15, max: 50) |
 
 **Response `200`:**
 
 ```json
 {
-  "total": 42,
+  "total": 2,
   "page": 1,
-  "limit": 10,
+  "limit": 15,
   "data": [
     {
-      "_id": "64f1a2b3c4d5e6f7a8b9c0d2",
-      "title": "Fill in the variable type",
+      "_id": "6a146d34425b3586bbec641e",
+      "title": "Declare Student Variables",
+      "instruction": "Khai báo các biến để lưu thông tin của một sinh viên: tên (string), tuổi (int), và điểm (double)",
       "language": "C++",
       "type": "fill_blank",
       "level": "easy",
-      "tags": [{ "_id": "64f1a2b3c4d5e6f7a8b9c0e1", "name": "variables" }],
-      "instruction": "Fill in the correct data type for the variable below."
+      "order": 1
+    },
+    {
+      "_id": "6a146d34425b3586bbec641f",
+      "title": "Output Variable Values",
+      "instruction": "Viết mã để in ra giá trị của các biến: name, age, và score",
+      "language": "C++",
+      "type": "fill_blank",
+      "level": "easy",
+      "order": 2
     }
   ]
 }
@@ -295,28 +303,37 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
 
 ### GET `/api/practice/exercises/:exerciseId`
 
-Get details of a specific exercise. **Does NOT include `correctAnswer`.**
+Get details of a specific exercise. **Does NOT include `correctAnswer` or `explanation`.**
 
 **Response `200`:**
 
 ```json
 {
-  "_id": "64f1a2b3c4d5e6f7a8b9c0d2",
-  "title": "Fill in the variable type",
+  "_id": "6a146d34425b3586bbec641e",
+  "title": "Declare Student Variables",
+  "instruction": "Khai báo các biến để lưu thông tin của một sinh viên: tên (string), tuổi (int), và điểm (double)",
   "language": "C++",
   "type": "fill_blank",
   "level": "easy",
-  "instruction": "Fill in the correct data type for the variable below.",
+  "order": 1,
   "data": {
-    "template": ["", " a = 10;", "cout << a;"],
-    "placeholders": { "input_1": "type" },
-    "options": ["int", "float", "string", "bool"]
+    "template": [
+      "____ ",
+      " name = \"John\";\nint ",
+      " = 20;\ndouble ",
+      " = 95.5;"
+    ],
+    "placeholders": {
+      "input_1": "string",
+      "input_2": "age",
+      "input_3": "score"
+    }
   },
   "hints": {
-    "1": "Think about what type stores whole numbers.",
-    "2": "It is a 4-byte integer type."
-  },
-  "feynmanQuestion": "Can you explain what a data type is in your own words?"
+    "1": "Tên của người dùng nên là một chuỗi ký tự, sử dụng từ khóa gì để khai báo?",
+    "2": "Tuổi là một số nguyên, sử dụng int",
+    "3": "Điểm có thể có phần thập phân, sử dụng double"
+  }
 }
 ```
 
@@ -324,31 +341,40 @@ Get details of a specific exercise. **Does NOT include `correctAnswer`.**
 
 ### POST `/api/practice/exercises/:exerciseId/submit`
 
-Submit an answer and get a result. On pass, spaced repetition schedule is updated.
+Submit an answer and get the grading result. The system stores only the latest attempt for each user and exercise, while still increasing `attemptNumber`.
 
 **Request Body:**
 
 ```json
 {
-  "answer": { "input_1": "int" }
+  "answer": {
+    "input_1": "string",
+    "input_2": "age",
+    "input_3": "score"
+  }
 }
 ```
 
-**Response `200` — correct:**
+**Response `200`:**
 
 ```json
 {
   "correct": true,
-  "explanation": "int is the correct type for storing whole numbers like 10 in C++."
-}
-```
-
-**Response `200` — wrong:**
-
-```json
-{
-  "correct": false,
-  "explanation": "float is used for decimal numbers, not whole numbers. Try int instead."
+  "items": [
+    {
+      "field": "input_1",
+      "isCorrect": true
+    },
+    {
+      "field": "input_2",
+      "isCorrect": true
+    },
+    {
+      "field": "input_3",
+      "isCorrect": true
+    }
+  ],
+  "attemptNumber": 4
 }
 ```
 
@@ -362,8 +388,8 @@ Request a hint. Tracks and increments hint usage level.
 
 ```json
 {
-  "hintLevel": 1,
-  "hint": "Think about what type stores whole numbers."
+  "hintLevel": 3,
+  "hint": "Điểm có thể có phần thập phân, sử dụng double"
 }
 ```
 
@@ -371,31 +397,38 @@ Request a hint. Tracks and increments hint usage level.
 
 ### GET `/api/practice/exercises/:exerciseId/history`
 
-Get the user's past attempts and answers for a specific exercise.
+Get the user's latest attempt and answer for a specific exercise. This API returns at most one record because only the latest attempt is stored.
 
 **Response `200`:**
 
 ```json
 [
   {
-    "_id": "64f1a2b3c4d5e6f7a8b9c0f1",
-    "exerciseId": "64f1a2b3c4d5e6f7a8b9c0d2",
-    "isPassed": false,
-    "isFeynmanPassed": false,
-    "hintLevel": 1,
-    "userAnswer": { "input_1": "float" },
-    "attemptNumber": 1,
-    "attemptedAt": "2024-03-01T10:00:00.000Z"
-  },
-  {
-    "_id": "64f1a2b3c4d5e6f7a8b9c0f2",
-    "exerciseId": "64f1a2b3c4d5e6f7a8b9c0d2",
+    "_id": "6a147424c8468bbce3aff71a",
+    "exerciseId": "6a146d34425b3586bbec641e",
     "isPassed": true,
-    "isFeynmanPassed": true,
-    "hintLevel": 1,
-    "userAnswer": { "input_1": "int" },
-    "attemptNumber": 2,
-    "attemptedAt": "2024-03-02T09:15:00.000Z"
+    "items": [
+      {
+        "field": "input_1",
+        "isCorrect": true
+      },
+      {
+        "field": "input_2",
+        "isCorrect": true
+      },
+      {
+        "field": "input_3",
+        "isCorrect": true
+      }
+    ],
+    "hintLevel": 3,
+    "userAnswer": {
+      "input_1": "string",
+      "input_2": "age",
+      "input_3": "score"
+    },
+    "attemptNumber": 4,
+    "attemptedAt": "2026-05-25T16:48:18.345Z"
   }
 ]
 ```
@@ -918,12 +951,13 @@ Mark a block as completed and update lesson/milestone progress percentages.
 
 ## 7. Other
 
-| Method | Endpoint                     | isAuth | Priority |
-| ------ | ---------------------------- | ------ | -------- |
-| GET    | `/api/languages`             | Yes    | HIGH     |
-| GET    | `/api/languages/:languageId` | Yes    | HIGH     |
-| POST   | `/api/languages/select`      | Yes    | HIGH     |
-| GET    | `/api/dashboard`             | Yes    | HIGH     |
+| Method | Endpoint                             | isAuth | Priority |
+| ------ | ------------------------------------ | ------ | -------- |
+| GET    | `/api/languages`                     | No     | HIGH     |
+| GET    | `/api/languages/:languageId`         | No     | HIGH     |
+| POST   | `/api/languages/select`              | Yes    | HIGH     |
+| POST   | `/api/exercises/:exerciseId/explain` | Yes    | HIGH     |
+| GET    | `/api/dashboard`                     | Yes    | HIGH     |
 
 ---
 
@@ -1001,6 +1035,52 @@ Set the primary learning language for the authenticated user's profile.
 {
   "message": "Language updated successfully",
   "selectedLanguage": ["C++"]
+}
+```
+
+---
+
+### POST `/api/exercises/:exerciseId/explain`
+
+Analyze a user's answer for an exercise with AI. The backend grades each placeholder first, then sends the exercise context and grading result to AI to generate feedback.
+
+**Request Body:**
+
+```json
+{
+  "answer": {
+    "input_1": "string",
+    "input_2": "age",
+    "input_3": "score"
+  }
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "exerciseId": "6a146d34425b3586bbec641e",
+  "isCorrect": true,
+  "feedback": "Chào bạn! Bạn đã hoàn thành bài tập này rất tốt. Tất cả các phần khai báo biến của bạn đều chính xác.",
+  "items": [
+    {
+      "field": "input_1",
+      "isCorrect": true,
+      "explanation": "Bạn đã sử dụng kiểu dữ liệu \"string\" một cách chính xác để lưu trữ tên. Kiểu \"string\" rất phù hợp cho các chuỗi ký tự như tên người."
+    },
+    {
+      "field": "input_2",
+      "isCorrect": true,
+      "explanation": "Tên biến \"age\" (tuổi) mà bạn chọn rất rõ ràng và dễ hiểu cho một biến kiểu số nguyên. Nó giúp người đọc dễ dàng nhận biết mục đích của biến."
+    },
+    {
+      "field": "input_3",
+      "isCorrect": true,
+      "explanation": "Việc đặt tên biến là \"score\" (điểm) là rất hợp lý và dễ đọc. Tên biến này giúp bạn và người khác hiểu ngay biến này dùng để làm gì."
+    }
+  ],
+  "suggestion": "Hãy tiếp tục phát huy những kiến thức bạn đã học nhé!"
 }
 ```
 

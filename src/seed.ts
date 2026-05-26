@@ -879,6 +879,8 @@ int main() {
     // ── Java Lesson 1.1: Variables and Types ──────────────────────────────────
     const javaBlock1_1 = await Block.create({
       lessonId: javaLesson1_1._id,
+      title: 'Java Variables and Types',
+      description: 'Primitive and reference variables in Java',
       content: asBlockContent([
         {
           type: 'theory',
@@ -915,6 +917,8 @@ int main() {
     // ── Java Lesson 1.1 Block 2: Type Casting and Wrapper Classes ────────────
     const javaBlock1_1b = await Block.create({
       lessonId: javaLesson1_1._id,
+      title: 'Casting and Wrapper Types',
+      description: 'Type conversion and primitive wrapper classes',
       content: asBlockContent([
         {
           type: 'theory',
@@ -957,6 +961,8 @@ int main() {
     // ── Java Lesson 1.1 Block 3: String Operations ────────────────────────────
     const javaBlock1_1c = await Block.create({
       lessonId: javaLesson1_1._id,
+      title: 'String Basics and StringBuilder',
+      description: 'Immutable strings and efficient text building',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1001,6 +1007,8 @@ int main() {
     // ── Java Lesson 1.2: Control Flow ─────────────────────────────────────────
     const javaBlock1_2 = await Block.create({
       lessonId: javaLesson1_2._id,
+      title: 'Java Control Flow Basics',
+      description: 'If-else, loops, and iteration in Java',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1037,6 +1045,8 @@ int main() {
     // ── Java Lesson 1.2 Block 2: Switch Expressions and Ternary ──────────────
     const javaBlock1_2b = await Block.create({
       lessonId: javaLesson1_2._id,
+      title: 'Switch Expressions and Ternary',
+      description: 'Multi-branch selection and concise conditions',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1082,6 +1092,8 @@ int main() {
     // ── Java Lesson 1.2 Block 3: Break, Continue, and Nested Loops ───────────
     const javaBlock1_2c = await Block.create({
       lessonId: javaLesson1_2._id,
+      title: 'Break, Continue, and Nested Loops',
+      description: 'Loop control and labeled flow statements',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1132,6 +1144,8 @@ int main() {
     // ── Java Lesson 2.1: Classes and Objects ──────────────────────────────────
     const javaBlock2_1 = await Block.create({
       lessonId: javaLesson2_1._id,
+      title: 'Classes and Objects',
+      description: 'Fields, constructors, and object instances',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1177,6 +1191,8 @@ public class Main {
     // ── Java Lesson 2.1 Block 2: Getters, Setters, and Encapsulation ─────────
     const javaBlock2_1b = await Block.create({
       lessonId: javaLesson2_1._id,
+      title: 'Getters, Setters, and Encapsulation',
+      description: 'Controlled access and validation',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1233,6 +1249,8 @@ public class Main {
     // ── Java Lesson 2.1 Block 3: Static Members and Methods ──────────────────
     const javaBlock2_1c = await Block.create({
       lessonId: javaLesson2_1._id,
+      title: 'Static Members and Methods',
+      description: 'Shared class-level state and utility methods',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1280,6 +1298,8 @@ public class Main {
     // ── Java Lesson 2.2: Inheritance and Interfaces ───────────────────────────
     const javaBlock2_2 = await Block.create({
       lessonId: javaLesson2_2._id,
+      title: 'Inheritance and Interfaces',
+      description: 'Extending classes and implementing contracts',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1328,6 +1348,8 @@ public class Main {
     // ── Java Lesson 2.2 Block 2: Abstract Classes and Polymorphism ───────────
     const javaBlock2_2b = await Block.create({
       lessonId: javaLesson2_2._id,
+      title: 'Abstract Classes and Polymorphism',
+      description: 'Abstract behavior and dynamic dispatch',
       content: asBlockContent([
         {
           type: 'theory',
@@ -1380,6 +1402,8 @@ public class Main {
     // ── Java Lesson 2.2 Block 3: Default Interface Methods ───────────────────
     const javaBlock2_2c = await Block.create({
       lessonId: javaLesson2_2._id,
+      title: 'Default Interface Methods',
+      description: 'Interface defaults and conflict resolution',
       content: asBlockContent([
         {
           type: 'theory',

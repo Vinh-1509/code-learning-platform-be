@@ -148,12 +148,7 @@ const seed = async () => {
       type: 'fill_blank',
       level: 'easy',
       data: {
-        template: [
-          '____ ',
-          ' name = "John";\nint ',
-          ' = 20;\ndouble ',
-          ' = 95.5;',
-        ],
+        template: ['', ' name = "John";\nint ', ' = 20;\ndouble ', ' = 95.5;'],
         placeholders: {
           input_1: 'string',
           input_2: 'age',
@@ -185,17 +180,23 @@ const seed = async () => {
       data: {
         template: [
           'cout << "Name: " << name << ',
+          '\n',
           ' << age << ',
+          '\n',
           ' << score << endl;',
         ],
         placeholders: {
-          input_1: 'endl;\\ncout << "Age: "',
-          input_2: 'endl;\\ncout << "Score: "',
+          input_1: 'endl;',
+          input_2: 'cout << "Age: "',
+          input_3: 'endl;',
+          input_4: 'cout << "Score: "',
         },
       },
       correctAnswer: {
-        input_1: 'endl;\\ncout << "Age: "',
-        input_2: 'endl;\\ncout << "Score: "',
+        input_1: 'endl;',
+        input_2: 'cout << "Age: "',
+        input_3: 'endl;',
+        input_4: 'cout << "Score: "',
       },
       explanation:
         'Sử dụng cout để in ra các biến. Mỗi dòng thông tin nên kết thúc bằng endl hoặc "\\n" để xuống dòng.',

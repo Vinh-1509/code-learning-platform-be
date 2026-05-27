@@ -194,8 +194,8 @@ const seed = async () => {
         },
       },
       correctAnswer: {
-        input_1: 'endl;\ncout << "Age: "',
-        input_2: 'endl;\ncout << "Score: "',
+        input_1: 'endl;\\ncout << "Age: "',
+        input_2: 'endl;\\ncout << "Score: "',
       },
       explanation:
         'Sử dụng cout để in ra các biến. Mỗi dòng thông tin nên kết thúc bằng endl hoặc "\\n" để xuống dòng.',

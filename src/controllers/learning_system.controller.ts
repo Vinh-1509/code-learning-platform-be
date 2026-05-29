@@ -36,12 +36,10 @@ async function enrichLanguagesWithDetails(
 ) {
   const languages = roadmaps.map((r) => r.language);
 
-  // 1. Fetch and cast using your existing interface
   const languageInfos = (await LanguageInfo.find({
     language: { $in: languages },
   }).lean()) as unknown as ILanguageInfoResponse[];
 
-  // 2. Strongly type the map so ESLint knows exactly what properties exist
   const infoMap: Record<string, ILanguageInfoResponse> = Object.fromEntries(
     languageInfos.map((li) => [li.language, li]),
   );
@@ -54,71 +52,6 @@ async function enrichLanguagesWithDetails(
     challenges: infoMap[r.language]?.challenges ?? [],
     useCases: infoMap[r.language]?.useCases ?? [],
   }));
-}
-
-/**
- * SECURITY HELPER: Verify if a user is legally allowed to access/modify a lesson.
- * Checks if the parent Milestone is unlocked AND if the previous Lesson is completed.
- */
-async function verifyLessonAccess(
-  userId: string,
-  lessonId: Types.ObjectId | string,
-  milestoneId: Types.ObjectId | string,
-): Promise<{ allowed: boolean; reason?: string }> {
-  // Changed 'let' to 'const'
-  const milestoneProgress = await UserMilestoneProgress.findOne({
-    userId,
-    milestoneId,
-  }).lean();
-
-  // 1. Enforce Milestone Lock
-  if (!milestoneProgress) {
-    const milestone = await Milestone.findById(milestoneId).lean();
-    if (!milestone) return { allowed: false, reason: 'Milestone not found' };
-
-    const isFirst = await isFirstMilestoneInRoadmap(
-      milestoneId.toString(),
-      milestone.roadmapId,
-    );
-
-    if (isFirst) {
-      // Just create it in the DB; no need to assign it to a variable
-      await UserMilestoneProgress.create({
-        userId,
-        milestoneId,
-        completionPercentage: 0,
-        status: 'active',
-      });
-    } else {
-      return { allowed: false, reason: 'Milestone is locked' };
-    }
-  } else if (milestoneProgress.status === 'locked') {
-    return { allowed: false, reason: 'Milestone is locked' };
-  }
-
-  // 2. Enforce Previous Lesson Lock
-  const allLessons = await Lesson.find({ milestoneId })
-    .sort({ order: 1 })
-    .select('_id')
-    .lean();
-
-  const lessonIndex = allLessons.findIndex(
-    (l) => l._id.toString() === lessonId.toString(),
-  );
-
-  if (lessonIndex > 0) {
-    const prevLessonId = allLessons[lessonIndex - 1]._id;
-    const prevLessonProgress = await UserLessonProgress.findOne({
-      userId,
-      lessonId: prevLessonId,
-    }).lean();
-
-    if (!prevLessonProgress || !prevLessonProgress.isCompleted) {
-      return { allowed: false, reason: 'Previous lesson is not completed' };
-    }
-  }
-
-  return { allowed: true };
 }
 
 // ─── Languages APIs ──────────────────────────────────────────────────────────
@@ -194,7 +127,7 @@ export const selectLanguage = async (
     }
     res.json({
       message: 'Language updated successfully',
-      selectedLanguage: user.selectedLanguage,
+      selectedLanguage: user.selectedLanguage ?? [],
     });
   } catch {
     res.status(500).json({ message: 'Failed to select language' });
@@ -209,12 +142,8 @@ export const getMilestones = async (
 ): Promise<void> => {
   try {
     const user = await User.findById(authUserId(req)).lean();
-    if (!user?.selectedLanguage?.[0]) {
-      res.status(400).json({ message: 'No language selected' });
-      return;
-    }
     const roadmap = await Roadmap.findOne({
-      language: user.selectedLanguage[0],
+      language: user!.selectedLanguage![0],
     }).lean();
     if (!roadmap) {
       res
@@ -373,18 +302,6 @@ export const getLessonById = async (
       return;
     }
 
-    // --- SECURITY/LOGIC FIX START ---
-    const access = await verifyLessonAccess(
-      authUserId(req),
-      lesson._id,
-      lesson.milestoneId,
-    );
-    if (!access.allowed) {
-      res.status(403).json({ message: `Forbidden: ${access.reason}` });
-      return;
-    }
-    // --- SECURITY/LOGIC FIX END ---
-
     const populatedBlocks = lesson.blocks as unknown as {
       _id: Types.ObjectId;
       title: string;
@@ -447,18 +364,6 @@ export const completeBlock = async (
       res.status(404).json({ message: 'Lesson not found' });
       return;
     }
-
-    // --- SECURITY/LOGIC FIX START ---
-    const access = await verifyLessonAccess(
-      authUserId(req),
-      lesson._id,
-      lesson.milestoneId,
-    );
-    if (!access.allowed) {
-      res.status(403).json({ message: `Forbidden: ${access.reason}` });
-      return;
-    }
-    // --- SECURITY/LOGIC FIX END ---
 
     const lessonProgress = await getOrCreateLessonProgress(
       authUserId(req),

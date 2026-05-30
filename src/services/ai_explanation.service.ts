@@ -38,7 +38,7 @@ const explanationResponseSchema: Record<string, unknown> = {
   required: ['isCorrect', 'feedback', 'items', 'suggestion'],
 };
 
-// Build a detailed prompt for Gemini to explain the exercise answer based on the exercise details.
+// Keep Gemini output predictable so the controller can return a stable API shape.
 function buildExplanationPrompt({
   exercise,
   userAnswer,
@@ -95,6 +95,7 @@ ${JSON.stringify(
 `;
 }
 
+// Runtime guard for AI output, because JSON schema guidance is not a TypeScript guarantee.
 function isExplanationItem(value: unknown): value is ExerciseExplanationItem {
   if (!value || typeof value !== 'object') return false;
 
@@ -121,7 +122,7 @@ function isExplainExerciseAiResult(
   );
 }
 
-// If Gemini response is missing or invalid, build a fallback explanation based on grading results.
+// Fallback keeps the API useful even when Gemini returns empty or invalid JSON.
 function buildFallbackExplanation(
   isCorrect: boolean,
   gradingItems: ExerciseExplanationItem[],
@@ -143,7 +144,7 @@ function buildFallbackExplanation(
   };
 }
 
-// Call Gemini API to generate an explanation for the exercise answer based on the provided input and prompt.
+// Use the REST endpoint directly to avoid SDK type-resolution issues in this project setup.
 async function generateGeminiText(prompt: string): Promise<string | undefined> {
   if (!ENV.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not defined');
@@ -245,6 +246,7 @@ export async function generateExerciseExplanation(
   return {
     ...parsed,
     isCorrect: input.isCorrect,
+    // Trust backend grading for correctness, while keeping Gemini's human-friendly wording.
     items: parsed.items.map((item) => {
       const gradedItem = input.gradingItems.find(
         (gradingItem) => gradingItem.field === item.field,

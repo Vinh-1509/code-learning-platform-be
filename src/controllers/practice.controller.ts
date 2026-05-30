@@ -80,6 +80,7 @@ async function getLatestAttemptState(
   userId: string,
   exerciseId: string,
 ): Promise<{ attemptNumber: number; hintLevel: number }> {
+  // One document stores the latest attempt, while attemptNumber preserves total tries.
   const attempt = await ExerciseAttempt.findOne({ userId, exerciseId })
     .select('attemptNumber hintLevel')
     .lean();
@@ -238,6 +239,7 @@ export const requestPracticeHint = async (
     const latestAttempt = await getLatestAttemptState(userId, exerciseId);
     const currentHintLevel = latestAttempt.hintLevel;
     const nextHintLevel = currentHintLevel + 1;
+    // Hint levels advance only when another hint exists.
     const hint = exercise.hints?.[String(nextHintLevel)] ?? null;
     const hintLevel = hint ? nextHintLevel : currentHintLevel;
 

@@ -5,6 +5,7 @@ dotenv.config();
 
 const connectDB = async () => {
   try {
+    // Support connection strings that keep the password as a DB_PASSWORD placeholder.
     const dbString =
       process.env.DB_STRING?.replace(
         'DB_PASSWORD',

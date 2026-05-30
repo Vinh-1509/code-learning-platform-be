@@ -24,9 +24,7 @@ function authUserId(req: Request): string {
   return req.user!.id;
 }
 
-/**
- * Helper: Enrich roadmap data with language info details (batched query)
- */
+// Enrich roadmaps with language_info data in one query to avoid per-language lookups.
 async function enrichLanguagesWithDetails(
   roadmaps: Array<{
     _id: Types.ObjectId;
@@ -162,6 +160,7 @@ export const getMilestones = async (
         });
 
         if (!progress) {
+          // Progress is initialized lazily; only the first milestone starts active.
           progress = await UserMilestoneProgress.create({
             userId: authUserId(req),
             milestoneId: milestone._id,
@@ -260,6 +259,7 @@ export const getLessonsByMilestone = async (
     const lessonsWithProgress = lessons.map((lesson, index) => {
       const progress = progressMap[lesson._id.toString()];
       let status: 'completed' | 'active' | 'locked' = 'locked';
+      // Lesson access is sequential inside an active milestone.
       if (progress?.isCompleted) {
         status = 'completed';
       } else if (milestoneProgress?.status === 'active') {
@@ -315,6 +315,7 @@ export const getLessonById = async (
       lesson._id,
       blockIds,
     );
+    // Opening a lesson updates recency and creates missing block progress.
     progress.lastAccessed = new Date();
     await progress.save();
     const blocksWithProgress = populatedBlocks.map((block) => {
@@ -414,6 +415,7 @@ export const completeBlock = async (
     currentBp.status = 'completed';
 
     if (blockIndex < lesson.blocks.length - 1) {
+      // Completing a block unlocks the next block in the same lesson.
       const nextBlockId = lesson.blocks[blockIndex + 1];
       let nextBp = lessonProgress.blockProgress.find(
         (bp) => bp.blockId.toString() === nextBlockId.toString(),
@@ -479,6 +481,7 @@ export const completeBlock = async (
     }
 
     if (averageCompletion === 100) {
+      // A fully completed milestone can unlock the next milestone.
       await unlockNextMilestoneIfCompleted(authUserId(req), lesson.milestoneId);
     }
 

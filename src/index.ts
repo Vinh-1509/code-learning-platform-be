@@ -28,7 +28,7 @@ app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'CodeStep BE is running' });
 });
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 'http://localhost:3000';
 
 async function bootstrap() {
   try {

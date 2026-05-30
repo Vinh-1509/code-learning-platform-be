@@ -14,10 +14,14 @@ import type { IBlock } from './interfaces/learning_system.interface';
 
 const asBlockContent = (content: IBlock['content']) => content;
 
-const seed = async () => {
+export const seed = async (disconnectAfter = true) => {
   try {
-    await connectDB();
-    console.log('✓ Connected to MongoDB');
+    if (
+      mongoose.connection.readyState === mongoose.ConnectionStates.disconnected
+    ) {
+      await connectDB();
+      console.log('✓ Connected to MongoDB');
+    }
 
     console.log('\n📝 Clearing collections...');
     await Promise.all([
@@ -2257,16 +2261,22 @@ public class Main {
     console.log('  🧩 Blocks        : 24  (3 blocks per lesson)');
     console.log('  💪 Exercises     : 25');
 
-    await mongoose.disconnect();
-    console.log('✓ Disconnected from MongoDB');
+    if (disconnectAfter) {
+      await mongoose.disconnect();
+      console.log('✓ Disconnected from MongoDB');
+    }
   } catch (error) {
     console.error('❌ Seed failed:', error);
-    await mongoose.disconnect().catch(() => undefined);
+    if (disconnectAfter) {
+      await mongoose.disconnect().catch(() => undefined);
+    }
     throw error;
   }
 };
 
-seed().catch((error: unknown) => {
-  console.error('Seed execution failed:', error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  seed(true).catch((error: unknown) => {
+    console.error('Seed execution failed:', error);
+    process.exitCode = 1;
+  });
+}

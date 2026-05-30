@@ -7,7 +7,8 @@ import authRoutes from './routes/auth.routes';
 import learningSystemRoutes from './routes/learning_system.routes';
 import exerciseRoutes from './routes/exercise.routes';
 import practiceRoutes from './routes/practice.routes';
-
+import { Roadmap } from './models/learning_system.model';
+import { seed } from './seed';
 dotenv.config();
 
 const app: Express = express();
@@ -33,6 +34,11 @@ async function bootstrap() {
   try {
     await connectDB();
 
+    const roadmapCount = await Roadmap.countDocuments();
+    if (roadmapCount === 0) {
+      console.log('Database is empty. Running auto-seeding...');
+      await seed(false);
+    }
     app.listen(PORT, () => {
       console.log(`Server running at http://localhost:${PORT}`);
     });

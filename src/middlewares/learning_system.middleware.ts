@@ -66,7 +66,7 @@ async function verifyLessonAccess(
     milestoneId,
   }).lean();
 
-  // Check milestone lock
+  // Create first-milestone progress on demand; all later milestones stay locked.
   if (!milestoneProgress) {
     const milestone = await Milestone.findById(milestoneId).lean();
 
@@ -102,7 +102,7 @@ async function verifyLessonAccess(
     };
   }
 
-  // Check previous lesson completion
+  // Lessons after the first require the previous lesson to be completed.
   const allLessons = await Lesson.find({ milestoneId })
     .sort({ order: 1 })
     .select('_id')
@@ -186,6 +186,7 @@ export const requireBlockAccess = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    // Block completion uses lesson-level access rules before checking block status.
     const blockId = req.params.blockId as string;
 
     const block = await Block.findById(blockId).lean();

@@ -21,6 +21,7 @@ export const SUPPORTED_LANGUAGES = ['C++', 'Java'] as const;
 export function buildDefaultBlockProgress(
   blockIds: Types.ObjectId[],
 ): BlockProgressEntry[] {
+  // A new lesson starts with only the first block available.
   return blockIds.map((blockId, index) => ({
     blockId,
     isFeynmanPassed: false,
@@ -45,6 +46,7 @@ export function recalcLessonCompletion(
   };
 }
 
+// A milestone is initially available only when it is the first one in its roadmap.
 export async function isFirstMilestoneInRoadmap(
   milestoneId: Types.ObjectId | string,
   roadmapId: Types.ObjectId,
@@ -123,6 +125,7 @@ export async function getOrCreateLessonProgress(
   let progress = await UserLessonProgress.findOne({ userId, lessonId });
 
   if (!progress) {
+    // Create progress lazily when the user first opens or completes a lesson.
     progress = await UserLessonProgress.create({
       userId,
       lessonId,
@@ -137,11 +140,13 @@ export async function getOrCreateLessonProgress(
   }
 
   if (!progress.status) {
+    // Backfill old progress records created before lesson status existed.
     progress.status = progress.isCompleted ? 'completed' : initialStatus;
     await progress.save();
   }
 
   if (!progress.blockProgress?.length && blockIds.length > 0) {
+    // Backfill block progress for older records or newly attached blocks.
     progress.blockProgress = buildDefaultBlockProgress(blockIds);
     await progress.save();
   }

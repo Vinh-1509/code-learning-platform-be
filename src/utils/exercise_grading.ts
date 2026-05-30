@@ -3,7 +3,7 @@ import type {
   ExerciseExplanationItem,
 } from '../interfaces/exercise.interface';
 
-// Normalize answer values to strings for comparison
+// Compare only simple scalar values; complex payloads are treated as blank answers.
 function normalizeAnswerValue(value: unknown): string {
   if (value === null || value === undefined) return '';
 
@@ -25,6 +25,7 @@ export function gradeExerciseAnswer(
   isCorrect: boolean;
   items: ExerciseExplanationItem[];
 } {
+  // Grade each placeholder independently so the UI can show per-field feedback.
   const items = Object.entries(correctAnswer).map(([field, expected]) => {
     const actual = userAnswer[field];
 

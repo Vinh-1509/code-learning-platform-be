@@ -28,7 +28,7 @@ app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'CodeStep BE is running' });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 async function bootstrap() {
   try {
@@ -40,7 +40,7 @@ async function bootstrap() {
       await seed(false);
     }
     app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
+      console.log(`Server running at ${PORT}`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);

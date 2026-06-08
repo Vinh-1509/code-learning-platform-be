@@ -14,6 +14,8 @@ interface EnvConfig {
   REFRESH_EXPIRES_IN: string;
   GEMINI_API_KEY?: string;
   GEMINI_MODEL: string;
+  GROQ_API_KEY?: string;
+  GROQ_MODEL: string;
 }
 
 export const ENV: EnvConfig = {
@@ -25,4 +27,6 @@ export const ENV: EnvConfig = {
   REFRESH_EXPIRES_IN: process.env.REFRESH_EXPIRES_IN || '7d',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  GROQ_API_KEY: process.env.GROQ_API_KEY,
+  GROQ_MODEL: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
 };

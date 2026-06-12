@@ -95,6 +95,14 @@ const userMilestoneProgressSchema = new Schema<IUserMilestoneProgress>(
 
 // ─── User Lesson Progress Schema ─────────────────────────────────────────────
 
+const chatMessageSchema = new Schema(
+  {
+    role: { type: String, enum: ['user', 'assistant'], required: true },
+    content: { type: String, required: true },
+  },
+  { _id: false },
+);
+
 const blockProgressSchema = new Schema(
   {
     blockId: { type: Schema.Types.ObjectId, required: true, ref: 'Block' },
@@ -104,14 +112,7 @@ const blockProgressSchema = new Schema(
       enum: ['locked', 'active', 'completed'],
       default: 'locked',
     },
-  },
-  { _id: false },
-);
-
-const chatMessageSchema = new Schema(
-  {
-    role: { type: String, enum: ['user', 'assistant'], required: true },
-    content: { type: String, required: true },
+    chatHistory: { type: [chatMessageSchema], default: [] },
   },
   { _id: false },
 );

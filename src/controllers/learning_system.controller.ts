@@ -388,6 +388,7 @@ export const completeBlock = async (
         blockId: block._id,
         isFeynmanPassed: false,
         status: blockIndex === 0 ? 'active' : 'locked',
+        chatHistory: [],
       };
       lessonProgress.blockProgress.push(currentBp);
     }
@@ -425,6 +426,7 @@ export const completeBlock = async (
           blockId: nextBlockId,
           isFeynmanPassed: false,
           status: 'locked',
+          chatHistory: [],
         };
         lessonProgress.blockProgress.push(nextBp);
       }

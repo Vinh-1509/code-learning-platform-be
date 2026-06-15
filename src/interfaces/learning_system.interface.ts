@@ -130,6 +130,7 @@ export interface IBlockProgress {
   blockId: Types.ObjectId;
   isFeynmanPassed: boolean;
   status: ProgressStatus;
+  chatHistory: { role: 'user' | 'assistant'; content: string }[];
 }
 
 export interface IUserLessonProgress extends Document {

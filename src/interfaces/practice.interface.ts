@@ -1,6 +1,8 @@
 import type { Types } from 'mongoose';
 import type { ExerciseAnswer } from './exercise.interface';
 
+export type ExerciseStatus = 'locked' | 'active' | 'completed';
+
 export interface PracticeExerciseQuery {
   q?: string;
   tag?: string;
@@ -17,6 +19,7 @@ export interface PracticeExerciseListItem {
   language: 'C++' | 'Java';
   type: 'fill_blank' | 'drag_drop';
   level: 'easy' | 'medium' | 'hard';
+  status: ExerciseStatus;
   order?: number;
 }
 

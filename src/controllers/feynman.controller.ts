@@ -13,6 +13,7 @@ import type {
   FeynmanChatResponse,
   FeynmanHistoryResponse,
   FeynmanQuestionResponse,
+  FeynmanResetHistoryResponse,
   FeynmanStatsResponse,
 } from '../interfaces/feynman.interface';
 
@@ -315,6 +316,63 @@ export const getBlockFeynmanHistory = async (
   } catch (err) {
     console.error('Get Feynman history error:', err);
     res.status(500).json({ message: 'Failed to fetch Feynman history' });
+  }
+};
+
+// api/feynman/block/:blockId/history/reset
+export const resetBlockFeynmanHistory = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const userId = authUserId(req);
+    const blockId = String(req.params.blockId);
+    const { block, lesson } = await findBlockAndLesson(blockId);
+
+    if (!block) {
+      res.status(404).json({ message: 'Block not found' });
+      return;
+    }
+    if (!lesson) {
+      res.status(404).json({ message: 'Lesson not found' });
+      return;
+    }
+
+    const progress = await getOrCreateLessonProgress(
+      userId,
+      lesson._id,
+      lesson.blocks,
+    );
+    const question = getBlockQuestion(block);
+    const blockProgress = getOrCreateBlockProgress(
+      progress,
+      lesson.blocks,
+      blockId,
+      question,
+    );
+
+    if (!ensureBlockCompleted(blockProgress, res)) return;
+
+    blockProgress.chatHistory = [
+      {
+        role: 'assistant',
+        content: question,
+      },
+    ];
+
+    progress.markModified('blockProgress');
+    await progress.save();
+
+    const response: FeynmanResetHistoryResponse = {
+      blockId,
+      chatHistory: blockProgress.chatHistory,
+      isFeynmanPassed: blockProgress.isFeynmanPassed,
+    };
+
+    res.json(response);
+  } catch (err) {
+    console.error('Reset Feynman history error:', err);
+    res.status(500).json({ message: 'Failed to reset Feynman history' });
   }
 };
 

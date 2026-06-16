@@ -4,6 +4,7 @@ import {
   getBlockFeynmanQuestion,
   getBlockFeynmanStats,
   postBlockFeynmanChat,
+  resetBlockFeynmanHistory,
 } from '../controllers/feynman.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { validateObjectId } from '../middlewares/learning_system.middleware';
@@ -29,6 +30,13 @@ router.get(
   authMiddleware,
   validateObjectId('blockId'),
   getBlockFeynmanHistory,
+);
+
+router.post(
+  '/feynman/block/:blockId/history/reset',
+  authMiddleware,
+  validateObjectId('blockId'),
+  resetBlockFeynmanHistory,
 );
 
 router.get(

@@ -37,6 +37,12 @@ export interface FeynmanHistoryResponse {
   chatHistory: FeynmanChatMessage[];
 }
 
+export interface FeynmanResetHistoryResponse {
+  blockId: string;
+  chatHistory: FeynmanChatMessage[];
+  isFeynmanPassed: boolean;
+}
+
 // Stats response
 export interface FeynmanStatsResponse {
   blockId: string;

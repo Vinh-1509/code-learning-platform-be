@@ -8,6 +8,7 @@ import learningSystemRoutes from './routes/learning_system.routes';
 import exerciseRoutes from './routes/exercise.routes';
 import practiceRoutes from './routes/practice.routes';
 import feynmanRoutes from './routes/feynman.routes';
+import tagRoutes from './routes/tag.routes';
 import { Roadmap } from './models/learning_system.model';
 import { seed } from './seed';
 dotenv.config();
@@ -24,6 +25,7 @@ app.use('/api', learningSystemRoutes);
 app.use('/api/', exerciseRoutes);
 app.use('/api', practiceRoutes);
 app.use('/api', feynmanRoutes);
+app.use('/api', tagRoutes);
 
 // Health check endpoint
 app.get('/', (req: Request, res: Response) => {

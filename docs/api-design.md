@@ -264,8 +264,10 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
 | Parameter    | Type   | Description                             |
 | ------------ | ------ | --------------------------------------- |
 | `q`          | string | Keyword search                          |
+| `tagId`      | string | Filter exercises by tag ObjectId        |
 | `difficulty` | string | `easy` \| `medium` \| `hard`            |
 | `language`   | string | `C++` \| `Java`                         |
+| `status`     | string | `locked` \| `active` \| `completed`     |
 | `page`       | int    | Page number (default: 1)                |
 | `limit`      | int    | Results per page (default: 15, max: 50) |
 
@@ -284,6 +286,8 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
       "language": "C++",
       "type": "fill_blank",
       "level": "easy",
+      "tagId": ["your_tag_id"],
+      "status": "active",
       "order": 1
     },
     {
@@ -293,6 +297,8 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
       "language": "C++",
       "type": "fill_blank",
       "level": "easy",
+      "tagId": ["your_tag_id"],
+      "status": "locked",
       "order": 2
     }
   ]
@@ -315,6 +321,8 @@ Get details of a specific exercise. **Does NOT include `correctAnswer` or `expla
   "language": "C++",
   "type": "fill_blank",
   "level": "easy",
+  "tagId": ["your_tag_id"],
+  "status": "active",
   "order": 1,
   "data": {
     "template": [
@@ -716,17 +724,16 @@ Retrieve the Spaced Repetition status and next review date for a specific exerci
 
 ## 5. Tag Stats
 
-| Method | Endpoint                     | isAuth | Priority |
-| ------ | ---------------------------- | ------ | -------- |
-| GET    | `/api/tags/weakness`         | Yes    | HIGH     |
-| GET    | `/api/tags/:tagId/info`      | Yes    | HIGH     |
-| GET    | `/api/tags/:tagId/exercises` | Yes    | HIGH     |
+| Method | Endpoint                | isAuth | Priority |
+| ------ | ----------------------- | ------ | -------- |
+| GET    | `/api/tags/weakness`    | Yes    | HIGH     |
+| GET    | `/api/tags/:tagId/info` | Yes    | HIGH     |
 
 ---
 
 ### GET `/api/tags/weakness`
 
-Retrieve all tags where `isWeak: true`, with attempt stats.
+Retrieve all tags where `isWeak: true`, with attempt stats. Results are sorted by `failureRate` descending, then by `failAttempts` descending.
 
 **Response `200`:**
 
@@ -738,7 +745,9 @@ Retrieve all tags where `isWeak: true`, with attempt stats.
     "description": "Memory address and pointer operations",
     "totalAttempts": 10,
     "failAttempts": 7,
-    "failureRate": 70
+    "failureRate": 70,
+    "isWeak": true,
+    "updatedAt": "your test updatedAt"
   }
 ]
 ```
@@ -760,36 +769,24 @@ Deep dive into a specific tag with failure rate and performance metrics.
   "failAttempts": 7,
   "failureRate": 70,
   "isWeak": true,
-  "updatedAt": "2024-03-05T10:00:00.000Z"
+  "updatedAt": "your test updatedAt"
 }
 ```
 
 ---
 
-### GET `/api/tags/:tagId/exercises`
+### Get exercises by tag
 
-Retrieve exercises for a tag. Supports limiting and sorting.
+Use the Practice System list API with the `tagId` query parameter.
 
-**Query Parameters:**
+```http
+GET /api/practice/exercises?tagId=your_tag_id
+```
 
-| Parameter | Type   | Description               |
-| --------- | ------ | ------------------------- |
-| `limit`   | int    | Max results (default: 10) |
-| `sort`    | string | `level` \| `order`        |
+Can be combined with other filters:
 
-**Response `200`:**
-
-```json
-[
-  {
-    "_id": "64f1a2b3c4d5e6f7a8b9c0d2",
-    "title": "Fill in the variable type",
-    "language": "C++",
-    "type": "fill_blank",
-    "level": "easy",
-    "instruction": "Fill in the correct data type."
-  }
-]
+```http
+GET /api/practice/exercises?tagId=your_tag_id&status=active&difficulty=easy
 ```
 
 ---

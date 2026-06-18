@@ -445,13 +445,14 @@ Get the user's latest attempt and answer for a specific exercise. This API retur
 
 ## 3. AI Feynman
 
-Block Feynman APIs are available only after the target block is `completed`. If the block is still `locked` or `active`, the backend returns `403`.
+Block Feynman APIs are available when the target block is not `locked` and all required practice exercises inside that block have been passed. If Feynman chat returns `isPassed: true`, the backend marks the block's Feynman as passed, completes the block, unlocks the next block, and recalculates lesson/milestone progress.
 
 | Method | Endpoint                                     | isAuth | Priority |
 | ------ | -------------------------------------------- | ------ | -------- |
 | GET    | `/api/feynman/block/:blockId/question`       | Yes    | HIGH     |
 | POST   | `/api/feynman/block/:blockId/chat`           | Yes    | HIGH     |
 | GET    | `/api/feynman/block/:blockId/history`        | Yes    | HIGH     |
+| POST   | `/api/feynman/block/:blockId/history/reset`  | Yes    | HIGH     |
 | GET    | `/api/feynman/block/:blockId/stats`          | Yes    | HIGH     |
 | GET    | `/api/feynman/exercise/:exerciseId/question` | Yes    | HIGH     |
 | POST   | `/api/feynman/exercise/:exerciseId/chat`     | Yes    | LOW      |
@@ -462,7 +463,7 @@ Block Feynman APIs are available only after the target block is `completed`. If 
 
 ### GET `/api/feynman/block/:blockId/question`
 
-Fetch the Feynman question for a completed block. The question comes from `blocks.feynmanQuestion`; if it is missing, the backend returns the default question.
+Fetch the Feynman question for a block that is ready for Feynman. The question comes from `blocks.feynmanQuestion`; if it is missing, the backend returns the default question.
 
 **Response `200`:**
 
@@ -478,14 +479,15 @@ Fetch the Feynman question for a completed block. The question comes from `block
 ```json
 { "message": "Block not found" } // 404
 { "message": "Lesson not found" } // 404
-{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
 ```
 
 ---
 
 ### POST `/api/feynman/block/:blockId/chat`
 
-Submit a user explanation for a completed block. Backend invokes Groq, updates `blockProgress.chatHistory`, and sets `isFeynmanPassed: true` if criteria are met.
+Submit a user explanation for a block that is ready for Feynman. Backend invokes Groq and updates `blockProgress.chatHistory`. If the AI returns `isPassed: true`, the backend sets `isFeynmanPassed: true`, completes the block, unlocks the next block, and recalculates lesson/milestone progress.
 
 **Request Body:**
 
@@ -521,7 +523,8 @@ Submit a user explanation for a completed block. Backend invokes Groq, updates `
 { "message": "Message is required" } // 400
 { "message": "Block not found" } // 404
 { "message": "Lesson not found" } // 404
-{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
 { "message": "Failed to process Feynman chat" } // 500
 ```
 
@@ -529,7 +532,7 @@ Submit a user explanation for a completed block. Backend invokes Groq, updates `
 
 ### GET `/api/feynman/block/:blockId/history`
 
-Fetch the `chatHistory` array for this completed block from the current user's `UserLessonProgress.blockProgress`.
+Fetch the `chatHistory` array for this block from the current user's `UserLessonProgress.blockProgress`.
 
 **Response `200`:**
 
@@ -558,15 +561,47 @@ Fetch the `chatHistory` array for this completed block from the current user's `
 ```json
 { "message": "Block not found" } // 404
 { "message": "Lesson not found" } // 404
-{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
 { "message": "Failed to fetch Feynman history" } // 500
+```
+
+---
+
+### POST `/api/feynman/block/:blockId/history/reset`
+
+Reset the current user's Feynman chat history for a block back to the first assistant question. This does **not** reset `isFeynmanPassed`.
+
+**Response `200`:**
+
+```json
+{
+  "blockId": "your_block_id",
+  "chatHistory": [
+    {
+      "role": "assistant",
+      "content": "your test question"
+    }
+  ],
+  "isFeynmanPassed": true
+}
+```
+
+**Error responses:**
+
+```json
+{ "message": "Block not found" } // 404
+{ "message": "Lesson not found" } // 404
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
+{ "message": "Failed to reset Feynman history" } // 500
 ```
 
 ---
 
 ### GET `/api/feynman/block/:blockId/stats`
 
-Check `isFeynmanPassed` for a completed block in the current user's `UserLessonProgress.blockProgress`.
+Check `isFeynmanPassed` for a block in the current user's `UserLessonProgress.blockProgress`.
 
 **Response `200`:**
 
@@ -582,7 +617,8 @@ Check `isFeynmanPassed` for a completed block in the current user's `UserLessonP
 ```json
 { "message": "Block not found" } // 404
 { "message": "Lesson not found" } // 404
-{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
 { "message": "Failed to fetch Feynman stats" } // 500
 ```
 
@@ -1135,7 +1171,9 @@ Get general dashboard summary for the authenticated user.
 {
   "user": {
     "_id": "64f1a2b3c4d5e6f7a8b9c0d1",
+    "email": "alice@example.com",
     "username": "alice",
+    "fullName": "Alice Nguyen",
     "selectedLanguage": ["C++"]
   },
   "roadmap": {
@@ -1164,7 +1202,18 @@ Get general dashboard summary for the authenticated user.
     }
   ],
   "dailyReview": {
-    "pendingCount": 8
+    "pendingCount": 0
   }
 }
+```
+
+> `dailyReview.pendingCount` currently returns `0` until the repetition system is implemented.
+
+**Error responses:**
+
+```json
+{ "message": "User not found" } // 404
+{ "message": "No language selected" } // 400
+{ "message": "Roadmap not found for selected language" } // 404
+{ "message": "Failed to fetch dashboard" } // 500
 ```

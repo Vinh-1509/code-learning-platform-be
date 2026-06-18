@@ -49,7 +49,7 @@ export class DashboardService {
         Array<{
           _id: Types.ObjectId;
           milestoneId: { _id: Types.ObjectId; title: string }; // populated doc
-          status: 'Locked' | 'Active' | 'Completed';
+          status: 'locked' | 'active' | 'completed';
           completionPercentage: number;
         }>
       >();

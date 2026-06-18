@@ -9,6 +9,8 @@ import {
   UserLessonProgress,
 } from './models/learning_system.model';
 import { Exercise } from './models/exercise.model';
+import { ExerciseTag } from './models/exercise_tag.model';
+import { UserTagStats } from './models/user_tag_stats.model';
 import { LanguageInfo } from './models/language_info.model';
 import type { IBlock } from './interfaces/learning_system.interface';
 
@@ -32,6 +34,8 @@ export const seed = async (disconnectAfter = true) => {
       UserLessonProgress.deleteMany({}),
       UserMilestoneProgress.deleteMany({}),
       Exercise.deleteMany({}),
+      ExerciseTag.deleteMany({}),
+      UserTagStats.deleteMany({}),
       LanguageInfo.deleteMany({}),
     ]);
     console.log('✓ Collections cleared');
@@ -64,6 +68,53 @@ export const seed = async (disconnectAfter = true) => {
     // ─── Roadmaps ────────────────────────────────────────────────────────────
 
     console.log('\n📚 Creating Roadmaps...');
+    console.log('\n🏷️ Creating exercise tags...');
+    const tags = await ExerciseTag.insertMany([
+      {
+        name: 'Variables',
+        description: 'Variable declaration, naming, assignment, and usage',
+      },
+      {
+        name: 'Data Types',
+        description: 'Choosing and matching data types and values',
+      },
+      {
+        name: 'Input Output',
+        description: 'Printing values and formatting program output',
+      },
+      {
+        name: 'Type Conversion',
+        description: 'Casting, narrowing, widening, and type conversion',
+      },
+      {
+        name: 'Operators',
+        description: 'Arithmetic, comparison, logical, and ternary operators',
+      },
+      {
+        name: 'Control Flow',
+        description: 'Conditional branching with if/else and switch',
+      },
+      {
+        name: 'Loops',
+        description: 'Repeated execution and loop control',
+      },
+      {
+        name: 'OOP',
+        description:
+          'Classes, objects, constructors, encapsulation, inheritance, interfaces, abstraction, and polymorphism',
+      },
+    ]);
+    const tagMap = new Map(tags.map((tag) => [tag.name, tag._id]));
+    const tagIds = (...names: string[]) =>
+      names.map((name) => {
+        const tagId = tagMap.get(name);
+        if (!tagId) {
+          throw new Error(`Missing exercise tag: ${name}`);
+        }
+        return tagId;
+      });
+    console.log(`✓ exercise_tag created: ${tags.length} tags`);
+
     const roadmap = await Roadmap.create({
       language: 'C++',
       title: 'Lộ trình C++',
@@ -144,6 +195,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 1.1 Block 1 — fill_blank
     const exercise1 = await Exercise.create({
       lessonId: lesson1_1._id,
+      tagId: tagIds('Variables', 'Data Types'),
       title: 'Declare Student Variables',
       instruction:
         'Khai báo các biến để lưu thông tin của một sinh viên: tên (string), tuổi (int), và điểm (double)',
@@ -176,6 +228,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 1.1 Block 1 — fill_blank
     const exercise2 = await Exercise.create({
       lessonId: lesson1_1._id,
+      tagId: tagIds('Input Output', 'Variables'),
       title: 'Output Variable Values',
       instruction: 'Viết mã để in ra giá trị của các biến: name, age, và score',
       language: 'C++',
@@ -214,6 +267,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 1.1 Block 2 — drag_drop
     const exercise3 = await Exercise.create({
       lessonId: lesson1_1._id,
+      tagId: tagIds('Data Types'),
       title: 'Match Data Types to Variables',
       instruction:
         'Kéo thả các giá trị phù hợp vào từng biến: int nhận số nguyên, double nhận số thực, char nhận ký tự, bool nhận giá trị logic',
@@ -251,6 +305,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 1.1 Block 3 — fill_blank
     const exercise4 = await Exercise.create({
       lessonId: lesson1_1._id,
+      tagId: tagIds('Type Conversion', 'Data Types'),
       title: 'Identify Casting Types',
       instruction:
         'Điền từ khóa phù hợp: implicit (ngầm định) hoặc explicit (tường minh)',
@@ -284,6 +339,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 1.2 Block 1 — drag_drop
     const exercise5 = await Exercise.create({
       lessonId: lesson1_2._id,
+      tagId: tagIds('Operators', 'Control Flow'),
       title: 'Even or Odd Condition',
       instruction: 'Kéo thả toán tử đúng để kiểm tra xem số có chẵn không',
       language: 'C++',
@@ -312,6 +368,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 1.2 Block 2 — fill_blank
     const exercise6 = await Exercise.create({
       lessonId: lesson1_2._id,
+      tagId: tagIds('Control Flow'),
       title: 'Complete Switch Statement',
       instruction: 'Chọn các từ khóa đúng để hoàn thành câu lệnh switch',
       language: 'C++',
@@ -347,6 +404,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 1.2 Block 3 — drag_drop
     const exercise7 = await Exercise.create({
       lessonId: lesson1_2._id,
+      tagId: tagIds('Loops'),
       title: 'While Loop Syntax',
       instruction:
         'Vòng lặp vô hạn nào kiểm tra điều kiện trước khi thực thi khối lệnh?',
@@ -377,6 +435,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 2.1 Block 1 — drag_drop
     const exercise8 = await Exercise.create({
       lessonId: lesson2_1._id,
+      tagId: tagIds('OOP'),
       title: 'Access Modifiers',
       instruction:
         'Hãy điền access modifier phù hợp: __ cho thuộc tính ẩn, __ cho phương thức công khai',
@@ -408,6 +467,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 2.1 Block 2 — fill_blank
     const exercise9 = await Exercise.create({
       lessonId: lesson2_1._id,
+      tagId: tagIds('OOP'),
       title: 'Constructor Syntax',
       instruction: 'Điền tên của constructor (phải trùng với tên class)',
       language: 'C++',
@@ -436,6 +496,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 2.1 Block 3 — drag_drop
     const exercise10 = await Exercise.create({
       lessonId: lesson2_1._id,
+      tagId: tagIds('OOP'),
       title: 'Getter and Setter Methods',
       instruction:
         'Kéo thả lần lượt các tên phù hợp cho phương thức getter và tiền tố setter phù hợp',
@@ -469,6 +530,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 2.2 Block 1 — fill_blank
     const exercise11 = await Exercise.create({
       lessonId: lesson2_2._id,
+      tagId: tagIds('OOP'),
       title: 'Inheritance Syntax',
       instruction: 'Điền từ khóa kế thừa để Dog kế thừa từ Animal',
       language: 'C++',
@@ -497,6 +559,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 2.2 Block 2 — drag_drop
     const exercise12 = await Exercise.create({
       lessonId: lesson2_2._id,
+      tagId: tagIds('OOP'),
       title: 'Virtual Function Override',
       instruction:
         'Từ khóa __ cho phép compiler kiểm tra phương thức virtual từ class cha',
@@ -527,6 +590,7 @@ export const seed = async (disconnectAfter = true) => {
     // Lesson 2.2 Block 3 — fill_blank
     const exercise13 = await Exercise.create({
       lessonId: lesson2_2._id,
+      tagId: tagIds('OOP'),
       title: 'Pure Virtual Function',
       instruction:
         'Điền ký tự để tạo pure virtual function (class trở thành abstract)',
@@ -1251,6 +1315,7 @@ int main() {
     // Java Lesson 1.1 Block 1 — fill_blank
     const javaExercise1 = await Exercise.create({
       lessonId: javaLesson1_1._id,
+      tagId: tagIds('Variables', 'Data Types'),
       title: 'Declare Java Variables',
       instruction:
         'Declare variables for person data: name (String), age (int), height (double)',
@@ -1284,6 +1349,7 @@ int main() {
     // Java Lesson 1.1 Block 2 — drag_drop
     const javaExercise2 = await Exercise.create({
       lessonId: javaLesson1_1._id,
+      tagId: tagIds('Data Types'),
       title: 'Match Java Types',
       instruction:
         'Kéo thả giá trị phù hợp cho từng kiểu dữ liệu Java: int, String, double, boolean',
@@ -1321,6 +1387,7 @@ int main() {
     // Java Lesson 1.1 Block 3 — fill_blank
     const javaExercise3 = await Exercise.create({
       lessonId: javaLesson1_1._id,
+      tagId: tagIds('Type Conversion', 'Data Types'),
       title: 'Type Narrowing in Java',
       instruction:
         'Điền kiểu dữ liệu phù hợp khi chuyển đổi từ double sang int',
@@ -1350,6 +1417,7 @@ int main() {
     // Java Lesson 1.2 Block 1 — drag_drop
     const javaExercise4 = await Exercise.create({
       lessonId: javaLesson1_2._id,
+      tagId: tagIds('Control Flow'),
       title: 'If-Else Structure',
       instruction: 'Kéo thả từ khóa để hoàn thành if-else statement',
       language: 'Java',
@@ -1381,6 +1449,7 @@ int main() {
     // Java Lesson 1.2 Block 2 — fill_blank
     const javaExercise5 = await Exercise.create({
       lessonId: javaLesson1_2._id,
+      tagId: tagIds('Operators', 'Control Flow'),
       title: 'Ternary Operator',
       instruction: 'Điền các ký tự của ternary operator (condition ? yes : no)',
       language: 'Java',
@@ -1409,6 +1478,7 @@ int main() {
     // Java Lesson 1.2 Block 3 — drag_drop
     const javaExercise6 = await Exercise.create({
       lessonId: javaLesson1_2._id,
+      tagId: tagIds('Loops'),
       title: 'Loop Control Keywords',
       instruction:
         'Từ khóa __ dùng để thoát vòng lặp ngay, __ để bỏ qua lần lặp hiện tại.',
@@ -1441,6 +1511,7 @@ int main() {
     // Java Lesson 2.1 Block 1 — fill_blank
     const javaExercise7 = await Exercise.create({
       lessonId: javaLesson2_1._id,
+      tagId: tagIds('OOP'),
       title: 'Class Constructor',
       instruction: 'Điền tên của constructor (phải trùng với tên class)',
       language: 'Java',
@@ -1469,6 +1540,7 @@ int main() {
     // Java Lesson 2.1 Block 2 — drag_drop
     const javaExercise8 = await Exercise.create({
       lessonId: javaLesson2_1._id,
+      tagId: tagIds('OOP'),
       title: 'Getter Method Pattern',
       instruction:
         'Kéo thả tên getter phù hợp nhất để lấy giá trị thuộc tính name',
@@ -1499,6 +1571,7 @@ int main() {
     // Java Lesson 2.1 Block 3 — fill_blank
     const javaExercise9 = await Exercise.create({
       lessonId: javaLesson2_1._id,
+      tagId: tagIds('OOP'),
       title: 'Static Variable',
       instruction:
         'Điền từ khóa để khai báo biến chia sẻ cho tất cả instances của class',
@@ -1525,6 +1598,7 @@ int main() {
     // Java Lesson 2.2 Block 1 — drag_drop
     const javaExercise10 = await Exercise.create({
       lessonId: javaLesson2_2._id,
+      tagId: tagIds('OOP'),
       title: 'Extends and Implements',
       instruction: 'Hãy điền từ khóa phù hợp. Dog __ Animal, Cat __ Speakable.',
       language: 'Java',
@@ -1552,6 +1626,7 @@ int main() {
     // Java Lesson 2.2 Block 2 — fill_blank
     const javaExercise11 = await Exercise.create({
       lessonId: javaLesson2_2._id,
+      tagId: tagIds('OOP'),
       title: 'Abstract Method',
       instruction:
         'Điền từ khóa để khai báo phương thức abstract (không có body)',
@@ -1578,6 +1653,7 @@ int main() {
     // Java Lesson 2.2 Block 3 — drag_drop
     const javaExercise12 = await Exercise.create({
       lessonId: javaLesson2_2._id,
+      tagId: tagIds('OOP'),
       title: 'Default Interface Method',
       instruction:
         'Kéo thả access modifier đúng khi khai báo default method trong interface',

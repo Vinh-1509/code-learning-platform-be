@@ -9,6 +9,7 @@ import {
   UserLessonProgress,
 } from './models/learning_system.model';
 import { Exercise } from './models/exercise.model';
+import { ExerciseAttempt } from './models/exercise_attempt.model';
 import { ExerciseTag } from './models/exercise_tag.model';
 import { UserTagStats } from './models/user_tag_stats.model';
 import { LanguageInfo } from './models/language_info.model';
@@ -34,6 +35,7 @@ export const seed = async (disconnectAfter = true) => {
       UserLessonProgress.deleteMany({}),
       UserMilestoneProgress.deleteMany({}),
       Exercise.deleteMany({}),
+      ExerciseAttempt.deleteMany({}),
       ExerciseTag.deleteMany({}),
       UserTagStats.deleteMany({}),
       LanguageInfo.deleteMany({}),

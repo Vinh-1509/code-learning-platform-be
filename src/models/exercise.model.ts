@@ -8,6 +8,7 @@ export interface IExercise extends Document {
   language: 'C++' | 'Java';
   type: 'fill_blank' | 'drag_drop';
   level: 'easy' | 'medium' | 'hard';
+  tagId?: Types.ObjectId[];
   data: Record<string, unknown>;
   correctAnswer: Record<string, unknown>;
   explanation: string;
@@ -39,6 +40,11 @@ const exerciseSchema = new Schema<IExercise>(
       type: String,
       required: true,
       enum: ['easy', 'medium', 'hard'],
+    },
+    tagId: {
+      type: [Schema.Types.ObjectId],
+      ref: 'ExerciseTag',
+      default: [],
     },
     data: { type: Schema.Types.Mixed, required: true },
     correctAnswer: { type: Schema.Types.Mixed, required: true },

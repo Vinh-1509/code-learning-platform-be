@@ -4,6 +4,7 @@ import { Exercise, IExercise } from '../models/exercise.model';
 import { ExerciseAttempt } from '../models/exercise_attempt.model';
 import { Block, UserLessonProgress } from '../models/learning_system.model';
 import { gradeExerciseAnswer } from '../utils/exercise_grading';
+import { updateUserTagStatsForExercise } from '../utils/tag_stats';
 import type {
   ExerciseAttemptResponse,
   ExerciseAttemptItem,
@@ -22,6 +23,7 @@ const DEFAULT_LIMIT = 15;
 const MAX_LIMIT = 50;
 const SUPPORTED_LANGUAGES = ['C++', 'Java'] as const;
 const SUPPORTED_LEVELS = ['easy', 'medium', 'hard'] as const;
+const SUPPORTED_STATUSES = ['locked', 'active', 'completed'] as const;
 
 function authUserId(req: Request): string {
   return req.user!.id;
@@ -58,6 +60,14 @@ function isSupportedLevel(
   return SUPPORTED_LEVELS.includes(value as (typeof SUPPORTED_LEVELS)[number]);
 }
 
+function isSupportedStatus(
+  value: string,
+): value is (typeof SUPPORTED_STATUSES)[number] {
+  return SUPPORTED_STATUSES.includes(
+    value as (typeof SUPPORTED_STATUSES)[number],
+  );
+}
+
 function toListItem(
   exercise: IExercise,
   status: ExerciseStatus,
@@ -69,6 +79,7 @@ function toListItem(
     language: exercise.language,
     type: exercise.type,
     level: exercise.level,
+    tagId: exercise.tagId,
     status,
     order: exercise.order,
   };
@@ -234,6 +245,41 @@ export const getPracticeExercises = async (
       filter.level = query.difficulty;
     }
 
+    if (query.tagId && mongoose.Types.ObjectId.isValid(query.tagId)) {
+      filter.tagId = new mongoose.Types.ObjectId(query.tagId);
+    }
+
+    if (query.status && isSupportedStatus(query.status)) {
+      const allExercises = await Exercise.find(filter).sort({
+        order: 1,
+        createdAt: 1,
+      });
+      const statusMap = await getExerciseStatusMap(
+        authUserId(req),
+        allExercises,
+      );
+      const filteredExercises = allExercises.filter(
+        (exercise) =>
+          (statusMap.get(exercise._id.toString()) ?? 'active') === query.status,
+      );
+      const paginatedExercises = filteredExercises.slice(skip, skip + limit);
+
+      const response: PracticeExerciseListResponse = {
+        total: filteredExercises.length,
+        page,
+        limit,
+        data: paginatedExercises.map((exercise) =>
+          toListItem(
+            exercise,
+            statusMap.get(exercise._id.toString()) ?? 'active',
+          ),
+        ),
+      };
+
+      res.json(response);
+      return;
+    }
+
     const [total, exercises] = await Promise.all([
       Exercise.countDocuments(filter),
       Exercise.find(filter)
@@ -334,6 +380,11 @@ export const submitPracticeExercise = async (
         attemptedAt: new Date(),
       },
       { new: true, upsert: true },
+    );
+    await updateUserTagStatsForExercise(
+      userId,
+      exercise.tagId,
+      grading.isCorrect,
     );
 
     const response: SubmitExerciseResponse = {

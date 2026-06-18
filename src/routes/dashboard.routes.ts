@@ -5,6 +5,6 @@ import { getDashboard } from '../controllers/dashboard.controller';
 const router = Router();
 
 // GET /api/dashboard
-router.get('/', authenticate, getDashboard);
+router.get('/dashboard', authenticate, getDashboard);
 
 export default router;

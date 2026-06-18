@@ -64,6 +64,11 @@ export default tseslint.config(
   },
   {
     files: ['tests/**/*.ts', '**/*.test.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.test.json',
+      },
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',

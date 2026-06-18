@@ -4,8 +4,8 @@ import {
   requireLanguageSelected,
   requireLessonAccess,
   requireBlockAccess,
-} from '../../../src/middlewares/learning_system.middleware';
-import User from '../../../src/models/user.model';
+} from '../../src/middlewares/learning_system.middleware';
+import User from '../../src/models/user.model';
 import { Types } from 'mongoose';
 import {
   UserMilestoneProgress,
@@ -13,12 +13,12 @@ import {
   Lesson,
   UserLessonProgress,
   Block,
-} from '../../../src/models/learning_system.model';
-import * as learningProgressUtils from '../../../src/utils/learning_progress';
+} from '../../src/models/learning_system.model';
+import * as learningProgressUtils from '../../src/utils/learning_progress';
 
-vi.mock('../../../src/models/user.model');
-vi.mock('../../../src/models/learning_system.model');
-vi.mock('../../../src/utils/learning_progress');
+vi.mock('../../src/models/user.model');
+vi.mock('../../src/models/learning_system.model');
+vi.mock('../../src/utils/learning_progress');
 
 describe('learning_system.middleware', () => {
   let req: any;

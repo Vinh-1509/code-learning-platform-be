@@ -239,7 +239,15 @@ describe('learning_progress', () => {
     });
 
     it('should backfill status if missing', async () => {
-      const mockProgress = { isCompleted: true, save: vi.fn() };
+      const mockProgress: {
+        isCompleted: boolean;
+        status?: string;
+        save: ReturnType<typeof vi.fn>;
+      } = {
+        isCompleted: true,
+        status: undefined,
+        save: vi.fn(),
+      };
       (UserLessonProgress.findOne as any).mockResolvedValue(mockProgress);
 
       await getOrCreateLessonProgress('user1', new Types.ObjectId(), []);

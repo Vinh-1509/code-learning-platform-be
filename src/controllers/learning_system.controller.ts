@@ -24,9 +24,7 @@ function authUserId(req: Request): string {
   return req.user!.id;
 }
 
-/**
- * Helper: Enrich roadmap data with language info details (batched query)
- */
+// Enrich roadmaps with language_info data in one query to avoid per-language lookups.
 async function enrichLanguagesWithDetails(
   roadmaps: Array<{
     _id: Types.ObjectId;
@@ -36,12 +34,10 @@ async function enrichLanguagesWithDetails(
 ) {
   const languages = roadmaps.map((r) => r.language);
 
-  // 1. Fetch and cast using your existing interface
   const languageInfos = (await LanguageInfo.find({
     language: { $in: languages },
   }).lean()) as unknown as ILanguageInfoResponse[];
 
-  // 2. Strongly type the map so ESLint knows exactly what properties exist
   const infoMap: Record<string, ILanguageInfoResponse> = Object.fromEntries(
     languageInfos.map((li) => [li.language, li]),
   );
@@ -54,71 +50,6 @@ async function enrichLanguagesWithDetails(
     challenges: infoMap[r.language]?.challenges ?? [],
     useCases: infoMap[r.language]?.useCases ?? [],
   }));
-}
-
-/**
- * SECURITY HELPER: Verify if a user is legally allowed to access/modify a lesson.
- * Checks if the parent Milestone is unlocked AND if the previous Lesson is completed.
- */
-async function verifyLessonAccess(
-  userId: string,
-  lessonId: Types.ObjectId | string,
-  milestoneId: Types.ObjectId | string,
-): Promise<{ allowed: boolean; reason?: string }> {
-  // Changed 'let' to 'const'
-  const milestoneProgress = await UserMilestoneProgress.findOne({
-    userId,
-    milestoneId,
-  }).lean();
-
-  // 1. Enforce Milestone Lock
-  if (!milestoneProgress) {
-    const milestone = await Milestone.findById(milestoneId).lean();
-    if (!milestone) return { allowed: false, reason: 'Milestone not found' };
-
-    const isFirst = await isFirstMilestoneInRoadmap(
-      milestoneId.toString(),
-      milestone.roadmapId,
-    );
-
-    if (isFirst) {
-      // Just create it in the DB; no need to assign it to a variable
-      await UserMilestoneProgress.create({
-        userId,
-        milestoneId,
-        completionPercentage: 0,
-        status: 'Active',
-      });
-    } else {
-      return { allowed: false, reason: 'Milestone is locked' };
-    }
-  } else if (milestoneProgress.status === 'Locked') {
-    return { allowed: false, reason: 'Milestone is locked' };
-  }
-
-  // 2. Enforce Previous Lesson Lock
-  const allLessons = await Lesson.find({ milestoneId })
-    .sort({ order: 1 })
-    .select('_id')
-    .lean();
-
-  const lessonIndex = allLessons.findIndex(
-    (l) => l._id.toString() === lessonId.toString(),
-  );
-
-  if (lessonIndex > 0) {
-    const prevLessonId = allLessons[lessonIndex - 1]._id;
-    const prevLessonProgress = await UserLessonProgress.findOne({
-      userId,
-      lessonId: prevLessonId,
-    }).lean();
-
-    if (!prevLessonProgress || !prevLessonProgress.isCompleted) {
-      return { allowed: false, reason: 'Previous lesson is not completed' };
-    }
-  }
-
-  return { allowed: true };
 }
 
 // ─── Languages APIs ──────────────────────────────────────────────────────────
@@ -194,7 +125,7 @@ export const selectLanguage = async (
     }
     res.json({
       message: 'Language updated successfully',
-      selectedLanguage: user.selectedLanguage,
+      selectedLanguage: user.selectedLanguage ?? [],
     });
   } catch {
     res.status(500).json({ message: 'Failed to select language' });
@@ -209,12 +140,8 @@ export const getMilestones = async (
 ): Promise<void> => {
   try {
     const user = await User.findById(authUserId(req)).lean();
-    if (!user?.selectedLanguage?.[0]) {
-      res.status(400).json({ message: 'No language selected' });
-      return;
-    }
     const roadmap = await Roadmap.findOne({
-      language: user.selectedLanguage[0],
+      language: user!.selectedLanguage![0],
     }).lean();
     if (!roadmap) {
       res
@@ -233,11 +160,12 @@ export const getMilestones = async (
         });
 
         if (!progress) {
+          // Progress is initialized lazily; only the first milestone starts active.
           progress = await UserMilestoneProgress.create({
             userId: authUserId(req),
             milestoneId: milestone._id,
             completionPercentage: 0,
-            status: index === 0 ? 'Active' : 'Locked',
+            status: index === 0 ? 'active' : 'locked',
           });
         }
 
@@ -283,7 +211,7 @@ export const getMilestoneById = async (
         userId: authUserId(req),
         milestoneId,
         completionPercentage: 0,
-        status: isFirst ? 'Active' : 'Locked',
+        status: isFirst ? 'active' : 'locked',
       });
     }
     res.json({
@@ -331,9 +259,10 @@ export const getLessonsByMilestone = async (
     const lessonsWithProgress = lessons.map((lesson, index) => {
       const progress = progressMap[lesson._id.toString()];
       let status: 'completed' | 'active' | 'locked' = 'locked';
+      // Lesson access is sequential inside an active milestone.
       if (progress?.isCompleted) {
         status = 'completed';
-      } else if (milestoneProgress?.status === 'Active') {
+      } else if (milestoneProgress?.status === 'active') {
         if (index === 0) {
           status = 'active';
         } else {
@@ -373,18 +302,6 @@ export const getLessonById = async (
       return;
     }
 
-    // --- SECURITY/LOGIC FIX START ---
-    const access = await verifyLessonAccess(
-      authUserId(req),
-      lesson._id,
-      lesson.milestoneId,
-    );
-    if (!access.allowed) {
-      res.status(403).json({ message: `Forbidden: ${access.reason}` });
-      return;
-    }
-    // --- SECURITY/LOGIC FIX END ---
-
     const populatedBlocks = lesson.blocks as unknown as {
       _id: Types.ObjectId;
       title: string;
@@ -398,6 +315,7 @@ export const getLessonById = async (
       lesson._id,
       blockIds,
     );
+    // Opening a lesson updates recency and creates missing block progress.
     progress.lastAccessed = new Date();
     await progress.save();
     const blocksWithProgress = populatedBlocks.map((block) => {
@@ -410,7 +328,7 @@ export const getLessonById = async (
         description: block.description,
         content: block.content,
         feynmanQuestion: block.feynmanQuestion,
-        state: blockProg?.state ?? 'locked',
+        status: blockProg?.status ?? 'locked',
         isFeynmanPassed: blockProg?.isFeynmanPassed ?? false,
       };
     });
@@ -420,6 +338,7 @@ export const getLessonById = async (
       order: lesson.order,
       blocks: blocksWithProgress,
       progress: {
+        status: progress.status,
         completionPercentage: progress.completionPercentage,
         isCompleted: progress.isCompleted,
         lastAccessed: progress.lastAccessed,
@@ -447,18 +366,6 @@ export const completeBlock = async (
       return;
     }
 
-    // --- SECURITY/LOGIC FIX START ---
-    const access = await verifyLessonAccess(
-      authUserId(req),
-      lesson._id,
-      lesson.milestoneId,
-    );
-    if (!access.allowed) {
-      res.status(403).json({ message: `Forbidden: ${access.reason}` });
-      return;
-    }
-    // --- SECURITY/LOGIC FIX END ---
-
     const lessonProgress = await getOrCreateLessonProgress(
       authUserId(req),
       block.lessonId,
@@ -480,12 +387,13 @@ export const completeBlock = async (
       currentBp = {
         blockId: block._id,
         isFeynmanPassed: false,
-        state: blockIndex === 0 ? 'active' : 'locked',
+        status: blockIndex === 0 ? 'active' : 'locked',
+        chatHistory: [],
       };
       lessonProgress.blockProgress.push(currentBp);
     }
 
-    if (currentBp.state === 'locked') {
+    if (currentBp.status === 'locked') {
       res.status(403).json({
         message:
           'Forbidden: Cannot complete a locked block. Complete previous blocks first.',
@@ -493,10 +401,11 @@ export const completeBlock = async (
       return;
     }
 
-    if (currentBp.state === 'completed') {
+    if (currentBp.status === 'completed') {
       res.json({
         message: 'Block already completed',
         lessonProgress: {
+          status: lessonProgress.status,
           completionPercentage: lessonProgress.completionPercentage,
           isCompleted: lessonProgress.isCompleted,
         },
@@ -504,9 +413,10 @@ export const completeBlock = async (
       return;
     }
 
-    currentBp.state = 'completed';
+    currentBp.status = 'completed';
 
     if (blockIndex < lesson.blocks.length - 1) {
+      // Completing a block unlocks the next block in the same lesson.
       const nextBlockId = lesson.blocks[blockIndex + 1];
       let nextBp = lessonProgress.blockProgress.find(
         (bp) => bp.blockId.toString() === nextBlockId.toString(),
@@ -515,12 +425,13 @@ export const completeBlock = async (
         nextBp = {
           blockId: nextBlockId,
           isFeynmanPassed: false,
-          state: 'locked',
+          status: 'locked',
+          chatHistory: [],
         };
         lessonProgress.blockProgress.push(nextBp);
       }
-      if (nextBp.state === 'locked') {
-        nextBp.state = 'active';
+      if (nextBp.status === 'locked') {
+        nextBp.status = 'active';
       }
     }
 
@@ -530,6 +441,7 @@ export const completeBlock = async (
     );
     lessonProgress.completionPercentage = completionPercentage;
     lessonProgress.isCompleted = isCompleted;
+    lessonProgress.status = isCompleted ? 'completed' : 'active';
     await lessonProgress.save();
 
     const averageCompletion = await averageMilestoneLessonCompletion(
@@ -555,28 +467,30 @@ export const completeBlock = async (
         completionPercentage: averageCompletion,
         status:
           averageCompletion === 100
-            ? 'Completed'
+            ? 'completed'
             : isFirst
-              ? 'Active'
-              : 'Locked',
+              ? 'active'
+              : 'locked',
       });
     } else {
       milestoneProgress.completionPercentage = averageCompletion;
       if (averageCompletion === 100) {
-        milestoneProgress.status = 'Completed';
-      } else if (milestoneProgress.status !== 'Locked') {
-        milestoneProgress.status = 'Active';
+        milestoneProgress.status = 'completed';
+      } else if (milestoneProgress.status !== 'locked') {
+        milestoneProgress.status = 'active';
       }
       await milestoneProgress.save();
     }
 
     if (averageCompletion === 100) {
+      // A fully completed milestone can unlock the next milestone.
       await unlockNextMilestoneIfCompleted(authUserId(req), lesson.milestoneId);
     }
 
     res.json({
       message: 'Block marked as completed',
       lessonProgress: {
+        status: lessonProgress.status,
         completionPercentage: lessonProgress.completionPercentage,
         isCompleted: lessonProgress.isCompleted,
       },

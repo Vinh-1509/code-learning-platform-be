@@ -437,6 +437,8 @@ Get the user's latest attempt and answer for a specific exercise. This API retur
 
 ## 3. AI Feynman
 
+Block Feynman APIs are available only after the target block is `completed`. If the block is still `locked` or `active`, the backend returns `403`.
+
 | Method | Endpoint                                     | isAuth | Priority |
 | ------ | -------------------------------------------- | ------ | -------- |
 | GET    | `/api/feynman/block/:blockId/question`       | Yes    | HIGH     |
@@ -452,28 +454,36 @@ Get the user's latest attempt and answer for a specific exercise. This API retur
 
 ### GET `/api/feynman/block/:blockId/question`
 
-Fetch `feynmanQuestion` from the `blocks` table.
+Fetch the Feynman question for a completed block. The question comes from `blocks.feynmanQuestion`; if it is missing, the backend returns the default question.
 
 **Response `200`:**
 
 ```json
 {
-  "blockId": "64f1a2b3c4d5e6f7a8b9c0b1",
-  "feynmanQuestion": "Can you explain what a pointer is as if you were teaching a 10-year-old?"
+  "blockId": "your_block_id",
+  "question": "your test question"
 }
+```
+
+**Error responses:**
+
+```json
+{ "message": "Block not found" } // 404
+{ "message": "Lesson not found" } // 404
+{ "message": "Feynman is available only after the block is completed" } // 403
 ```
 
 ---
 
 ### POST `/api/feynman/block/:blockId/chat`
 
-Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFeynmanPassed: true` if criteria are met.
+Submit a user explanation for a completed block. Backend invokes Groq, updates `blockProgress.chatHistory`, and sets `isFeynmanPassed: true` if criteria are met.
 
 **Request Body:**
 
 ```json
 {
-  "message": "A pointer is like an address. It stores where a value lives in memory, not the value itself."
+  "message": "your test explanation"
 }
 ```
 
@@ -481,8 +491,9 @@ Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFe
 
 ```json
 {
-  "reply": "Great analogy! That is exactly right. Can you tell me what happens when you dereference a pointer?",
-  "isFeynmanPassed": false
+  "blockId": "your_block_id",
+  "reply": "your test ai reply",
+  "isPassed": false
 }
 ```
 
@@ -490,52 +501,81 @@ Submit a user message. Backend invokes AI, updates `chatHistory`, and sets `isFe
 
 ```json
 {
-  "reply": "Excellent explanation! You clearly understand this concept.",
-  "isFeynmanPassed": true
+  "blockId": "your_block_id",
+  "reply": "your test ai reply",
+  "isPassed": true
 }
+```
+
+**Error responses:**
+
+```json
+{ "message": "Message is required" } // 400
+{ "message": "Block not found" } // 404
+{ "message": "Lesson not found" } // 404
+{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Failed to process Feynman chat" } // 500
 ```
 
 ---
 
 ### GET `/api/feynman/block/:blockId/history`
 
-Fetch the `chatHistory` array for this block from the user's progress record.
+Fetch the `chatHistory` array for this completed block from the current user's `UserLessonProgress.blockProgress`.
 
 **Response `200`:**
 
 ```json
 {
-  "blockId": "64f1a2b3c4d5e6f7a8b9c0b1",
+  "blockId": "your_block_id",
   "chatHistory": [
     {
       "role": "assistant",
-      "content": "Can you explain what a pointer is as if you were teaching a 10-year-old?"
+      "content": "your test question"
     },
     {
       "role": "user",
-      "content": "A pointer stores a memory address, not a value."
+      "content": "your test explanation"
     },
     {
       "role": "assistant",
-      "content": "Correct! What happens when you dereference it?"
+      "content": "your test ai reply"
     }
   ]
 }
+```
+
+**Error responses:**
+
+```json
+{ "message": "Block not found" } // 404
+{ "message": "Lesson not found" } // 404
+{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Failed to fetch Feynman history" } // 500
 ```
 
 ---
 
 ### GET `/api/feynman/block/:blockId/stats`
 
-Check `isFeynmanPassed` in `user_lesson_progress` for the current user.
+Check `isFeynmanPassed` for a completed block in the current user's `UserLessonProgress.blockProgress`.
 
 **Response `200`:**
 
 ```json
 {
-  "blockId": "64f1a2b3c4d5e6f7a8b9c0b1",
+  "blockId": "your_block_id",
   "isFeynmanPassed": true
 }
+```
+
+**Error responses:**
+
+```json
+{ "message": "Block not found" } // 404
+{ "message": "Lesson not found" } // 404
+{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Failed to fetch Feynman stats" } // 500
 ```
 
 ---
@@ -780,7 +820,7 @@ Get list of milestones with user progress attached.
     "description": "Variables, types, control flow and functions.",
     "order": 1,
     "progress": {
-      "status": "Active",
+      "status": "active",
       "completionPercentage": 45
     }
   },
@@ -790,7 +830,7 @@ Get list of milestones with user progress attached.
     "description": "Classes, inheritance, polymorphism.",
     "order": 2,
     "progress": {
-      "status": "Locked",
+      "status": "locked",
       "completionPercentage": 0
     }
   }
@@ -812,7 +852,7 @@ Get details of a specific milestone with user progress.
   "description": "Variables, types, control flow and functions.",
   "order": 1,
   "progress": {
-    "status": "Active",
+    "status": "active",
     "completionPercentage": 45,
     "updatedAt": "2024-03-04T14:00:00.000Z"
   }
@@ -823,7 +863,7 @@ Get details of a specific milestone with user progress.
 
 ### GET `/api/learning/milestones/:milestoneId/lessons`
 
-Get all lessons belonging to the milestone with progress state.
+Get all lessons belonging to the milestone with progress status.
 
 **Response `200`:**
 
@@ -852,13 +892,13 @@ Get all lessons belonging to the milestone with progress state.
 ]
 ```
 
-> `status` is one of `"completed"` | `"active"` | `"locked"`. A lesson is `active` when the milestone is Active and all preceding lessons are completed. It is `locked` when the milestone itself is Locked or the previous lesson is not yet completed.
+> `status` is one of `"completed"` | `"active"` | `"locked"`. A lesson is `active` when the milestone is active and all preceding lessons are completed. It is `locked` when the milestone itself is locked or the previous lesson is not yet completed.
 
 ---
 
 ### GET `/api/learning/lessons/:lessonId`
 
-Get full lesson content with all blocks embedded. Block state reflects current user progress.
+Get full lesson content with all blocks embedded. Block status reflects current user progress.
 
 **Response `200`:**
 
@@ -899,7 +939,7 @@ Get full lesson content with all blocks embedded. Block state reflects current u
         }
       ],
       "feynmanQuestion": "Can you explain what a variable is in your own words?",
-      "state": "completed",
+      "status": "completed",
       "isFeynmanPassed": true
     },
     {
@@ -917,11 +957,12 @@ Get full lesson content with all blocks embedded. Block state reflects current u
         }
       ],
       "feynmanQuestion": "What is the difference between int and float?",
-      "state": "active",
+      "status": "active",
       "isFeynmanPassed": false
     }
   ],
   "progress": {
+    "status": "active",
     "completionPercentage": 50,
     "isCompleted": false,
     "lastAccessed": "2024-03-05T09:00:00.000Z"
@@ -941,6 +982,7 @@ Mark a block as completed and update lesson/milestone progress percentages.
 {
   "message": "Block marked as completed",
   "lessonProgress": {
+    "status": "completed",
     "completionPercentage": 100,
     "isCompleted": true
   }
@@ -1114,13 +1156,13 @@ Get general dashboard summary for the authenticated user.
     {
       "_id": "64f1a2b3c4d5e6f7a8b9c0a1",
       "title": "C++ Fundamentals",
-      "status": "Active",
+      "status": "active",
       "completionPercentage": 45
     },
     {
       "_id": "64f1a2b3c4d5e6f7a8b9c0a2",
       "title": "Object Oriented Programming",
-      "status": "Locked",
+      "status": "locked",
       "completionPercentage": 0
     }
   ],

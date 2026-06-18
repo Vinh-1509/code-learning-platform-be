@@ -37,7 +37,7 @@ const userSchema = new Schema<IUser>(
   { timestamps: false },
 );
 
-// Hash password before saving
+// Hash only new or changed passwords before persisting a user.
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
 
@@ -45,7 +45,7 @@ userSchema.pre('save', async function () {
   this.password = await bcryptjs.hash(this.password, salt);
 });
 
-// Method to compare password
+// Hide bcrypt details from auth controllers.
 userSchema.methods.comparePassword = async function (
   password: string,
 ): Promise<boolean> {

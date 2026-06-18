@@ -9,6 +9,7 @@ export const authMiddleware = (
   next: NextFunction,
 ): void => {
   try {
+    // Expected format: Authorization: Bearer <access_token>
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {

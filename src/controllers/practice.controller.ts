@@ -2,10 +2,12 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { Exercise, IExercise } from '../models/exercise.model';
 import { ExerciseAttempt } from '../models/exercise_attempt.model';
+import { Block, UserLessonProgress } from '../models/learning_system.model';
 import { gradeExerciseAnswer } from '../utils/exercise_grading';
 import type {
   ExerciseAttemptResponse,
   ExerciseAttemptItem,
+  ExerciseStatus,
   HintResponse,
   PracticeExerciseDetailResponse,
   PracticeExerciseListItem,
@@ -56,7 +58,10 @@ function isSupportedLevel(
   return SUPPORTED_LEVELS.includes(value as (typeof SUPPORTED_LEVELS)[number]);
 }
 
-function toListItem(exercise: IExercise): PracticeExerciseListItem {
+function toListItem(
+  exercise: IExercise,
+  status: ExerciseStatus,
+): PracticeExerciseListItem {
   return {
     _id: exercise._id,
     title: exercise.title,
@@ -64,29 +69,140 @@ function toListItem(exercise: IExercise): PracticeExerciseListItem {
     language: exercise.language,
     type: exercise.type,
     level: exercise.level,
+    status,
     order: exercise.order,
   };
 }
 
-function toDetailResponse(exercise: IExercise): PracticeExerciseDetailResponse {
+function toDetailResponse(
+  exercise: IExercise,
+  status: ExerciseStatus,
+): PracticeExerciseDetailResponse {
   return {
-    ...toListItem(exercise),
+    ...toListItem(exercise, status),
     data: exercise.data,
     hints: exercise.hints,
   };
 }
 
+function getPracticeExerciseIds(content: unknown[]): string[] {
+  return content.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+
+    const contentItem = item as Record<string, unknown>;
+    if (contentItem.type !== 'practice') return [];
+    if (!contentItem.data || typeof contentItem.data !== 'object') return [];
+
+    const data = contentItem.data as Record<string, unknown>;
+    const exerciseId = data.exerciseId;
+    if (exerciseId instanceof mongoose.Types.ObjectId) {
+      return [exerciseId.toString()];
+    }
+    if (typeof exerciseId === 'string') {
+      return [exerciseId];
+    }
+    return [];
+  });
+}
+
+async function getExerciseStatusMap(
+  userId: string,
+  exercises: IExercise[],
+): Promise<Map<string, ExerciseStatus>> {
+  const statusMap = new Map<string, ExerciseStatus>();
+  if (exercises.length === 0) return statusMap;
+
+  const exerciseIds = exercises.map((exercise) => exercise._id);
+  const attempts = await ExerciseAttempt.find({
+    userId,
+    exerciseId: { $in: exerciseIds },
+  })
+    .select('exerciseId isPassed')
+    .lean();
+  const passedExerciseIds = new Set(
+    attempts
+      .filter((attempt) => attempt.isPassed)
+      .map((attempt) => attempt.exerciseId.toString()),
+  );
+
+  exercises.forEach((exercise) => {
+    const exerciseId = exercise._id.toString();
+    if (passedExerciseIds.has(exerciseId)) {
+      statusMap.set(exerciseId, 'completed');
+      return;
+    }
+
+    statusMap.set(exerciseId, exercise.lessonId ? 'locked' : 'active');
+  });
+
+  const lessonIds = exercises
+    .map((exercise) => exercise.lessonId)
+    .filter((lessonId): lessonId is mongoose.Types.ObjectId =>
+      Boolean(lessonId),
+    );
+  if (lessonIds.length === 0) return statusMap;
+
+  const [blocks, lessonProgresses] = await Promise.all([
+    Block.find({ lessonId: { $in: lessonIds } })
+      .select('_id lessonId content')
+      .lean(),
+    UserLessonProgress.find({ userId, lessonId: { $in: lessonIds } })
+      .select('lessonId blockProgress status')
+      .lean(),
+  ]);
+
+  const exerciseBlockMap = new Map<string, string>();
+  blocks.forEach((block) => {
+    getPracticeExerciseIds(block.content).forEach((exerciseId) => {
+      exerciseBlockMap.set(exerciseId, block._id.toString());
+    });
+  });
+
+  const progressMap = new Map(
+    lessonProgresses.map((progress) => [
+      progress.lessonId.toString(),
+      progress,
+    ]),
+  );
+
+  exercises.forEach((exercise) => {
+    const exerciseId = exercise._id.toString();
+    if (statusMap.get(exerciseId) === 'completed' || !exercise.lessonId) {
+      return;
+    }
+
+    const progress = progressMap.get(exercise.lessonId.toString());
+    if (!progress || progress.status === 'locked') {
+      statusMap.set(exerciseId, 'locked');
+      return;
+    }
+
+    const blockId = exerciseBlockMap.get(exerciseId);
+    const blockProgress = progress.blockProgress?.find(
+      (bp) => bp.blockId.toString() === blockId,
+    );
+    statusMap.set(
+      exerciseId,
+      blockProgress?.status === 'locked' ? 'locked' : 'active',
+    );
+  });
+
+  return statusMap;
+}
+
 async function getLatestAttemptState(
   userId: string,
   exerciseId: string,
-): Promise<{ attemptNumber: number; hintLevel: number }> {
+): Promise<{ attemptNumber: number; hintLevel: number; isPassed: boolean }> {
+  // One document stores the latest attempt, while attemptNumber preserves total tries.
   const attempt = await ExerciseAttempt.findOne({ userId, exerciseId })
-    .select('attemptNumber hintLevel')
+    .select('attemptNumber hintLevel isPassed')
     .lean();
 
   return {
     attemptNumber: attempt?.attemptNumber ?? 0,
     hintLevel: attempt?.hintLevel ?? 0,
+    isPassed: attempt?.isPassed ?? false,
   };
 }
 
@@ -125,12 +241,18 @@ export const getPracticeExercises = async (
         .skip(skip)
         .limit(limit),
     ]);
+    const statusMap = await getExerciseStatusMap(authUserId(req), exercises);
 
     const response: PracticeExerciseListResponse = {
       total,
       page,
       limit,
-      data: exercises.map(toListItem),
+      data: exercises.map((exercise) =>
+        toListItem(
+          exercise,
+          statusMap.get(exercise._id.toString()) ?? 'active',
+        ),
+      ),
     };
 
     res.json(response);
@@ -154,7 +276,13 @@ export const getPracticeExerciseById = async (
       return;
     }
 
-    res.json(toDetailResponse(exercise));
+    const statusMap = await getExerciseStatusMap(authUserId(req), [exercise]);
+    res.json(
+      toDetailResponse(
+        exercise,
+        statusMap.get(exercise._id.toString()) ?? 'active',
+      ),
+    );
   } catch (err) {
     console.error('Get practice exercise error:', err);
     res.status(500).json({ message: 'Failed to fetch exercise' });
@@ -185,6 +313,7 @@ export const submitPracticeExercise = async (
     const grading = gradeExerciseAnswer(answer, exercise.correctAnswer);
     const latestAttempt = await getLatestAttemptState(userId, exerciseId);
     const attemptNumber = latestAttempt.attemptNumber + 1;
+    const isPassed = latestAttempt.isPassed || grading.isCorrect;
     const items: ExerciseAttemptItem[] = grading.items.map(
       ({ field, isCorrect }) => ({
         field,
@@ -197,7 +326,7 @@ export const submitPracticeExercise = async (
       {
         userId,
         exerciseId,
-        isPassed: grading.isCorrect,
+        isPassed,
         items,
         hintLevel: latestAttempt.hintLevel,
         userAnswer: answer,
@@ -238,6 +367,7 @@ export const requestPracticeHint = async (
     const latestAttempt = await getLatestAttemptState(userId, exerciseId);
     const currentHintLevel = latestAttempt.hintLevel;
     const nextHintLevel = currentHintLevel + 1;
+    // Hint levels advance only when another hint exists.
     const hint = exercise.hints?.[String(nextHintLevel)] ?? null;
     const hintLevel = hint ? nextHintLevel : currentHintLevel;
 

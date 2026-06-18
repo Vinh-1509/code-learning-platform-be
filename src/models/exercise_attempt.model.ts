@@ -67,6 +67,7 @@ const exerciseAttemptSchema = new Schema<IExerciseAttempt>(
   { timestamps: true },
 );
 
+// Keep one latest attempt per user and exercise; attemptNumber tracks repeat submits.
 exerciseAttemptSchema.index({ userId: 1, exerciseId: 1 }, { unique: true });
 
 export const ExerciseAttempt = mongoose.model<IExerciseAttempt>(

@@ -86,27 +86,14 @@ const userMilestoneProgressSchema = new Schema<IUserMilestoneProgress>(
     completionPercentage: { type: Number, default: 0, min: 0, max: 100 },
     status: {
       type: String,
-      enum: ['Locked', 'Active', 'Completed'],
-      default: 'Locked',
+      enum: ['locked', 'active', 'completed'],
+      default: 'locked',
     },
   },
   { timestamps: true }, // createdAt and updatedAt managed by Mongoose
 );
 
 // ─── User Lesson Progress Schema ─────────────────────────────────────────────
-
-const blockProgressSchema = new Schema(
-  {
-    blockId: { type: Schema.Types.ObjectId, required: true, ref: 'Block' },
-    isFeynmanPassed: { type: Boolean, default: false },
-    state: {
-      type: String,
-      enum: ['locked', 'active', 'completed'],
-      default: 'locked',
-    },
-  },
-  { _id: false },
-);
 
 const chatMessageSchema = new Schema(
   {
@@ -116,10 +103,29 @@ const chatMessageSchema = new Schema(
   { _id: false },
 );
 
+const blockProgressSchema = new Schema(
+  {
+    blockId: { type: Schema.Types.ObjectId, required: true, ref: 'Block' },
+    isFeynmanPassed: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ['locked', 'active', 'completed'],
+      default: 'locked',
+    },
+    chatHistory: { type: [chatMessageSchema], default: [] },
+  },
+  { _id: false },
+);
+
 const userLessonProgressSchema = new Schema<IUserLessonProgress>(
   {
     userId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
     lessonId: { type: Schema.Types.ObjectId, required: true, ref: 'Lesson' },
+    status: {
+      type: String,
+      enum: ['locked', 'active', 'completed'],
+      default: 'locked',
+    },
     blockProgress: { type: [blockProgressSchema], default: [] },
     chatHistory: { type: [chatMessageSchema], default: [] },
     completionPercentage: { type: Number, default: 0, min: 0, max: 100 },

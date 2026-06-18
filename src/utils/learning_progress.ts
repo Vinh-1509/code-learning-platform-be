@@ -5,12 +5,16 @@ import {
   UserLessonProgress,
   UserMilestoneProgress,
 } from '../models/learning_system.model';
-import type { IUserLessonProgress } from '../interfaces/learning_system.interface';
+import type {
+  IUserLessonProgress,
+  ProgressStatus,
+} from '../interfaces/learning_system.interface';
 
 export type BlockProgressEntry = {
   blockId: Types.ObjectId;
   isFeynmanPassed: boolean;
-  state: 'locked' | 'active' | 'completed';
+  status: ProgressStatus;
+  chatHistory: { role: 'user' | 'assistant'; content: string }[];
 };
 
 export const SUPPORTED_LANGUAGES = ['C++', 'Java'] as const;
@@ -18,10 +22,12 @@ export const SUPPORTED_LANGUAGES = ['C++', 'Java'] as const;
 export function buildDefaultBlockProgress(
   blockIds: Types.ObjectId[],
 ): BlockProgressEntry[] {
+  // A new lesson starts with only the first block available.
   return blockIds.map((blockId, index) => ({
     blockId,
     isFeynmanPassed: false,
-    state: index === 0 ? 'active' : 'locked',
+    status: index === 0 ? 'active' : 'locked',
+    chatHistory: [],
   }));
 }
 
@@ -33,7 +39,7 @@ export function recalcLessonCompletion(
     return { completionPercentage: 0, isCompleted: false };
   }
   const completed = blockProgress.filter(
-    (bp) => bp.state === 'completed',
+    (bp) => bp.status === 'completed',
   ).length;
   const completionPercentage = (completed / totalBlocks) * 100;
   return {
@@ -42,6 +48,7 @@ export function recalcLessonCompletion(
   };
 }
 
+// A milestone is initially available only when it is the first one in its roadmap.
 export async function isFirstMilestoneInRoadmap(
   milestoneId: Types.ObjectId | string,
   roadmapId: Types.ObjectId,
@@ -81,7 +88,7 @@ export async function unlockNextMilestoneIfCompleted(
     userId,
     milestoneId,
   });
-  if (milestoneProgress?.status !== 'Completed') return;
+  if (milestoneProgress?.status !== 'completed') return;
 
   const currentMilestone = await Milestone.findById(milestoneId).lean();
   if (!currentMilestone) return;
@@ -103,10 +110,10 @@ export async function unlockNextMilestoneIfCompleted(
       userId,
       milestoneId: nextMilestone._id,
       completionPercentage: 0,
-      status: 'Active',
+      status: 'active',
     });
-  } else if (nextProgress.status === 'Locked') {
-    nextProgress.status = 'Active';
+  } else if (nextProgress.status === 'locked') {
+    nextProgress.status = 'active';
     await nextProgress.save();
   }
 }
@@ -115,13 +122,16 @@ export async function getOrCreateLessonProgress(
   userId: string,
   lessonId: Types.ObjectId,
   blockIds: Types.ObjectId[],
+  initialStatus: ProgressStatus = 'active',
 ): Promise<IUserLessonProgress> {
   let progress = await UserLessonProgress.findOne({ userId, lessonId });
 
   if (!progress) {
+    // Create progress lazily when the user first opens or completes a lesson.
     progress = await UserLessonProgress.create({
       userId,
       lessonId,
+      status: initialStatus,
       blockProgress: buildDefaultBlockProgress(blockIds),
       chatHistory: [],
       completionPercentage: 0,
@@ -131,7 +141,14 @@ export async function getOrCreateLessonProgress(
     return progress;
   }
 
+  if (!progress.status) {
+    // Backfill old progress records created before lesson status existed.
+    progress.status = progress.isCompleted ? 'completed' : initialStatus;
+    await progress.save();
+  }
+
   if (!progress.blockProgress?.length && blockIds.length > 0) {
+    // Backfill block progress for older records or newly attached blocks.
     progress.blockProgress = buildDefaultBlockProgress(blockIds);
     await progress.save();
   }

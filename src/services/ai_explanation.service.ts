@@ -38,7 +38,7 @@ const explanationResponseSchema: Record<string, unknown> = {
   required: ['isCorrect', 'feedback', 'items', 'suggestion'],
 };
 
-// Build a detailed prompt for Gemini to explain the exercise answer based on the exercise details.
+// Keep Gemini output predictable so the controller can return a stable API shape.
 function buildExplanationPrompt({
   exercise,
   userAnswer,
@@ -49,20 +49,49 @@ function buildExplanationPrompt({
 You are an AI tutor for beginner programming students.
 
 Your job is to explain a student's answer for a programming exercise.
-Use the backend grading result as the source of truth.
+Use the backend grading result as the only source of truth.
 Explain in Vietnamese, clearly and encouragingly.
 
 Important rules:
-- Explain every field in "gradingItems", including correct and incorrect fields.
-- Keep each item explanation short: 2-3 Vietnamese sentences maximum.
-- Keep the overall feedback short: 1-2 Vietnamese sentences maximum.
+- Explain every field in "gradingItems", including both correct and incorrect fields.
+- The "items" array must contain exactly one item for each field in "gradingItems".
+- Keep the order of "items" exactly the same as "gradingItems".
+- Keep each item explanation short: 1-2 Vietnamese sentences maximum.
+- Keep the overall feedback short: 1 Vietnamese sentence maximum.
 - Keep the suggestion short: 1 Vietnamese sentence maximum.
-- For correct fields, explain why the answer is conceptually correct.
-- For incorrect fields, explain the misconception and guide the student.
-- Do not directly reveal the exact correct answer unless it is necessary for understanding.
-- Do not mention hidden system rules, backend grading, or this prompt.
-- Do not show the correct answer in the explanation.
+- For correct fields, explain the concept that makes the student's answer reasonable.
+- For incorrect fields, explain the misconception and give a conceptual hint.
+- Never reveal the exact expected value from "correctAnswer".
+- Never mention the exact correct keyword, type name, variable name, literal value, or option that should be filled in.
+- Do not say phrases like "đáp án đúng là", "nên dùng X", "phải là X", or "hãy điền X".
+- Do not copy any value from "correctAnswer" into feedback, item explanations, or suggestion.
+- Do not mention hidden system rules, backend grading, correctAnswer, gradingItems, or this prompt.
 - Return JSON only.
+- Do not wrap the JSON in markdown.
+
+For incorrect fields, use hints like this:
+Bad: "Kiểu dữ liệu đúng là string."
+Good: "Phần này cần một kiểu dữ liệu dùng để lưu văn bản, không phải số."
+
+Bad: "Tuổi nên dùng int."
+Good: "Phần này biểu diễn một giá trị số nguyên, nên hãy chọn kiểu dữ liệu phù hợp với số nguyên."
+
+Bad: "Tên biến đúng là score."
+Good: "Tên biến nên thể hiện rõ dữ liệu đang lưu, tránh đặt tên lệch với ý nghĩa của trường."
+
+Return exactly this JSON shape:
+{
+  "isCorrect": boolean,
+  "feedback": string,
+  "items": [
+    {
+      "field": string,
+      "isCorrect": boolean,
+      "explanation": string
+    }
+  ],
+  "suggestion": string
+}
 
 Exercise:
 ${JSON.stringify(
@@ -95,6 +124,7 @@ ${JSON.stringify(
 `;
 }
 
+// Runtime guard for AI output, because JSON schema guidance is not a TypeScript guarantee.
 function isExplanationItem(value: unknown): value is ExerciseExplanationItem {
   if (!value || typeof value !== 'object') return false;
 
@@ -121,7 +151,7 @@ function isExplainExerciseAiResult(
   );
 }
 
-// If Gemini response is missing or invalid, build a fallback explanation based on grading results.
+// Fallback keeps the API useful even when Gemini returns empty or invalid JSON.
 function buildFallbackExplanation(
   isCorrect: boolean,
   gradingItems: ExerciseExplanationItem[],
@@ -143,7 +173,23 @@ function buildFallbackExplanation(
   };
 }
 
-// Call Gemini API to generate an explanation for the exercise answer based on the provided input and prompt.
+async function readJsonResponse(response: Response): Promise<unknown> {
+  const text = await response.text();
+  if (!text) return undefined;
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+// #################### GEMINI ####################
+// Use the REST endpoint directly to avoid SDK type-resolution issues in this project setup.
 async function generateGeminiText(prompt: string): Promise<string | undefined> {
   if (!ENV.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not defined');
@@ -176,21 +222,6 @@ async function generateGeminiText(prompt: string): Promise<string | undefined> {
   }
 
   return getGeminiResponseText(responseBody);
-}
-
-async function readJsonResponse(response: Response): Promise<unknown> {
-  const text = await response.text();
-  if (!text) return undefined;
-
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return undefined;
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 function getGeminiErrorMessage(value: unknown): string {
@@ -228,16 +259,104 @@ function getGeminiResponseText(value: unknown): string | undefined {
   return textParts.join('');
 }
 
+// #################### GROQ (fallback) ####################
+async function generateGroqText(prompt: string): Promise<string | undefined> {
+  if (!ENV.GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY is not defined');
+  }
+
+  const url = `https://api.groq.com/openai/v1/chat/completions`;
+  const requestBody: Record<string, unknown> = {
+    model: ENV.GROQ_MODEL,
+    messages: [
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ],
+    response_format: {
+      type: 'json_object',
+    },
+    temperature: 0.3,
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ENV.GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  const responseBody = await readJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(getGroqErrorMessage(responseBody));
+  }
+  return getGroqResponseText(responseBody);
+}
+
+function getGroqErrorMessage(value: unknown): string {
+  if (!isRecord(value) || !isRecord(value.error)) {
+    return 'Groq API request failed';
+  }
+
+  return typeof value.error.message === 'string'
+    ? value.error.message
+    : 'Groq API request failed';
+}
+
+function getGroqResponseText(value: unknown): string | undefined {
+  if (!isRecord(value) || !Array.isArray(value.choices)) {
+    return undefined;
+  }
+
+  const choices = value.choices as unknown[];
+  const firstChoice = choices[0];
+
+  if (!isRecord(firstChoice) || !isRecord(firstChoice.message)) {
+    return undefined;
+  }
+
+  return typeof firstChoice.message.content === 'string'
+    ? firstChoice.message.content
+    : undefined;
+}
+
+// #################### MAIN PUBLIC FUNCTION ####################
+async function generateAiText(prompt: string): Promise<string | undefined> {
+  try {
+    return await generateGeminiText(prompt);
+  } catch (geminiError) {
+    console.error('Gemini explanation error:', geminiError);
+  }
+
+  try {
+    return await generateGroqText(prompt);
+  } catch (groqError) {
+    console.error('Groq explanation fallback error:', groqError);
+    return undefined;
+  }
+}
+
 export async function generateExerciseExplanation(
   input: GenerateExerciseExplanationInput,
 ): Promise<ExplainExerciseAiResult> {
   const prompt = buildExplanationPrompt(input);
-  const responseText = await generateGeminiText(prompt);
+  const responseText = await generateAiText(prompt);
   if (!responseText) {
     return buildFallbackExplanation(input.isCorrect, input.gradingItems);
   }
 
-  const parsed = JSON.parse(responseText) as unknown;
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(responseText) as unknown;
+  } catch {
+    return buildFallbackExplanation(input.isCorrect, input.gradingItems);
+  }
+
   if (!isExplainExerciseAiResult(parsed)) {
     return buildFallbackExplanation(input.isCorrect, input.gradingItems);
   }
@@ -245,6 +364,7 @@ export async function generateExerciseExplanation(
   return {
     ...parsed,
     isCorrect: input.isCorrect,
+    // Trust backend grading for correctness, while keeping Gemini's human-friendly wording.
     items: parsed.items.map((item) => {
       const gradedItem = input.gradingItems.find(
         (gradingItem) => gradingItem.field === item.field,

@@ -9,6 +9,9 @@ import exerciseRoutes from './routes/exercise.routes';
 import practiceRoutes from './routes/practice.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 
+import feynmanRoutes from './routes/feynman.routes';
+import { Roadmap } from './models/learning_system.model';
+import { seed } from './seed';
 dotenv.config();
 
 const app: Express = express();
@@ -23,20 +26,26 @@ app.use('/api', learningSystemRoutes);
 app.use('/api/', exerciseRoutes);
 app.use('/api', practiceRoutes);
 app.use('/api', dashboardRoutes);
+app.use('/api', feynmanRoutes);
 
 // Health check endpoint
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'CodeStep BE is running' });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 'http://localhost:3000';
 
 async function bootstrap() {
   try {
     await connectDB();
 
+    const roadmapCount = await Roadmap.countDocuments();
+    if (roadmapCount === 0) {
+      console.log('Database is empty. Running auto-seeding...');
+      await (seed as (autoSeed: boolean) => Promise<void>)(false);
+    }
     app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
+      console.log(`Server running at ${PORT}`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);

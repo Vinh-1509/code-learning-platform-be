@@ -36,6 +36,7 @@ export const explainExerciseAnswer = async (
     }
 
     const grading = gradeExerciseAnswer(answer, exercise.correctAnswer);
+    // AI explains the already-graded result; it does not decide correctness.
     const aiResult = await generateExerciseExplanation({
       exercise,
       userAnswer: answer,

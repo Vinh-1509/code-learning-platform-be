@@ -2,18 +2,13 @@ import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import mongoose from 'mongoose';
+
+import app from '../../src/app';
 import authRoutes from '../../src/routes/auth.routes';
 import practiceRoutes from '../../src/routes/practice.routes';
 import { Exercise } from '../../src/models/exercise.model';
 import { ExerciseAttempt } from '../../src/models/exercise_attempt.model';
 import { connectTestDB, clearTestDB, disconnectTestDB } from '../setup/setupDB';
-
-// ─── App ──────────────────────────────────────────────────────────────────────
-
-const app = express();
-app.use(express.json());
-app.use('/api/auth', authRoutes);
-app.use('/api', practiceRoutes);
 
 // ─── DB Lifecycle ─────────────────────────────────────────────────────────────
 

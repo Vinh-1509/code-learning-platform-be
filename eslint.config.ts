@@ -16,14 +16,16 @@ export default tseslint.config(
       '.prettierrc',
       'tsconfig.json',
       '.env*',
-      'coverage'
+      'coverage',
+      'eslint.config.ts',
+      'vitest.config.ts',
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
 
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}'],
 
     plugins: {
       prettier: prettierPlugin,

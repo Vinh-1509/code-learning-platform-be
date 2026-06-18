@@ -10,8 +10,11 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*",
-    "tests/**/*",
+    "src/**/*"
+  ],
+  "exclude": [
+    "tests",
+    "dist",
     "vitest.config.ts",
     "eslint.config.ts"
   ],

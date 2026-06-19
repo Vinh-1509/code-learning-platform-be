@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import User from '../models/user.model';
+import { Exercise } from '../models/exercise.model';
 import { ExerciseAttempt } from '../models/exercise_attempt.model';
 import {
+  Lesson,
   Milestone,
   Roadmap,
   UserLessonProgress,
@@ -57,6 +59,16 @@ export const getDashboard = async (
       .lean();
     const milestoneIds = milestones.map((milestone) => milestone._id);
 
+    const lessons = await Lesson.find({ milestoneId: { $in: milestoneIds } })
+      .select('_id')
+      .lean();
+    const lessonIds = lessons.map((lesson) => lesson._id);
+
+    const exercises = await Exercise.find({ lessonId: { $in: lessonIds } })
+      .select('_id')
+      .lean();
+    const exerciseIds = exercises.map((exercise) => exercise._id);
+
     const [
       milestoneProgresses,
       learnedLessonsCount,
@@ -69,13 +81,18 @@ export const getDashboard = async (
       }).lean(),
       UserLessonProgress.countDocuments({
         userId,
+        lessonId: { $in: lessonIds },
         $or: [
           { isCompleted: true },
           { completionPercentage: { $gt: 0 } },
           { status: 'active' },
         ],
       }),
-      ExerciseAttempt.countDocuments({ userId, isPassed: true }),
+      ExerciseAttempt.countDocuments({
+        userId,
+        exerciseId: { $in: exerciseIds },
+        isPassed: true,
+      }),
       UserTagStats.countDocuments({ userId, isWeak: true }),
     ]);
 
@@ -111,7 +128,9 @@ export const getDashboard = async (
         language: roadmap.language,
       },
       stats: {
+        totalLessons: lessons.length,
         totalLearnedLessons: learnedLessonsCount,
+        totalExercises: exercises.length,
         totalCompletedExercises,
         overallProgress: average(
           milestoneResponses.map((milestone) => milestone.completionPercentage),

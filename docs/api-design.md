@@ -835,7 +835,6 @@ GET /api/practice/exercises?tagId=your_tag_id&status=active&difficulty=easy
 | GET    | `/api/learning/milestones/:milestoneId`         | Yes    | HIGH     |
 | GET    | `/api/learning/milestones/:milestoneId/lessons` | Yes    | HIGH     |
 | GET    | `/api/learning/lessons/:lessonId`               | Yes    | HIGH     |
-| POST   | `/api/learning/blocks/:blockId/complete`        | Yes    | HIGH     |
 
 ---
 
@@ -999,25 +998,6 @@ Get full lesson content with all blocks embedded. Block status reflects current 
     "completionPercentage": 50,
     "isCompleted": false,
     "lastAccessed": "2024-03-05T09:00:00.000Z"
-  }
-}
-```
-
----
-
-### POST `/api/learning/blocks/:blockId/complete`
-
-Mark a block as completed and update lesson/milestone progress percentages.
-
-**Response `200`:**
-
-```json
-{
-  "message": "Block marked as completed",
-  "lessonProgress": {
-    "status": "completed",
-    "completionPercentage": 100,
-    "isCompleted": true
   }
 }
 ```

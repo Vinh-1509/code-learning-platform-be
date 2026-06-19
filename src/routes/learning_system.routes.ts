@@ -7,14 +7,12 @@ import {
   getMilestoneById,
   getLessonsByMilestone,
   getLessonById,
-  completeBlock,
 } from '../controllers/learning_system.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import {
   validateObjectId,
   requireLanguageSelected,
   requireLessonAccess,
-  requireBlockAccess,
 } from '../middlewares/learning_system.middleware';
 
 const router = Router();
@@ -61,14 +59,6 @@ router.get(
   validateObjectId('lessonId'),
   requireLessonAccess,
   getLessonById,
-);
-
-router.post(
-  '/learning/blocks/:blockId/complete',
-  authMiddleware,
-  validateObjectId('blockId'),
-  requireBlockAccess,
-  completeBlock,
 );
 
 export default router;

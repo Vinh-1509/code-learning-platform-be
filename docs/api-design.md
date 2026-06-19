@@ -264,8 +264,10 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
 | Parameter    | Type   | Description                             |
 | ------------ | ------ | --------------------------------------- |
 | `q`          | string | Keyword search                          |
+| `tagId`      | string | Filter exercises by tag ObjectId        |
 | `difficulty` | string | `easy` \| `medium` \| `hard`            |
 | `language`   | string | `C++` \| `Java`                         |
+| `status`     | string | `locked` \| `active` \| `completed`     |
 | `page`       | int    | Page number (default: 1)                |
 | `limit`      | int    | Results per page (default: 15, max: 50) |
 
@@ -284,6 +286,8 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
       "language": "C++",
       "type": "fill_blank",
       "level": "easy",
+      "tagId": ["your_tag_id"],
+      "status": "active",
       "order": 1
     },
     {
@@ -293,6 +297,8 @@ Get a list of exercises. Supports searching, filtering, and pagination via query
       "language": "C++",
       "type": "fill_blank",
       "level": "easy",
+      "tagId": ["your_tag_id"],
+      "status": "locked",
       "order": 2
     }
   ]
@@ -315,6 +321,8 @@ Get details of a specific exercise. **Does NOT include `correctAnswer` or `expla
   "language": "C++",
   "type": "fill_blank",
   "level": "easy",
+  "tagId": ["your_tag_id"],
+  "status": "active",
   "order": 1,
   "data": {
     "template": [
@@ -437,13 +445,14 @@ Get the user's latest attempt and answer for a specific exercise. This API retur
 
 ## 3. AI Feynman
 
-Block Feynman APIs are available only after the target block is `completed`. If the block is still `locked` or `active`, the backend returns `403`.
+Block Feynman APIs are available when the target block is not `locked` and all required practice exercises inside that block have been passed. If Feynman chat returns `isPassed: true`, the backend marks the block's Feynman as passed, completes the block, unlocks the next block, and recalculates lesson/milestone progress.
 
 | Method | Endpoint                                     | isAuth | Priority |
 | ------ | -------------------------------------------- | ------ | -------- |
 | GET    | `/api/feynman/block/:blockId/question`       | Yes    | HIGH     |
 | POST   | `/api/feynman/block/:blockId/chat`           | Yes    | HIGH     |
 | GET    | `/api/feynman/block/:blockId/history`        | Yes    | HIGH     |
+| POST   | `/api/feynman/block/:blockId/history/reset`  | Yes    | HIGH     |
 | GET    | `/api/feynman/block/:blockId/stats`          | Yes    | HIGH     |
 | GET    | `/api/feynman/exercise/:exerciseId/question` | Yes    | HIGH     |
 | POST   | `/api/feynman/exercise/:exerciseId/chat`     | Yes    | LOW      |
@@ -454,7 +463,7 @@ Block Feynman APIs are available only after the target block is `completed`. If 
 
 ### GET `/api/feynman/block/:blockId/question`
 
-Fetch the Feynman question for a completed block. The question comes from `blocks.feynmanQuestion`; if it is missing, the backend returns the default question.
+Fetch the Feynman question for a block that is ready for Feynman. The question comes from `blocks.feynmanQuestion`; if it is missing, the backend returns the default question.
 
 **Response `200`:**
 
@@ -470,14 +479,15 @@ Fetch the Feynman question for a completed block. The question comes from `block
 ```json
 { "message": "Block not found" } // 404
 { "message": "Lesson not found" } // 404
-{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
 ```
 
 ---
 
 ### POST `/api/feynman/block/:blockId/chat`
 
-Submit a user explanation for a completed block. Backend invokes Groq, updates `blockProgress.chatHistory`, and sets `isFeynmanPassed: true` if criteria are met.
+Submit a user explanation for a block that is ready for Feynman. Backend invokes Groq and updates `blockProgress.chatHistory`. If the AI returns `isPassed: true`, the backend sets `isFeynmanPassed: true`, completes the block, unlocks the next block, and recalculates lesson/milestone progress.
 
 **Request Body:**
 
@@ -513,7 +523,8 @@ Submit a user explanation for a completed block. Backend invokes Groq, updates `
 { "message": "Message is required" } // 400
 { "message": "Block not found" } // 404
 { "message": "Lesson not found" } // 404
-{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
 { "message": "Failed to process Feynman chat" } // 500
 ```
 
@@ -521,7 +532,7 @@ Submit a user explanation for a completed block. Backend invokes Groq, updates `
 
 ### GET `/api/feynman/block/:blockId/history`
 
-Fetch the `chatHistory` array for this completed block from the current user's `UserLessonProgress.blockProgress`.
+Fetch the `chatHistory` array for this block from the current user's `UserLessonProgress.blockProgress`.
 
 **Response `200`:**
 
@@ -550,15 +561,47 @@ Fetch the `chatHistory` array for this completed block from the current user's `
 ```json
 { "message": "Block not found" } // 404
 { "message": "Lesson not found" } // 404
-{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
 { "message": "Failed to fetch Feynman history" } // 500
+```
+
+---
+
+### POST `/api/feynman/block/:blockId/history/reset`
+
+Reset the current user's Feynman chat history for a block back to the first assistant question. This does **not** reset `isFeynmanPassed`.
+
+**Response `200`:**
+
+```json
+{
+  "blockId": "your_block_id",
+  "chatHistory": [
+    {
+      "role": "assistant",
+      "content": "your test question"
+    }
+  ],
+  "isFeynmanPassed": true
+}
+```
+
+**Error responses:**
+
+```json
+{ "message": "Block not found" } // 404
+{ "message": "Lesson not found" } // 404
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
+{ "message": "Failed to reset Feynman history" } // 500
 ```
 
 ---
 
 ### GET `/api/feynman/block/:blockId/stats`
 
-Check `isFeynmanPassed` for a completed block in the current user's `UserLessonProgress.blockProgress`.
+Check `isFeynmanPassed` for a block in the current user's `UserLessonProgress.blockProgress`.
 
 **Response `200`:**
 
@@ -574,7 +617,8 @@ Check `isFeynmanPassed` for a completed block in the current user's `UserLessonP
 ```json
 { "message": "Block not found" } // 404
 { "message": "Lesson not found" } // 404
-{ "message": "Feynman is available only after the block is completed" } // 403
+{ "message": "Feynman is not available for a locked block" } // 403
+{ "message": "Complete all required exercises before starting Feynman" } // 403
 { "message": "Failed to fetch Feynman stats" } // 500
 ```
 
@@ -716,17 +760,16 @@ Retrieve the Spaced Repetition status and next review date for a specific exerci
 
 ## 5. Tag Stats
 
-| Method | Endpoint                     | isAuth | Priority |
-| ------ | ---------------------------- | ------ | -------- |
-| GET    | `/api/tags/weakness`         | Yes    | HIGH     |
-| GET    | `/api/tags/:tagId/info`      | Yes    | HIGH     |
-| GET    | `/api/tags/:tagId/exercises` | Yes    | HIGH     |
+| Method | Endpoint                | isAuth | Priority |
+| ------ | ----------------------- | ------ | -------- |
+| GET    | `/api/tags/weakness`    | Yes    | HIGH     |
+| GET    | `/api/tags/:tagId/info` | Yes    | HIGH     |
 
 ---
 
 ### GET `/api/tags/weakness`
 
-Retrieve all tags where `isWeak: true`, with attempt stats.
+Retrieve all tags where `isWeak: true`, with attempt stats. Results are sorted by `failureRate` descending, then by `failAttempts` descending.
 
 **Response `200`:**
 
@@ -738,7 +781,9 @@ Retrieve all tags where `isWeak: true`, with attempt stats.
     "description": "Memory address and pointer operations",
     "totalAttempts": 10,
     "failAttempts": 7,
-    "failureRate": 70
+    "failureRate": 70,
+    "isWeak": true,
+    "updatedAt": "your test updatedAt"
   }
 ]
 ```
@@ -760,36 +805,24 @@ Deep dive into a specific tag with failure rate and performance metrics.
   "failAttempts": 7,
   "failureRate": 70,
   "isWeak": true,
-  "updatedAt": "2024-03-05T10:00:00.000Z"
+  "updatedAt": "your test updatedAt"
 }
 ```
 
 ---
 
-### GET `/api/tags/:tagId/exercises`
+### Get exercises by tag
 
-Retrieve exercises for a tag. Supports limiting and sorting.
+Use the Practice System list API with the `tagId` query parameter.
 
-**Query Parameters:**
+```http
+GET /api/practice/exercises?tagId=your_tag_id
+```
 
-| Parameter | Type   | Description               |
-| --------- | ------ | ------------------------- |
-| `limit`   | int    | Max results (default: 10) |
-| `sort`    | string | `level` \| `order`        |
+Can be combined with other filters:
 
-**Response `200`:**
-
-```json
-[
-  {
-    "_id": "64f1a2b3c4d5e6f7a8b9c0d2",
-    "title": "Fill in the variable type",
-    "language": "C++",
-    "type": "fill_blank",
-    "level": "easy",
-    "instruction": "Fill in the correct data type."
-  }
-]
+```http
+GET /api/practice/exercises?tagId=your_tag_id&status=active&difficulty=easy
 ```
 
 ---
@@ -1138,7 +1171,9 @@ Get general dashboard summary for the authenticated user.
 {
   "user": {
     "_id": "64f1a2b3c4d5e6f7a8b9c0d1",
+    "email": "alice@example.com",
     "username": "alice",
+    "fullName": "Alice Nguyen",
     "selectedLanguage": ["C++"]
   },
   "roadmap": {
@@ -1167,7 +1202,18 @@ Get general dashboard summary for the authenticated user.
     }
   ],
   "dailyReview": {
-    "pendingCount": 8
+    "pendingCount": 0
   }
 }
+```
+
+> `dailyReview.pendingCount` currently returns `0` until the repetition system is implemented.
+
+**Error responses:**
+
+```json
+{ "message": "User not found" } // 404
+{ "message": "No language selected" } // 400
+{ "message": "Roadmap not found for selected language" } // 404
+{ "message": "Failed to fetch dashboard" } // 500
 ```

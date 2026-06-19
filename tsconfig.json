@@ -9,7 +9,15 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "tests",
+    "dist",
+    "vitest.config.ts",
+    "eslint.config.ts"
+  ],
   "ts-node": {
     "files": true
   }

@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { authenticate } from '../middlewares/dashboard.middleware';
 import { getDashboard } from '../controllers/dashboard.controller';
+import { authMiddleware } from '../middlewares/auth.middleware';
+import { requireLanguageSelected } from '../middlewares/learning_system.middleware';
 
 const router = Router();
 
-// GET /api/dashboard
-router.get('/dashboard', authenticate, getDashboard);
+router.get('/dashboard', authMiddleware, requireLanguageSelected, getDashboard);
 
 export default router;

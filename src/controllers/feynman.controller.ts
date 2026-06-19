@@ -547,9 +547,6 @@ export const resetBlockFeynmanHistory = async (
       },
     ];
 
-    progress.markModified('blockProgress');
-    await progress.save();
-
     const response: FeynmanResetHistoryResponse = {
       blockId,
       chatHistory: blockProgress.chatHistory,
@@ -595,9 +592,6 @@ export const getBlockFeynmanStats = async (
     );
 
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
-
-    progress.markModified('blockProgress');
-    await progress.save();
 
     const response: FeynmanStatsResponse = {
       blockId,

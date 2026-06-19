@@ -5,9 +5,10 @@ export type ExerciseStatus = 'locked' | 'active' | 'completed';
 
 export interface PracticeExerciseQuery {
   q?: string;
-  tag?: string;
+  tagId?: string;
   difficulty?: string;
   language?: string;
+  status?: ExerciseStatus;
   page?: string;
   limit?: string;
 }
@@ -19,6 +20,7 @@ export interface PracticeExerciseListItem {
   language: 'C++' | 'Java';
   type: 'fill_blank' | 'drag_drop';
   level: 'easy' | 'medium' | 'hard';
+  tagId?: Types.ObjectId[];
   status: ExerciseStatus;
   order?: number;
 }

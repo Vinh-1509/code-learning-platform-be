@@ -835,7 +835,6 @@ GET /api/practice/exercises?tagId=your_tag_id&status=active&difficulty=easy
 | GET    | `/api/learning/milestones/:milestoneId`         | Yes    | HIGH     |
 | GET    | `/api/learning/milestones/:milestoneId/lessons` | Yes    | HIGH     |
 | GET    | `/api/learning/lessons/:lessonId`               | Yes    | HIGH     |
-| POST   | `/api/learning/blocks/:blockId/complete`        | Yes    | HIGH     |
 
 ---
 
@@ -1005,25 +1004,6 @@ Get full lesson content with all blocks embedded. Block status reflects current 
 
 ---
 
-### POST `/api/learning/blocks/:blockId/complete`
-
-Mark a block as completed and update lesson/milestone progress percentages.
-
-**Response `200`:**
-
-```json
-{
-  "message": "Block marked as completed",
-  "lessonProgress": {
-    "status": "completed",
-    "completionPercentage": 100,
-    "isCompleted": true
-  }
-}
-```
-
----
-
 ## 7. Other
 
 | Method | Endpoint                             | isAuth | Priority |
@@ -1182,7 +1162,9 @@ Get general dashboard summary for the authenticated user.
     "language": "C++"
   },
   "stats": {
+    "totalLessons": 10,
     "totalLearnedLessons": 5,
+    "totalExercises": 8,
     "totalCompletedExercises": 18,
     "overallProgress": 32,
     "weakTagsCount": 2

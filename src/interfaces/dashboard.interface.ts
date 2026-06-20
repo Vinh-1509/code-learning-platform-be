@@ -15,7 +15,9 @@ export interface DashboardResponse {
     language: string;
   };
   stats: {
+    totalLessons: number;
     totalLearnedLessons: number;
+    totalExercises: number;
     totalCompletedExercises: number;
     overallProgress: number;
     weakTagsCount: number;

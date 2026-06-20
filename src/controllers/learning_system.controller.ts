@@ -4,7 +4,6 @@ import {
   Roadmap,
   Milestone,
   Lesson,
-  Block,
   UserMilestoneProgress,
   UserLessonProgress,
 } from '../models/learning_system.model';
@@ -14,10 +13,7 @@ import User from '../models/user.model';
 import {
   SUPPORTED_LANGUAGES,
   getOrCreateLessonProgress,
-  recalcLessonCompletion,
   isFirstMilestoneInRoadmap,
-  averageMilestoneLessonCompletion,
-  unlockNextMilestoneIfCompleted,
 } from '../utils/learning_progress';
 
 function authUserId(req: Request): string {
@@ -346,156 +342,5 @@ export const getLessonById = async (
     });
   } catch {
     res.status(500).json({ message: 'Failed to fetch lesson' });
-  }
-};
-
-export const completeBlock = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  try {
-    const blockId = String(req.params.blockId);
-    const block = await Block.findById(blockId).lean();
-    if (!block) {
-      res.status(404).json({ message: 'Block not found' });
-      return;
-    }
-    const lesson = await Lesson.findById(block.lessonId).lean();
-    if (!lesson) {
-      res.status(404).json({ message: 'Lesson not found' });
-      return;
-    }
-
-    const lessonProgress = await getOrCreateLessonProgress(
-      authUserId(req),
-      block.lessonId,
-      lesson.blocks,
-    );
-    const blockIndex = lesson.blocks.findIndex(
-      (bid) => bid.toString() === blockId,
-    );
-    if (blockIndex === -1) {
-      res.status(404).json({ message: 'Block not found in lesson' });
-      return;
-    }
-
-    let currentBp = lessonProgress.blockProgress.find(
-      (bp) => bp.blockId.toString() === blockId,
-    );
-
-    if (!currentBp) {
-      currentBp = {
-        blockId: block._id,
-        isFeynmanPassed: false,
-        status: blockIndex === 0 ? 'active' : 'locked',
-        chatHistory: [],
-      };
-      lessonProgress.blockProgress.push(currentBp);
-    }
-
-    if (currentBp.status === 'locked') {
-      res.status(403).json({
-        message:
-          'Forbidden: Cannot complete a locked block. Complete previous blocks first.',
-      });
-      return;
-    }
-
-    if (currentBp.status === 'completed') {
-      res.json({
-        message: 'Block already completed',
-        lessonProgress: {
-          status: lessonProgress.status,
-          completionPercentage: lessonProgress.completionPercentage,
-          isCompleted: lessonProgress.isCompleted,
-        },
-      });
-      return;
-    }
-
-    currentBp.status = 'completed';
-
-    if (blockIndex < lesson.blocks.length - 1) {
-      // Completing a block unlocks the next block in the same lesson.
-      const nextBlockId = lesson.blocks[blockIndex + 1];
-      let nextBp = lessonProgress.blockProgress.find(
-        (bp) => bp.blockId.toString() === nextBlockId.toString(),
-      );
-      if (!nextBp) {
-        nextBp = {
-          blockId: nextBlockId,
-          isFeynmanPassed: false,
-          status: 'locked',
-          chatHistory: [],
-        };
-        lessonProgress.blockProgress.push(nextBp);
-      }
-      if (nextBp.status === 'locked') {
-        nextBp.status = 'active';
-      }
-    }
-
-    const { completionPercentage, isCompleted } = recalcLessonCompletion(
-      lessonProgress.blockProgress,
-      lesson.blocks.length,
-    );
-    lessonProgress.completionPercentage = completionPercentage;
-    lessonProgress.isCompleted = isCompleted;
-    lessonProgress.status = isCompleted ? 'completed' : 'active';
-    await lessonProgress.save();
-
-    const averageCompletion = await averageMilestoneLessonCompletion(
-      authUserId(req),
-      lesson.milestoneId,
-    );
-    const milestone = await Milestone.findById(lesson.milestoneId).lean();
-    let milestoneProgress = await UserMilestoneProgress.findOne({
-      userId: authUserId(req),
-      milestoneId: lesson.milestoneId,
-    });
-
-    if (!milestoneProgress) {
-      const isFirst =
-        milestone &&
-        (await isFirstMilestoneInRoadmap(
-          lesson.milestoneId,
-          milestone.roadmapId,
-        ));
-      milestoneProgress = await UserMilestoneProgress.create({
-        userId: authUserId(req),
-        milestoneId: lesson.milestoneId,
-        completionPercentage: averageCompletion,
-        status:
-          averageCompletion === 100
-            ? 'completed'
-            : isFirst
-              ? 'active'
-              : 'locked',
-      });
-    } else {
-      milestoneProgress.completionPercentage = averageCompletion;
-      if (averageCompletion === 100) {
-        milestoneProgress.status = 'completed';
-      } else if (milestoneProgress.status !== 'locked') {
-        milestoneProgress.status = 'active';
-      }
-      await milestoneProgress.save();
-    }
-
-    if (averageCompletion === 100) {
-      // A fully completed milestone can unlock the next milestone.
-      await unlockNextMilestoneIfCompleted(authUserId(req), lesson.milestoneId);
-    }
-
-    res.json({
-      message: 'Block marked as completed',
-      lessonProgress: {
-        status: lessonProgress.status,
-        completionPercentage: lessonProgress.completionPercentage,
-        isCompleted: lessonProgress.isCompleted,
-      },
-    });
-  } catch {
-    res.status(500).json({ message: 'Failed to complete block' });
   }
 };

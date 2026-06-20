@@ -1,4 +1,3 @@
-// tests/api/contract/auth.contract.test.ts
 import {
   describe,
   test,

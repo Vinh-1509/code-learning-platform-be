@@ -202,29 +202,34 @@ afterAll(async () => await disconnectTestDB());
 ```
 tests/
   ├── setup/
-  │   ├── env.setup.ts          # process.env injection — runs before all imports
-  │   └── setupDB.ts            # mongodb-memory-server lifecycle hooks
+  │   ├── env.setup.ts
+  │   └── setupDB.ts
   ├── unit/
   │   ├── utils/
   │   │   ├── validators.test.ts
   │   │   ├── exercise_grading.test.ts
   │   │   └── learning_progress.test.ts
   │   ├── services/
-  │   │   ├── ai_explanation.service.test.ts   # includes Gemini → Groq fallback path
+  │   │   ├── ai_explanation.service.test.ts
   │   │   └── feynman.service.test.ts
   │   └── middlewares/
   │       ├── auth.middleware.test.ts
-  |       └── validateObjectId.test.ts
+  │       └── validateObjectId.test.ts
   ├── integration/
   │   ├── auth.test.ts
   │   ├── practice.test.ts
   │   ├── feynman.test.ts
   │   ├── learning_system.test.ts
-  │   └── learning_system_middleware.test.ts   # requireLessonAccess, requireBlockAccess
+  │   └── learning_system_middleware.test.ts
   ├── api/
-  │   └── contract.test.ts      # HTTP status codes, error shapes, required fields
+  │   ├── auth.contract.test.ts - Done
+  │   ├── dashboard.contract.test.ts - Done
+  │   ├── exercise.contract.test.ts
+  │   ├── feynman.contract.test.ts
+  │   ├── learning.contract.test.ts
+  │   ├── practice.contract.test.ts
   └── e2e/
-      └── workflows.test.ts     # Full user journey tests
+      └── workflows.test.ts
 ```
 
 ---
@@ -247,4 +252,4 @@ Work bottom-up: pure functions first, DB-dependent last.
 
 ---
 
-> [!NOTE] **Next Step: Phase 2A** Begin with `tests/unit/utils/validators.test.ts` and `tests/unit/utils/exercise_grading.test.ts`. These have zero external dependencies and will confirm the entire test infrastructure (Vitest config, env setup, coverage reporting) is working correctly before touching anything DB-related.
+> [!NOTE] **Next Step: Phase 4** Complete the remaining API contract files.

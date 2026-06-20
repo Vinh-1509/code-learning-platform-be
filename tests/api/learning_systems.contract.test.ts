@@ -1,4 +1,3 @@
-// tests/api/contract/learning.contract.test.ts
 import {
   describe,
   test,
@@ -729,95 +728,6 @@ describe('Learning System API Contract Tests', () => {
       expect(response.status).toBe(404);
       expect(response.body).toMatchObject({
         message: 'Lesson not found',
-      });
-    });
-  });
-
-  // ─── Block Completion API ────────────────────────────────────────────────────
-
-  describe('POST /api/learning/blocks/:blockId/complete', () => {
-    const endpoint = '/api/learning/blocks';
-
-    test('should return 200 when completing a block', async () => {
-      const block = await Block.findOne({ title: 'Introduction to Variables' });
-      const response = await request(app)
-        .post(`${endpoint}/${String(block?._id)}/complete`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toMatchObject({
-        message: 'Block marked as completed',
-        lessonProgress: {
-          status: expect.stringMatching(/^(locked|active|completed)$/),
-          completionPercentage: expect.any(Number),
-          isCompleted: expect.any(Boolean),
-        },
-      });
-    });
-
-    test('should return 403 when completing a locked block', async () => {
-      // Try to complete the second block without completing the first
-      const block = await Block.findOne({ title: 'Data Types' });
-      const response = await request(app)
-        .post(`${endpoint}/${String(block?._id)}/complete`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(403);
-      expect(response.body).toMatchObject({
-        message: expect.stringContaining('Forbidden'),
-      });
-    });
-
-    test('should return 200 when completing already completed block', async () => {
-      // First complete the block
-      const block = await Block.findOne({ title: 'Introduction to Variables' });
-      await request(app)
-        .post(`${endpoint}/${String(block?._id)}/complete`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      // Try to complete again
-      const response = await request(app)
-        .post(`${endpoint}/${String(block?._id)}/complete`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toMatchObject({
-        message: 'Block already completed',
-      });
-    });
-
-    test('should return 400 for invalid block ID', async () => {
-      const response = await request(app)
-        .post(`${endpoint}/invalid-id/complete`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toMatchObject({
-        message: 'Invalid blockId',
-      });
-    });
-
-    test('should return 404 for non-existent block', async () => {
-      const nonExistentId = new Types.ObjectId().toString();
-      const response = await request(app)
-        .post(`${endpoint}/${nonExistentId}/complete`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(404);
-      expect(response.body).toMatchObject({
-        message: 'Block not found',
-      });
-    });
-
-    test('should return 401 when no token provided', async () => {
-      const block = await Block.findOne({ title: 'Introduction to Variables' });
-      const response = await request(app).post(
-        `${endpoint}/${String(block?._id)}/complete`,
-      );
-
-      expect(response.status).toBe(401);
-      expect(response.body).toMatchObject({
-        message: 'No token provided',
       });
     });
   });

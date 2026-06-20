@@ -28,7 +28,6 @@ const validUser = {
 };
 
 async function registerUser(overrides = {}) {
-  await clearTestDB(); // Ensure a clean state before registration
   return request(app)
     .post('/api/auth/register')
     .send({ ...validUser, ...overrides });
@@ -38,7 +37,6 @@ async function loginUser(
   email = validUser.email,
   password = validUser.password,
 ) {
-  await clearTestDB(); // Ensure a clean state before login
   return request(app).post('/api/auth/login').send({ email, password });
 }
 

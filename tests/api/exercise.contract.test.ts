@@ -1,4 +1,3 @@
-// tests/api/contract/exercise.contract.test.ts
 import {
   describe,
   test,

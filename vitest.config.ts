@@ -15,12 +15,12 @@ export default defineConfig({
         'src/controllers/**/*.ts',
       ],
       exclude: ['**/*.test.ts', 'tests/**'],
-      // thresholds: {
-      //   lines: 80,
-      //   functions: 80,
-      //   branches: 75,
-      //   statements: 80,
-      // },
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 70,
+        statements: 80,
+      },
     },
     testTimeout: 15000, // 15 seconds
     hookTimeout: 15000, // 15 seconds

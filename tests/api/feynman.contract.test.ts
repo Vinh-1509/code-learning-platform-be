@@ -1,4 +1,3 @@
-// tests/api/contract/feynman.contract.test.ts
 import {
   describe,
   test,

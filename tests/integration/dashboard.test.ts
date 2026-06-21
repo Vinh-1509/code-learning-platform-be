@@ -352,7 +352,7 @@ describe('GET /api/dashboard', () => {
       expect(res.body.stats.totalCompletedExercises).toBe(0);
     });
 
-    it('counts totalLearnedLessons from lessons with active or completed progress', async () => {
+    it('counts totalLearnedLessons from completed lessons only', async () => {
       const { user, milestone1 } = await seedBaseData();
       const userId = user._id.toString();
 
@@ -392,7 +392,7 @@ describe('GET /api/dashboard', () => {
         .get('/api/dashboard')
         .set('Authorization', `Bearer ${token}`);
 
-      expect(res.body.stats.totalLearnedLessons).toBe(2);
+      expect(res.body.stats.totalLearnedLessons).toBe(1);
     });
 
     it('counts weakTagsCount from UserTagStats with isWeak: true', async () => {

@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
+import {
+  vi,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterEach,
+  afterAll,
+} from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import mongoose, { Types } from 'mongoose';
@@ -716,5 +724,79 @@ describe('POST submit — tag stats side-effects', () => {
     expect(res.status).toBe(200);
     const count = await UserTagStats.countDocuments();
     expect(count).toBe(0);
+  });
+});
+
+describe('Practice Controller — Error Handling & Edge Cases', () => {
+  it('should return 500 when Exercise.findById fails during history retrieval', async () => {
+    // Mocking the database to fail
+    const spy = vi
+      .spyOn(Exercise, 'findById')
+      .mockRejectedValueOnce(new Error('DB failure'));
+    const token = await getValidToken();
+
+    const res = await authedGet(
+      token,
+      `/api/practice/exercises/${validObjectId}/history`,
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.body.message).toBe('Failed to fetch exercise history');
+    spy.mockRestore();
+  });
+
+  it('should return 500 when Exercise.findById fails during submission', async () => {
+    const spy = vi
+      .spyOn(Exercise, 'findById')
+      .mockRejectedValueOnce(new Error('DB failure'));
+    const token = await getValidToken();
+
+    const res = await authedPost(
+      token,
+      `/api/practice/exercises/${validObjectId}/submit`,
+      {
+        answer: { input_1: 'test' },
+      },
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.body.message).toBe('Failed to submit exercise');
+    spy.mockRestore();
+  });
+
+  it('should return 500 when ExerciseAttempt.findOne fails during history retrieval', async () => {
+    // Force the first findById to succeed, but the subsequent findOne to fail
+    vi.spyOn(Exercise, 'findById').mockResolvedValueOnce({
+      _id: validObjectId,
+    } as any);
+    const spy = vi
+      .spyOn(ExerciseAttempt, 'findOne')
+      .mockRejectedValueOnce(new Error('DB failure'));
+
+    const token = await getValidToken();
+    const res = await authedGet(
+      token,
+      `/api/practice/exercises/${validObjectId}/history`,
+    );
+
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+  });
+
+  it('should return 400 when answer payload is null or an array (testing isAnswerPayload)', async () => {
+    const { fill } = await seedExercises();
+    const token = await getValidToken();
+
+    // Testing array input
+    const res = await authedPost(
+      token,
+      `/api/practice/exercises/${fill._id.toString()}/submit`,
+      {
+        answer: ['not', 'an', 'object'],
+      },
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Answer must be an object');
   });
 });

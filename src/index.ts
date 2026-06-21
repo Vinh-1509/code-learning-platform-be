@@ -19,7 +19,7 @@ async function bootstrap() {
 
     if (roadmapCount === 0) {
       console.log('Database is empty. Running auto-seeding...');
-      await seed(false);
+      await (seed as (autoSeed: boolean) => Promise<void>)(false);
     }
 
     app.listen(PORT, () => {

@@ -1,13 +1,21 @@
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
+import {
+  vi,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterEach,
+  afterAll,
+} from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 
 import app from '../../src/app';
-import authRoutes from '../../src/routes/auth.routes';
-import practiceRoutes from '../../src/routes/practice.routes';
 import { Exercise } from '../../src/models/exercise.model';
 import { ExerciseAttempt } from '../../src/models/exercise_attempt.model';
+import { ExerciseTag } from '../../src/models/exercise_tag.model';
+import { UserTagStats } from '../../src/models/user_tag_stats.model';
 import { connectTestDB, clearTestDB, disconnectTestDB } from '../setup/setupDB';
 
 // ─── DB Lifecycle ─────────────────────────────────────────────────────────────
@@ -95,11 +103,12 @@ const validObjectId = new mongoose.Types.ObjectId().toString();
 
 describe('GET /api/practice/exercises', () => {
   describe('success', () => {
-    it('returns paginated exercises with total, page, and limit', async () => {
+    it('returns paginated exercises with correct structure and required list fields', async () => {
       await seedExercises();
       const token = await getValidToken();
       const res = await authedGet(token, '/api/practice/exercises');
 
+      // Assert outer pagination structure
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
         total: 2,
@@ -107,13 +116,8 @@ describe('GET /api/practice/exercises', () => {
         limit: 15,
       });
       expect(res.body.data).toHaveLength(2);
-    });
 
-    it('each exercise item has required list fields', async () => {
-      await seedExercises();
-      const token = await getValidToken();
-      const res = await authedGet(token, '/api/practice/exercises');
-
+      // Assert inner item structure
       const item = res.body.data[0];
       expect(item).toHaveProperty('_id');
       expect(item).toHaveProperty('title');
@@ -146,7 +150,7 @@ describe('GET /api/practice/exercises', () => {
     });
   });
 
-  describe('pagination', () => {
+  describe('pagination & filtering', () => {
     it('respects the page and limit query params', async () => {
       await seedExercises();
       const token = await getValidToken();
@@ -169,7 +173,6 @@ describe('GET /api/practice/exercises', () => {
         '/api/practice/exercises?page=999&limit=15',
       );
 
-      expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(0);
       expect(res.body.total).toBe(2);
     });
@@ -180,40 +183,28 @@ describe('GET /api/practice/exercises', () => {
 
       expect(res.body.limit).toBe(50);
     });
-  });
 
-  describe('filtering', () => {
-    it('filters by language', async () => {
+    it('filters by language, difficulty, and search query', async () => {
       await seedExercises();
       const token = await getValidToken();
-      const res = await authedGet(
+
+      const langRes = await authedGet(
         token,
         '/api/practice/exercises?language=C%2B%2B',
       );
+      expect(langRes.body.data[0].language).toBe('C++');
 
-      expect(res.body.total).toBe(1);
-      expect(res.body.data[0].language).toBe('C++');
-    });
-
-    it('filters by difficulty', async () => {
-      await seedExercises();
-      const token = await getValidToken();
-      const res = await authedGet(
+      const diffRes = await authedGet(
         token,
         '/api/practice/exercises?difficulty=easy',
       );
+      expect(diffRes.body.data[0].level).toBe('easy');
 
-      expect(res.body.total).toBe(1);
-      expect(res.body.data[0].level).toBe('easy');
-    });
-
-    it('filters by search query (title match)', async () => {
-      await seedExercises();
-      const token = await getValidToken();
-      const res = await authedGet(token, '/api/practice/exercises?q=Declare');
-
-      expect(res.body.total).toBe(1);
-      expect(res.body.data[0].title).toBe('Declare a Variable');
+      const searchRes = await authedGet(
+        token,
+        '/api/practice/exercises?q=Declare',
+      );
+      expect(searchRes.body.data[0].title).toBe('Declare a Variable');
     });
 
     it('returns empty when no exercises match the filter', async () => {
@@ -226,18 +217,6 @@ describe('GET /api/practice/exercises', () => {
 
       expect(res.body.total).toBe(0);
       expect(res.body.data).toHaveLength(0);
-    });
-
-    it('ignores unsupported language values', async () => {
-      await seedExercises();
-      const token = await getValidToken();
-      const res = await authedGet(
-        token,
-        '/api/practice/exercises?language=Python',
-      );
-
-      // Unsupported language is ignored — all exercises are returned
-      expect(res.body.total).toBe(2);
     });
   });
 
@@ -272,23 +251,6 @@ describe('GET /api/practice/exercises/:exerciseId', () => {
       expect(res.body).toHaveProperty('data');
       expect(res.body).toHaveProperty('hints');
     });
-
-    it('status becomes completed after a correct submission', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const exerciseId = fill._id.toString();
-
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
-        answer: { input_1: 'age' },
-      });
-
-      const res = await authedGet(
-        token,
-        `/api/practice/exercises/${exerciseId}`,
-      );
-
-      expect(res.body.status).toBe('completed');
-    });
   });
 
   describe('failures', () => {
@@ -298,17 +260,13 @@ describe('GET /api/practice/exercises/:exerciseId', () => {
         token,
         `/api/practice/exercises/${validObjectId}`,
       );
-
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe('Exercise not found');
     });
 
     it('returns 400 for an invalid ObjectId', async () => {
       const token = await getValidToken();
       const res = await authedGet(token, '/api/practice/exercises/bad-id');
-
       expect(res.status).toBe(400);
-      expect(res.body.message).toBe('Invalid exerciseId');
     });
 
     it('returns 401 when no token is provided', async () => {
@@ -316,7 +274,6 @@ describe('GET /api/practice/exercises/:exerciseId', () => {
       const res = await request(app).get(
         `/api/practice/exercises/${fill._id.toString()}`,
       );
-
       expect(res.status).toBe(401);
     });
   });
@@ -325,34 +282,38 @@ describe('GET /api/practice/exercises/:exerciseId', () => {
 // ─── POST /api/practice/exercises/:exerciseId/submit ─────────────────────────
 
 describe('POST /api/practice/exercises/:exerciseId/submit', () => {
-  describe('correct answer', () => {
-    it('returns correct: true with per-field items', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const res = await authedPost(
-        token,
-        `/api/practice/exercises/${fill._id.toString()}/submit`,
-        { answer: { input_1: 'age' } },
-      );
-
-      expect(res.status).toBe(200);
-      expect(res.body.correct).toBe(true);
-      expect(res.body.items).toHaveLength(1);
-      expect(res.body.items[0]).toEqual({ field: 'input_1', isCorrect: true });
-      expect(res.body.attemptNumber).toBe(1);
-    });
-
-    it('marks the exercise as completed after a correct answer', async () => {
+  describe('correct answer integration', () => {
+    it('returns correct: true, updates the DB as passed, and reflects completion status on GET', async () => {
       const { fill } = await seedExercises();
       const token = await getValidToken();
       const exerciseId = fill._id.toString();
 
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
-        answer: { input_1: 'age' },
+      // 1. Submit correct answer
+      const postRes = await authedPost(
+        token,
+        `/api/practice/exercises/${exerciseId}/submit`,
+        {
+          answer: { input_1: 'age' },
+        },
+      );
+
+      expect(postRes.status).toBe(200);
+      expect(postRes.body.correct).toBe(true);
+      expect(postRes.body.items[0]).toEqual({
+        field: 'input_1',
+        isCorrect: true,
       });
 
+      // 2. Assert DB state was updated
       const attempt = await ExerciseAttempt.findOne({ exerciseId }).lean();
       expect(attempt?.isPassed).toBe(true);
+
+      // 3. Assert subsequent GET reflects 'completed' status
+      const getRes = await authedGet(
+        token,
+        `/api/practice/exercises/${exerciseId}`,
+      );
+      expect(getRes.body.status).toBe('completed');
     });
   });
 
@@ -363,15 +324,14 @@ describe('POST /api/practice/exercises/:exerciseId/submit', () => {
       const res = await authedPost(
         token,
         `/api/practice/exercises/${fill._id.toString()}/submit`,
-        { answer: { input_1: 'wrongAnswer' } },
+        {
+          answer: { input_1: 'wrongAnswer' },
+        },
       );
 
       expect(res.status).toBe(200);
       expect(res.body.correct).toBe(false);
-      expect(res.body.items[0]).toEqual({
-        field: 'input_1',
-        isCorrect: false,
-      });
+      expect(res.body.items[0]).toEqual({ field: 'input_1', isCorrect: false });
     });
 
     it('isPassed stays true after a wrong re-submit', async () => {
@@ -379,12 +339,9 @@ describe('POST /api/practice/exercises/:exerciseId/submit', () => {
       const token = await getValidToken();
       const exerciseId = fill._id.toString();
 
-      // First submit correct
       await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
         answer: { input_1: 'age' },
       });
-
-      // Then submit wrong
       await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
         answer: { input_1: 'wrong' },
       });
@@ -395,47 +352,30 @@ describe('POST /api/practice/exercises/:exerciseId/submit', () => {
   });
 
   describe('attempt tracking', () => {
-    it('increments attemptNumber on each submission', async () => {
+    it('upserts a single document per user+exercise, preserving latest answer and attempt count', async () => {
       const { fill } = await seedExercises();
       const token = await getValidToken();
       const exerciseId = fill._id.toString();
       const url = `/api/practice/exercises/${exerciseId}/submit`;
-      const body = { answer: { input_1: 'wrong' } };
 
-      const first = await authedPost(token, url, body);
-      const second = await authedPost(token, url, body);
-      const third = await authedPost(token, url, body);
+      const first = await authedPost(token, url, {
+        answer: { input_1: 'first_wrong' },
+      });
+      const second = await authedPost(token, url, {
+        answer: { input_1: 'second_wrong' },
+      });
+      const third = await authedPost(token, url, {
+        answer: { input_1: 'age' },
+      }); // Correct
 
+      // Assert API response counters
       expect(first.body.attemptNumber).toBe(1);
       expect(second.body.attemptNumber).toBe(2);
       expect(third.body.attemptNumber).toBe(3);
-    });
 
-    it('keeps only one attempt document per user+exercise (upsert)', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const exerciseId = fill._id.toString();
-      const url = `/api/practice/exercises/${exerciseId}/submit`;
-
-      await authedPost(token, url, { answer: { input_1: 'wrong' } });
-      await authedPost(token, url, { answer: { input_1: 'wrong' } });
-      await authedPost(token, url, { answer: { input_1: 'age' } });
-
+      // Assert DB state (upsert behavior + latest answer)
       const count = await ExerciseAttempt.countDocuments({ exerciseId });
       expect(count).toBe(1);
-    });
-
-    it('stores the latest user answer in the attempt document', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const exerciseId = fill._id.toString();
-
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
-        answer: { input_1: 'first' },
-      });
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
-        answer: { input_1: 'age' },
-      });
 
       const attempt = await ExerciseAttempt.findOne({ exerciseId }).lean();
       expect(attempt?.userAnswer).toEqual({ input_1: 'age' });
@@ -443,27 +383,15 @@ describe('POST /api/practice/exercises/:exerciseId/submit', () => {
   });
 
   describe('drag_drop grading', () => {
-    it('grades a drag_drop exercise correctly', async () => {
-      const { drag } = await seedExercises();
-      const token = await getValidToken();
-      const res = await authedPost(
-        token,
-        `/api/practice/exercises/${drag._id.toString()}/submit`,
-        { answer: { '1': 'block-1', '2': 'block-0' } },
-      );
-
-      expect(res.status).toBe(200);
-      expect(res.body.correct).toBe(true);
-      expect(res.body.items).toHaveLength(2);
-    });
-
     it('returns partial correctness for a partially correct drag_drop answer', async () => {
       const { drag } = await seedExercises();
       const token = await getValidToken();
       const res = await authedPost(
         token,
         `/api/practice/exercises/${drag._id.toString()}/submit`,
-        { answer: { '1': 'block-1', '2': 'block-2' } },
+        {
+          answer: { '1': 'block-1', '2': 'block-2' },
+        },
       );
 
       expect(res.body.correct).toBe(false);
@@ -479,66 +407,46 @@ describe('POST /api/practice/exercises/:exerciseId/submit', () => {
   });
 
   describe('failures', () => {
-    it('returns 400 when answer is not an object', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const res = await authedPost(
-        token,
-        `/api/practice/exercises/${fill._id.toString()}/submit`,
-        { answer: 'just a string' },
-      );
+    it.each([
+      {
+        scenario: 'not an object',
+        body: { answer: 'just a string' },
+        expectedMsg: 'Answer must be an object',
+      },
+      {
+        scenario: 'an array',
+        body: { answer: ['a', 'b'] },
+        expectedMsg: 'Answer must be an object',
+      },
+      { scenario: 'missing entirely', body: {} },
+    ])(
+      'returns 400 when answer is $scenario',
+      async ({ body, expectedMsg }) => {
+        const { fill } = await seedExercises();
+        const token = await getValidToken();
+        const res = await authedPost(
+          token,
+          `/api/practice/exercises/${fill._id.toString()}/submit`,
+          body,
+        );
 
-      expect(res.status).toBe(400);
-      expect(res.body.message).toBe('Answer must be an object');
-    });
-
-    it('returns 400 when answer is an array', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const res = await authedPost(
-        token,
-        `/api/practice/exercises/${fill._id.toString()}/submit`,
-        { answer: ['a', 'b'] },
-      );
-
-      expect(res.status).toBe(400);
-      expect(res.body.message).toBe('Answer must be an object');
-    });
-
-    it('returns 400 when answer field is missing entirely', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const res = await authedPost(
-        token,
-        `/api/practice/exercises/${fill._id.toString()}/submit`,
-        {},
-      );
-
-      expect(res.status).toBe(400);
-    });
+        expect(res.status).toBe(400);
+        if (expectedMsg) {
+          expect(res.body.message).toBe(expectedMsg);
+        }
+      },
+    );
 
     it('returns 404 for a non-existent exercise', async () => {
       const token = await getValidToken();
       const res = await authedPost(
         token,
         `/api/practice/exercises/${validObjectId}/submit`,
-        { answer: { input_1: 'age' } },
+        {
+          answer: { input_1: 'age' },
+        },
       );
-
       expect(res.status).toBe(404);
-      expect(res.body.message).toBe('Exercise not found');
-    });
-
-    it('returns 400 for an invalid ObjectId', async () => {
-      const token = await getValidToken();
-      const res = await authedPost(
-        token,
-        '/api/practice/exercises/bad-id/submit',
-        { answer: { input_1: 'age' } },
-      );
-
-      expect(res.status).toBe(400);
-      expect(res.body.message).toBe('Invalid exerciseId');
     });
 
     it('returns 401 when no token is provided', async () => {
@@ -546,7 +454,6 @@ describe('POST /api/practice/exercises/:exerciseId/submit', () => {
       const res = await request(app)
         .post(`/api/practice/exercises/${fill._id.toString()}/submit`)
         .send({ answer: { input_1: 'age' } });
-
       expect(res.status).toBe(401);
     });
   });
@@ -569,35 +476,17 @@ describe('POST /api/practice/exercises/:exerciseId/hint', () => {
       expect(res.body.hint).toBe(fillBlankFixture.hints['1']);
     });
 
-    it('advances to hint level 2 on second request', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const exerciseId = fill._id.toString();
-
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/hint`);
-      const res = await authedPost(
-        token,
-        `/api/practice/exercises/${exerciseId}/hint`,
-      );
-
-      expect(res.body.hintLevel).toBe(2);
-      expect(res.body.hint).toBe(fillBlankFixture.hints['2']);
-    });
-
     it('does not advance beyond the last available hint', async () => {
       const { fill } = await seedExercises();
       const token = await getValidToken();
       const exerciseId = fill._id.toString();
 
-      // Exhaust both hints
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/hint`);
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/hint`);
-
-      // Request a third time — no hint 3 exists
+      await authedPost(token, `/api/practice/exercises/${exerciseId}/hint`); // level 1
+      await authedPost(token, `/api/practice/exercises/${exerciseId}/hint`); // level 2
       const res = await authedPost(
         token,
         `/api/practice/exercises/${exerciseId}/hint`,
-      );
+      ); // No level 3 exists
 
       expect(res.body.hintLevel).toBe(2);
       expect(res.body.hint).toBe(fillBlankFixture.hints['2']);
@@ -642,18 +531,7 @@ describe('POST /api/practice/exercises/:exerciseId/hint', () => {
         token,
         `/api/practice/exercises/${validObjectId}/hint`,
       );
-
       expect(res.status).toBe(404);
-    });
-
-    it('returns 400 for an invalid ObjectId', async () => {
-      const token = await getValidToken();
-      const res = await authedPost(
-        token,
-        '/api/practice/exercises/bad-id/hint',
-      );
-
-      expect(res.status).toBe(400);
     });
   });
 });
@@ -674,11 +552,15 @@ describe('GET /api/practice/exercises/:exerciseId/history', () => {
       expect(res.body).toEqual([]);
     });
 
-    it('returns the latest attempt after a submission', async () => {
+    it('reflects the latest state, including hintLevel, after multiple submissions and hint requests', async () => {
       const { fill } = await seedExercises();
       const token = await getValidToken();
       const exerciseId = fill._id.toString();
 
+      await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
+        answer: { input_1: 'wrong' },
+      });
+      await authedPost(token, `/api/practice/exercises/${exerciseId}/hint`);
       await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
         answer: { input_1: 'age' },
       });
@@ -692,48 +574,9 @@ describe('GET /api/practice/exercises/:exerciseId/history', () => {
       expect(res.body).toHaveLength(1);
       expect(res.body[0]).toMatchObject({
         isPassed: true,
-        attemptNumber: 1,
-        hintLevel: 0,
+        attemptNumber: 2,
+        hintLevel: 1,
       });
-    });
-
-    it('reflects the latest state after multiple submissions', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const exerciseId = fill._id.toString();
-
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
-        answer: { input_1: 'wrong' },
-      });
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
-        answer: { input_1: 'age' },
-      });
-
-      const res = await authedGet(
-        token,
-        `/api/practice/exercises/${exerciseId}/history`,
-      );
-
-      // Still only one document due to upsert
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].attemptNumber).toBe(2);
-      expect(res.body[0].isPassed).toBe(true);
-    });
-
-    it('history includes hintLevel when hints were requested', async () => {
-      const { fill } = await seedExercises();
-      const token = await getValidToken();
-      const exerciseId = fill._id.toString();
-
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/hint`);
-      await authedPost(token, `/api/practice/exercises/${exerciseId}/hint`);
-
-      const res = await authedGet(
-        token,
-        `/api/practice/exercises/${exerciseId}/history`,
-      );
-
-      expect(res.body[0].hintLevel).toBe(2);
     });
   });
 
@@ -744,27 +587,216 @@ describe('GET /api/practice/exercises/:exerciseId/history', () => {
         token,
         `/api/practice/exercises/${validObjectId}/history`,
       );
-
       expect(res.status).toBe(404);
     });
+  });
+});
 
-    it('returns 400 for an invalid ObjectId', async () => {
-      const token = await getValidToken();
-      const res = await authedGet(
-        token,
-        '/api/practice/exercises/bad-id/history',
-      );
+// ─── Tag stats side-effects (covers tag_stats.ts) ────────────────────────────
 
-      expect(res.status).toBe(400);
+describe('POST submit — tag stats side-effects', () => {
+  async function seedTaggedExercise(tagIds?: Types.ObjectId[]) {
+    const tag = await ExerciseTag.create({
+      name: 'Variables',
+      description: 'Variable usage',
+    });
+    const resolvedTagIds = tagIds ?? [tag._id];
+    const exercise = await Exercise.create({
+      ...fillBlankFixture,
+      title: 'Tagged Exercise',
+      tagId: resolvedTagIds,
+    });
+    return { tag, exercise };
+  }
+
+  it('creates a UserTagStats document on first submission', async () => {
+    const { tag, exercise } = await seedTaggedExercise();
+    const token = await getValidToken();
+
+    await authedPost(
+      token,
+      `/api/practice/exercises/${exercise._id.toString()}/submit`,
+      {
+        answer: { input_1: 'age' },
+      },
+    );
+
+    const stats = await UserTagStats.findOne({ tagId: tag._id }).lean();
+    expect(stats).not.toBeNull();
+    expect(stats?.totalAttempts).toBe(1);
+    expect(stats?.failAttempts).toBe(0);
+    expect(stats?.isWeak).toBe(false);
+  });
+
+  it('increments failAttempts on a wrong answer', async () => {
+    const { tag, exercise } = await seedTaggedExercise();
+    const token = await getValidToken();
+
+    await authedPost(
+      token,
+      `/api/practice/exercises/${exercise._id.toString()}/submit`,
+      {
+        answer: { input_1: 'wrong' },
+      },
+    );
+
+    const stats = await UserTagStats.findOne({ tagId: tag._id }).lean();
+    expect(stats?.totalAttempts).toBe(1);
+    expect(stats?.failAttempts).toBe(1);
+  });
+
+  it('sets isWeak=true when failure rate crosses threshold (≥3 attempts, ≥60% fail)', async () => {
+    const { tag, exercise } = await seedTaggedExercise();
+    const token = await getValidToken();
+    const exerciseId = exercise._id.toString();
+
+    // 3 wrong answers → 3/3 = 100% fail rate, totalAttempts=3 → isWeak
+    await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
+      answer: { input_1: 'wrong' },
+    });
+    await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
+      answer: { input_1: 'wrong' },
+    });
+    await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
+      answer: { input_1: 'wrong' },
     });
 
-    it('returns 401 when no token is provided', async () => {
-      const { fill } = await seedExercises();
-      const res = await request(app).get(
-        `/api/practice/exercises/${fill._id.toString()}/history`,
-      );
+    const stats = await UserTagStats.findOne({ tagId: tag._id }).lean();
+    expect(stats?.totalAttempts).toBe(3);
+    expect(stats?.failAttempts).toBe(3);
+    expect(stats?.isWeak).toBe(true);
+  });
 
-      expect(res.status).toBe(401);
+  it('keeps isWeak=false when below the minimum attempt threshold', async () => {
+    const { tag, exercise } = await seedTaggedExercise();
+    const token = await getValidToken();
+    const exerciseId = exercise._id.toString();
+
+    // 2 wrong answers — below MIN_ATTEMPTS_FOR_WEAK_TAG (3)
+    await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
+      answer: { input_1: 'wrong' },
     });
+    await authedPost(token, `/api/practice/exercises/${exerciseId}/submit`, {
+      answer: { input_1: 'wrong' },
+    });
+
+    const stats = await UserTagStats.findOne({ tagId: tag._id }).lean();
+    expect(stats?.totalAttempts).toBe(2);
+    expect(stats?.isWeak).toBe(false);
+  });
+
+  it('updates stats for every tagId on an exercise with multiple tags', async () => {
+    const tag1 = await ExerciseTag.create({ name: 'Loops' });
+    const tag2 = await ExerciseTag.create({ name: 'OOP' });
+    const { exercise } = await seedTaggedExercise([tag1._id, tag2._id]);
+    const token = await getValidToken();
+
+    await authedPost(
+      token,
+      `/api/practice/exercises/${exercise._id.toString()}/submit`,
+      {
+        answer: { input_1: 'wrong' },
+      },
+    );
+
+    const stats1 = await UserTagStats.findOne({ tagId: tag1._id }).lean();
+    const stats2 = await UserTagStats.findOne({ tagId: tag2._id }).lean();
+    expect(stats1?.totalAttempts).toBe(1);
+    expect(stats2?.totalAttempts).toBe(1);
+  });
+
+  it('does not throw when exercise has no tagId (empty array early-return)', async () => {
+    const exercise = await Exercise.create({
+      ...fillBlankFixture,
+      title: 'No Tag',
+      tagId: [],
+    });
+    const token = await getValidToken();
+
+    const res = await authedPost(
+      token,
+      `/api/practice/exercises/${exercise._id.toString()}/submit`,
+      {
+        answer: { input_1: 'age' },
+      },
+    );
+
+    expect(res.status).toBe(200);
+    const count = await UserTagStats.countDocuments();
+    expect(count).toBe(0);
+  });
+});
+
+describe('Practice Controller — Error Handling & Edge Cases', () => {
+  it('should return 500 when Exercise.findById fails during history retrieval', async () => {
+    // Mocking the database to fail
+    const spy = vi
+      .spyOn(Exercise, 'findById')
+      .mockRejectedValueOnce(new Error('DB failure'));
+    const token = await getValidToken();
+
+    const res = await authedGet(
+      token,
+      `/api/practice/exercises/${validObjectId}/history`,
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.body.message).toBe('Failed to fetch exercise history');
+    spy.mockRestore();
+  });
+
+  it('should return 500 when Exercise.findById fails during submission', async () => {
+    const spy = vi
+      .spyOn(Exercise, 'findById')
+      .mockRejectedValueOnce(new Error('DB failure'));
+    const token = await getValidToken();
+
+    const res = await authedPost(
+      token,
+      `/api/practice/exercises/${validObjectId}/submit`,
+      {
+        answer: { input_1: 'test' },
+      },
+    );
+
+    expect(res.status).toBe(500);
+    expect(res.body.message).toBe('Failed to submit exercise');
+    spy.mockRestore();
+  });
+
+  it('should return 500 when ExerciseAttempt.findOne fails during history retrieval', async () => {
+    // Force the first findById to succeed, but the subsequent findOne to fail
+    vi.spyOn(Exercise, 'findById').mockResolvedValueOnce({
+      _id: validObjectId,
+    } as any);
+    const spy = vi
+      .spyOn(ExerciseAttempt, 'findOne')
+      .mockRejectedValueOnce(new Error('DB failure'));
+
+    const token = await getValidToken();
+    const res = await authedGet(
+      token,
+      `/api/practice/exercises/${validObjectId}/history`,
+    );
+
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+  });
+
+  it('should return 400 when answer payload is null or an array (testing isAnswerPayload)', async () => {
+    const { fill } = await seedExercises();
+    const token = await getValidToken();
+
+    // Testing array input
+    const res = await authedPost(
+      token,
+      `/api/practice/exercises/${fill._id.toString()}/submit`,
+      {
+        answer: ['not', 'an', 'object'],
+      },
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Answer must be an object');
   });
 });

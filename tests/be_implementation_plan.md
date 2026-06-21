@@ -204,31 +204,36 @@ afterAll(async () => await disconnectTestDB());
 ```
 tests/
   ├── setup/
-  │   ├── env.setup.ts          # process.env injection — runs before all imports
-  │   └── setupDB.ts            # mongodb-memory-server lifecycle hooks
+  │   ├── env.setup.ts                         ✅
+  │   └── setupDB.ts                           ✅
   ├── unit/
   │   ├── utils/
-  │   │   ├── validators.test.ts
-  │   │   ├── exercise_grading.test.ts
-  │   │   └── learning_progress.test.ts
+  │   │   ├── validators.test.ts               ✅
+  │   │   ├── exercise_grading.test.ts         ✅
+  │   │   └── learning_progress.test.ts        ✅
   │   ├── services/
-  │   │   ├── ai_explanation.service.test.ts   # Gemini primary + Groq fallback paths
-  │   │   └── feynman.service.test.ts          # Groq only — success, failure, invalid JSON
+  │   │   ├── ai_explanation.service.test.ts   ✅ # Gemini primary + Groq fallback paths
+  │   │   └── feynman.service.test.ts          ✅ # Groq only — success, failure, invalid JSON
   │   └── middlewares/
-  │       ├── auth.middleware.test.ts
-  │       └── validateObjectId.test.ts
+  │       ├── auth.middleware.test.ts          ✅
+  │       └── validateObjectId.test.ts         ✅
   ├── integration/
-  │   ├── auth.test.ts
-  │   ├── dashboard.test.ts                    # TODO — not yet written
-  │   ├── practice.test.ts
-  │   ├── feynman.test.ts
-  │   ├── learning_system.test.ts
-  │   ├── learning_system_middleware.test.ts   # requireLessonAccess, requireBlockAccess
-  │   └── tag.test.ts                          # TODO — not yet written
-  ├── api/
-  │   └── contract.test.ts      # HTTP status codes, error shapes, required fields
-  └── e2e/
-      └── workflows.test.ts     # Full user journey tests
+  │   ├── auth.test.ts                         ✅
+  │   ├── dashboard.test.ts                    ✅
+  │   ├── practice.test.ts                     ✅
+  │   ├── feynman.test.ts                      ✅
+  │   ├── learning_system.test.ts              ✅
+  │   ├── learning_system_middleware.test.ts   ✅ # requireLessonAccess, requireBlockAccess
+  │   └── tag.test.ts                          ✅
+  └── api/
+      ├── auth.contract.test.ts                ✅
+      ├── dashboard.contract.test.ts           ✅
+      ├── exercise.contract.test.ts
+      ├── feynman.contract.test.ts
+      ├── learning_system.contract.test.ts     ✅
+      ├── practice.contract.test.ts
+      └── tag.contract.test.ts                 ✅
+
 ```
 
 ---
@@ -248,8 +253,8 @@ Work bottom-up: pure functions first, DB-dependent last.
 | **3C** | Integration: `learning_system.test.ts` + `learning_system_middleware.test.ts` | ✅ Done |
 | **3D** | Integration: `feynman.test.ts` | ✅ Done |
 | **3E** | Integration: `dashboard.test.ts`, `tag.test.ts` | ✅ Done |
-| **4** | API contract + E2E workflows | ⬜ Not started |
+| **4** | API contract | ⬜ Not started |
 
 ---
 
-> [!NOTE] **Next Step: Phase 3E** Write `tests/integration/dashboard.test.ts` and `tests/integration/tag.test.ts`. These cover `dashboard.controller.ts` (GET /api/dashboard — roadmap lookup, milestone aggregation, stats) and `tag.controller.ts` (GET /api/tags/weakness, GET /api/tags/:tagId/info — UserTagStats queries and failure rate calculation).
+> [!NOTE] **Next Step: Phase 4** Complete the remaining API contract files.

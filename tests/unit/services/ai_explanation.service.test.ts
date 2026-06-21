@@ -11,26 +11,26 @@ vi.mock('../../../src/config/env', () => ({
   },
 }));
 
-describe('ai_explanation.service', () => {
-  const mockInput = {
-    exercise: {
-      title: 'Test',
-      instruction: 'Test instruction',
-      language: 'C++',
-      type: 'fill_in_the_blank',
-      level: 'easy',
-      data: {},
-      explanation: 'Official',
-      correctAnswer: { q1: 'ans' },
-    } as any,
-    userAnswer: { q1: 'wrong' },
-    isCorrect: false,
-    gradingItems: [{ field: 'q1', isCorrect: false, explanation: '' }],
-  };
+export const mockInput = {
+  exercise: {
+    title: 'Test',
+    instruction: 'Test instruction',
+    language: 'C++',
+    type: 'fill_in_the_blank',
+    level: 'easy',
+    data: {},
+    explanation: 'Official',
+    correctAnswer: { q1: 'ans' },
+  } as any,
+  userAnswer: { q1: 'wrong' },
+  isCorrect: false,
+  gradingItems: [{ field: 'q1', isCorrect: false, explanation: '' }],
+};
 
+describe('ai_explanation.service', () => {
   beforeEach(() => {
-    global.fetch = vi.fn();
-    vi.clearAllMocks();
+    vi.stubGlobal('fetch', vi.fn());
+    vi.resetAllMocks();
   });
 
   it('should return valid result from Gemini if fetch succeeds', async () => {
@@ -146,5 +146,36 @@ describe('ai_explanation.service', () => {
     const result = await generateExerciseExplanation(mockInput);
 
     expect(result.feedback).toContain('chưa chính xác');
+  });
+});
+
+describe('ai_explanation.service - Error Branch Coverage', () => {
+  it('should return fallback if Gemini returns invalid JSON', async () => {
+    // Mock Gemini returning non-JSON text
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      text: vi.fn().mockResolvedValue('Plain text error'),
+    });
+    // Mock Groq failing too
+    (global.fetch as any).mockRejectedValueOnce(new Error('Groq failed'));
+
+    const result = await generateExerciseExplanation(mockInput);
+
+    // This reaches the final 'return buildFallbackExplanation(...)'
+    expect(result.feedback).toBeDefined();
+  });
+
+  it('should return fallback if result does not match the AI schema', async () => {
+    // Mock Gemini returning valid JSON, but missing required fields (like 'items')
+    const malformedJson = { isCorrect: true, feedback: 'Incomplete' };
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      text: vi.fn().mockResolvedValue(JSON.stringify(malformedJson)),
+    });
+
+    const result = await generateExerciseExplanation(mockInput);
+
+    // This hits the branch: if (!isExplainExerciseAiResult(parsed))
+    expect(result.feedback).toBeDefined();
   });
 });

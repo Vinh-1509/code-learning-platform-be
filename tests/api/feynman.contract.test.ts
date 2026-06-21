@@ -219,6 +219,13 @@ describe('Feynman API Contract Tests', () => {
 
   beforeAll(async () => {
     await connectTestDB();
+    const result = await feynmanService.generateFeynmanFeedback({
+      contentSummary: 'test',
+      userMessage: 'test',
+      chatHistory: [],
+    });
+    // Now you need await because you're calling the actual function
+    expect(result).toBeDefined();
   });
 
   afterAll(async () => {

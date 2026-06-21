@@ -226,13 +226,13 @@ tests/
   │   ├── learning_system_middleware.test.ts   ✅ # requireLessonAccess, requireBlockAccess
   │   └── tag.test.ts                          ✅
   └── api/
-  │   ├── auth.contract.test.ts                ✅
-  │   ├── dashboard.contract.test.ts
-  │   ├── exercise.contract.test.ts
-  │   ├── feynman.contract.test.ts
-  │   ├── learning_system.contract.test.ts     ✅
-  │   ├── practice.contract.test.ts
-  │   └──tag.contract.test.ts
+      ├── auth.contract.test.ts                ✅
+      ├── dashboard.contract.test.ts           ✅
+      ├── exercise.contract.test.ts
+      ├── feynman.contract.test.ts
+      ├── learning_system.contract.test.ts     ✅
+      ├── practice.contract.test.ts
+      └── tag.contract.test.ts                 ✅
 
 ```
 

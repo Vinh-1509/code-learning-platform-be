@@ -105,6 +105,11 @@ export const seed = async (disconnectAfter = true) => {
         description:
           'Classes, objects, constructors, encapsulation, inheritance, interfaces, abstraction, and polymorphism',
       },
+      {
+        name: 'Environment Setup',
+        description:
+          'Installing tools, compiling, running, and verifying local development setup',
+      },
     ]);
     const tagMap = new Map(tags.map((tag) => [tag.name, tag._id]));
     const tagIds = (...names: string[]) =>
@@ -160,17 +165,24 @@ export const seed = async (disconnectAfter = true) => {
 
     console.log('\n📖 Creating Lessons...');
 
+    const lesson1_setup = await Lesson.create({
+      milestoneId: milestone1._id,
+      title: 'Setup C++ Development Environment',
+      order: 1,
+      blocks: [],
+    });
+
     const lesson1_1 = await Lesson.create({
       milestoneId: milestone1._id,
       title: 'Variables and Data Types',
-      order: 1,
+      order: 2,
       blocks: [],
     });
 
     const lesson1_2 = await Lesson.create({
       milestoneId: milestone1._id,
       title: 'Control Flow and Loops',
-      order: 2,
+      order: 3,
       blocks: [],
     });
 
@@ -188,19 +200,103 @@ export const seed = async (disconnectAfter = true) => {
       blocks: [],
     });
 
-    console.log('✓ Lessons created: 4 lessons');
+    console.log('✓ C++ Lessons created: 5 lessons');
 
     // ─── C++ Exercises ───────────────────────────────────────────────────────
 
     console.log('\n💪 Creating C++ Exercises...');
 
     // Lesson 1.1 Block 1 — fill_blank
+    const exerciseSetupCppVsCode = await Exercise.create({
+      lessonId: lesson1_setup._id,
+      tagId: tagIds('Environment Setup'),
+      title: 'Install VS Code for C++',
+      instruction: 'What is VS Code mainly used for when learning C++?',
+      language: 'C++',
+      type: 'drag_drop',
+      level: 'easy',
+      data: {
+        expectedSlots: 1,
+        blocks: [
+          { id: 'block-0', code: 'code editor', indent: 0 },
+          { id: 'block-1', code: 'compiler', indent: 0 },
+          { id: 'block-2', code: 'operating system', indent: 0 },
+        ],
+      },
+      correctAnswer: {
+        '1': 'block-0',
+      },
+      explanation:
+        'VS Code is an editor for writing and managing code files. After installing it, you can create your C++ source files there.',
+      hints: {
+        '1': 'An editor is where you write code; it is not the compiler.',
+      },
+      order: 1,
+    });
+
+    const exerciseSetupCppCompiler = await Exercise.create({
+      lessonId: lesson1_setup._id,
+      tagId: tagIds('Environment Setup'),
+      title: 'Install C++ Compiler',
+      instruction: 'Which tool is used to compile C++ source code?',
+      language: 'C++',
+      type: 'drag_drop',
+      level: 'easy',
+      data: {
+        expectedSlots: 1,
+        blocks: [
+          { id: 'block-0', code: 'g++', indent: 0 },
+          { id: 'block-1', code: 'VS Code', indent: 0 },
+          { id: 'block-2', code: 'java', indent: 0 },
+        ],
+      },
+      correctAnswer: {
+        '1': 'block-0',
+      },
+      explanation:
+        'C++ needs a compiler such as g++ to turn source code into a runnable program.',
+      hints: {
+        '1': 'The command for checking the C++ compiler usually starts with g++.',
+      },
+      order: 2,
+    });
+
+    const exerciseSetupCpp = await Exercise.create({
+      lessonId: lesson1_setup._id,
+      tagId: tagIds('Environment Setup', 'Input Output'),
+      title: 'Run Your First C++ Program',
+      instruction:
+        'Choose the compile command first, then the run command for the sample C++ program.',
+      language: 'C++',
+      type: 'drag_drop',
+      level: 'easy',
+      data: {
+        expectedSlots: 2,
+        blocks: [
+          { id: 'block-0', code: 'g++ main.cpp -o main', indent: 0 },
+          { id: 'block-1', code: './main', indent: 0 },
+          { id: 'block-2', code: 'javac Main.java', indent: 0 },
+        ],
+      },
+      correctAnswer: {
+        '1': 'block-0',
+        '2': 'block-1',
+      },
+      explanation:
+        'To run C++, you need an editor, a compiler, a .cpp file, a g++ compile command, and a command to run the output program.',
+      hints: {
+        '1': 'C++ needs a compiler such as g++ before it can run.',
+        '2': 'A C++ source file usually ends with .cpp.',
+      },
+      order: 3,
+    });
+
     const exercise1 = await Exercise.create({
       lessonId: lesson1_1._id,
       tagId: tagIds('Variables', 'Data Types'),
       title: 'Declare Student Variables',
       instruction:
-        'Khai báo các biến để lưu thông tin của một sinh viên: tên (string), tuổi (int), và điểm (double)',
+        'Khai báo các biến để lưu thông tin của một sinh viên: name (string), age (int), và score (double)',
       language: 'C++',
       type: 'fill_blank',
       level: 'easy',
@@ -232,7 +328,8 @@ export const seed = async (disconnectAfter = true) => {
       lessonId: lesson1_1._id,
       tagId: tagIds('Input Output', 'Variables'),
       title: 'Output Variable Values',
-      instruction: 'Viết mã để in ra giá trị của các biến: name, age, và score',
+      instruction:
+        'Viết mã để in ra giá trị của các biến: name, age, và score. Theo format mẫu sau: "Name: John\nAge: 25\nScore: 10"',
       language: 'C++',
       type: 'fill_blank',
       level: 'easy',
@@ -272,29 +369,27 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Data Types'),
       title: 'Match Data Types to Variables',
       instruction:
-        'Kéo thả các giá trị phù hợp vào từng biến: int nhận số nguyên, double nhận số thực, char nhận ký tự, bool nhận giá trị logic',
+        'Kéo thả các giá trị theo thứ tự để khớp với kiểu dữ liệu sau: int, double, char, bool',
       language: 'C++',
       type: 'drag_drop',
       level: 'easy',
       data: {
         expectedSlots: 4,
         blocks: [
-          { id: 'block-0', code: '42', indent: 0 },
-          { id: 'block-1', code: '3.14159', indent: 0 },
-          { id: 'block-2', code: "'A'", indent: 0 },
-          { id: 'block-3', code: 'true', indent: 0 },
-          { id: 'block-4', code: '100', indent: 0 },
-          { id: 'block-5', code: '2.5', indent: 0 },
+          { id: 'block-0', code: "'A'", indent: 0 },
+          { id: 'block-1', code: 'true', indent: 0 },
+          { id: 'block-2', code: '100', indent: 0 },
+          { id: 'block-3', code: '3.14159', indent: 0 },
         ],
       },
       correctAnswer: {
-        '1': 'block-0',
-        '2': 'block-1',
-        '3': 'block-2',
-        '4': 'block-3',
+        '1': 'block-2',
+        '2': 'block-3',
+        '3': 'block-0',
+        '4': 'block-1',
       },
       explanation:
-        "int chứa số nguyên (42), double chứa số thực (3.14159), char chứa ký tự đơn trong ngoặc đơn ('A'), bool chứa giá trị true/false.",
+        "int chứa số nguyên (100), double chứa số thực (3.14159), char chứa ký tự đơn trong ngoặc đơn ('A'), bool chứa giá trị true/false.",
       hints: {
         '1': 'Chọn số nguyên cho int',
         '2': 'Chọn số có phần thập phân cho double',
@@ -310,7 +405,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Type Conversion', 'Data Types'),
       title: 'Identify Casting Types',
       instruction:
-        'Điền từ khóa phù hợp: implicit (ngầm định) hoặc explicit (tường minh)',
+        'Điền từ hai khóa sau vào vị trí phù hợp: implicit (ngầm định), explicit (tường minh)',
       language: 'C++',
       type: 'fill_blank',
       level: 'medium',
@@ -343,7 +438,8 @@ export const seed = async (disconnectAfter = true) => {
       lessonId: lesson1_2._id,
       tagId: tagIds('Operators', 'Control Flow'),
       title: 'Even or Odd Condition',
-      instruction: 'Kéo thả toán tử đúng để kiểm tra xem số có chẵn không',
+      instruction:
+        'Chọn toán tử đúng để kiểm tra xem một số có là số chẵn hay không',
       language: 'C++',
       type: 'drag_drop',
       level: 'easy',
@@ -372,7 +468,8 @@ export const seed = async (disconnectAfter = true) => {
       lessonId: lesson1_2._id,
       tagId: tagIds('Control Flow'),
       title: 'Complete Switch Statement',
-      instruction: 'Chọn các từ khóa đúng để hoàn thành câu lệnh switch',
+      instruction:
+        'Chọn các từ khóa phù hợp để câu lệnh switch chạy đúng cho các ngày trong tuần',
       language: 'C++',
       type: 'fill_blank',
       level: 'medium',
@@ -409,22 +506,22 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Loops'),
       title: 'While Loop Syntax',
       instruction:
-        'Vòng lặp vô hạn nào kiểm tra điều kiện trước khi thực thi khối lệnh?',
+        'Cấu trúc vòng lặp nào kiểm tra điều kiện trước khi thực thi khối lệnh?',
       language: 'C++',
       type: 'drag_drop',
       level: 'easy',
       data: {
         expectedSlots: 1,
         blocks: [
-          { id: 'block-0', code: 'while', indent: 0 },
+          { id: 'block-0', code: 'do-while', indent: 0 },
           { id: 'block-1', code: 'for', indent: 0 },
-          { id: 'block-2', code: 'do-while', indent: 0 },
+          { id: 'block-2', code: 'while', indent: 0 },
           { id: 'block-3', code: 'if', indent: 0 },
           { id: 'block-4', code: 'switch', indent: 0 },
         ],
       },
       correctAnswer: {
-        '1': 'block-0',
+        '1': 'block-2',
       },
       explanation:
         'while lặp lại khi điều kiện còn đúng. do-while cũng lặp nhưng kiểm tra điều kiện sau. for dùng khi biết số lần lặp.',
@@ -440,7 +537,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('OOP'),
       title: 'Access Modifiers',
       instruction:
-        'Hãy điền access modifier phù hợp: __ cho thuộc tính ẩn, __ cho phương thức công khai',
+        'Hãy điền access modifier phù hợp vào: __ cho thuộc tính ẩn, __ cho phương thức công khai',
       language: 'C++',
       type: 'drag_drop',
       level: 'medium',
@@ -471,7 +568,7 @@ export const seed = async (disconnectAfter = true) => {
       lessonId: lesson2_1._id,
       tagId: tagIds('OOP'),
       title: 'Constructor Syntax',
-      instruction: 'Điền tên của constructor (phải trùng với tên class)',
+      instruction: 'Điền tên của constructor phù hợp cho class Car',
       language: 'C++',
       type: 'fill_blank',
       level: 'easy',
@@ -501,7 +598,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('OOP'),
       title: 'Getter and Setter Methods',
       instruction:
-        'Kéo thả lần lượt các tên phù hợp cho phương thức getter và tiền tố setter phù hợp',
+        'Kéo thả các tên phương thức phù hợp để truy cập (lấy) và cập nhật thuộc tính balance của một class',
       language: 'C++',
       type: 'drag_drop',
       level: 'medium',
@@ -509,10 +606,10 @@ export const seed = async (disconnectAfter = true) => {
         expectedSlots: 2,
         blocks: [
           { id: 'block-0', code: 'getBalance', indent: 0 },
-          { id: 'block-1', code: 'setBalance', indent: 0 },
+          { id: 'block-1', code: 'balance', indent: 0 },
           { id: 'block-2', code: 'readBalance', indent: 0 },
           { id: 'block-3', code: 'writeBalance', indent: 0 },
-          { id: 'block-4', code: 'set', indent: 0 },
+          { id: 'block-4', code: 'setBalance', indent: 0 },
           { id: 'block-5', code: 'get', indent: 0 },
         ],
       },
@@ -534,7 +631,8 @@ export const seed = async (disconnectAfter = true) => {
       lessonId: lesson2_2._id,
       tagId: tagIds('OOP'),
       title: 'Inheritance Syntax',
-      instruction: 'Điền từ khóa kế thừa để Dog kế thừa từ Animal',
+      instruction:
+        'Điền từ khóa phù hợp để Dog kế thừa mọi thuộc tính và phương thức của Animal',
       language: 'C++',
       type: 'fill_blank',
       level: 'easy',
@@ -564,7 +662,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('OOP'),
       title: 'Virtual Function Override',
       instruction:
-        'Từ khóa __ cho phép compiler kiểm tra phương thức virtual từ class cha',
+        'Từ khóa __ cho phép compiler kiểm tra phương thức virtual từ class cha có được ghi đè đúng hay không',
       language: 'C++',
       type: 'drag_drop',
       level: 'medium',
@@ -602,7 +700,7 @@ export const seed = async (disconnectAfter = true) => {
       data: {
         template: [
           'class Shape {\npublic:\n  virtual double area() const ',
-          ' { }\n};',
+          ';\n};',
         ],
         placeholders: {
           input_1: '= 0',
@@ -619,11 +717,162 @@ export const seed = async (disconnectAfter = true) => {
       order: 1,
     });
 
-    console.log('✓ C++ Exercises created: 13 exercises');
+    console.log('✓ C++ Exercises created: 16 exercises');
 
     // ─── C++ Blocks ──────────────────────────────────────────────────────────
 
     console.log('\n🧩 Creating C++ Blocks...');
+
+    const block1_setup_vscode = await Block.create({
+      lessonId: lesson1_setup._id,
+      title: 'Install VS Code',
+      description: 'Download and open the editor used to write code',
+      content: asBlockContent([
+        {
+          type: 'theory',
+          data: {
+            order: 1,
+            text: 'VS Code is a code editor. It is where you create files, write code, open the terminal, and manage your lesson folder. VS Code does not compile C++ by itself; it only makes writing code easier.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 2,
+            code: `Step 1: Go to https://code.visualstudio.com/download
+Step 2: Choose the installer for your operating system
+Step 3: Open the installer and keep the default options
+Step 4: Open Visual Studio Code after installation
+
+Self-check:
+VS Code opens and you can create a new file`,
+            explanation:
+              'Follow these steps to install VS Code and check that it opens correctly.',
+          },
+        },
+        {
+          type: 'practice',
+          data: {
+            order: 3,
+            exerciseId: exerciseSetupCppVsCode._id,
+            required: true,
+          },
+        },
+      ]),
+      feynmanQuestion:
+        'In your own words, what is VS Code used for when learning C++?',
+      feynmanPrompt:
+        'Check whether the user understands that VS Code is an editor used to write code.',
+    });
+
+    const block1_setup_compiler = await Block.create({
+      lessonId: lesson1_setup._id,
+      title: 'Install a C++ Compiler',
+      description: 'Install g++ and verify it from the terminal',
+      content: asBlockContent([
+        {
+          type: 'theory',
+          data: {
+            order: 1,
+            text: 'C++ needs a compiler to turn a .cpp source file into a program that can run. In this lesson, we use g++ as the compiler. VS Code is where you write code; g++ is the tool that compiles that code.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 2,
+            code: `Step 1: Go to https://www.msys2.org/
+Step 2: Install MSYS2 by following the official guide
+Step 3: Install the MinGW-w64 toolchain
+Step 4: Add the MinGW bin folder to PATH if needed
+Step 5: Open a new terminal and run:
+g++ --version
+
+Self-check:
+The terminal prints version information`,
+            explanation:
+              'These steps install g++ and verify that the terminal can find it.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 3,
+            code: `g++ --version`,
+            explanation:
+              'Run this command in a new terminal. If it prints version information, your C++ compiler is installed correctly.',
+          },
+        },
+        {
+          type: 'practice',
+          data: {
+            order: 4,
+            exerciseId: exerciseSetupCppCompiler._id,
+            required: true,
+          },
+        },
+      ]),
+      feynmanQuestion:
+        'Why is installing VS Code alone not enough to run a C++ program?',
+      feynmanPrompt:
+        'Check whether the user understands that VS Code edits code while g++ compiles C++ code.',
+    });
+
+    const block1_setup = await Block.create({
+      lessonId: lesson1_setup._id,
+      title: 'Run Your First C++ Program',
+      description: 'Create main.cpp, compile it, and run the output program',
+      content: asBlockContent([
+        {
+          type: 'theory',
+          data: {
+            order: 1,
+            text: 'A basic C++ program usually goes through three stages: write source code in a .cpp file, compile it with a compiler, then run the output program.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 2,
+            code: `Step 1: Create a file named main.cpp
+Step 2: Paste the sample code below
+Step 3: Open the terminal in the same folder
+Step 4: Compile:
+g++ main.cpp -o main
+Step 5: Run:
+./main
+
+Self-check:
+The terminal prints Hello, C++!`,
+            explanation:
+              'Follow these steps to compile and run your first C++ program.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 3,
+            code: `#include <iostream>
+using namespace std;
+
+int main() {
+  cout << "Hello, C++!" << endl;
+  return 0;
+}`,
+            explanation:
+              'Save this code as main.cpp, compile it with g++ main.cpp -o main, then run the generated program with ./main.',
+          },
+        },
+        {
+          type: 'practice',
+          data: { order: 4, exerciseId: exerciseSetupCpp._id, required: true },
+        },
+      ]),
+      feynmanQuestion:
+        'Briefly explain the process from main.cpp to a running C++ program.',
+      feynmanPrompt:
+        'Check whether the user understands that C++ source code must be compiled into an executable before running.',
+    });
 
     const block1_1 = await Block.create({
       lessonId: lesson1_1._id,
@@ -1249,17 +1498,23 @@ int main() {
         'Yêu cầu người dùng so sánh v1 + v2 với add(v1, v2) về mặt tính dễ đọc và sử dụng',
     });
 
-    console.log('✓ C++ Blocks created: 12 blocks');
+    console.log('✓ C++ Blocks created: 15 blocks');
 
     // ─── Link C++ blocks to lessons ──────────────────────────────────────────
 
     console.log('\n🔗 Linking blocks to C++ lessons...');
+    lesson1_setup.blocks = [
+      block1_setup_vscode._id,
+      block1_setup_compiler._id,
+      block1_setup._id,
+    ];
     lesson1_1.blocks = [block1_1._id, block1_1b._id, block1_1c._id];
     lesson1_2.blocks = [block1_2._id, block1_2b._id, block1_2c._id];
     lesson2_1.blocks = [block2_1._id, block2_1b._id, block2_1c._id];
     lesson2_2.blocks = [block2_2._id, block2_2b._id, block2_2c._id];
 
     await Promise.all([
+      lesson1_setup.save(),
       lesson1_1.save(),
       lesson1_2.save(),
       lesson2_1.save(),
@@ -1285,16 +1540,23 @@ int main() {
       description: 'Classes, inheritance, interfaces, and polymorphism in Java',
     });
 
+    const javaLesson1_setup = await Lesson.create({
+      milestoneId: javaMilestone1._id,
+      title: 'Setup Java Development Environment',
+      order: 1,
+      blocks: [],
+    });
+
     const javaLesson1_1 = await Lesson.create({
       milestoneId: javaMilestone1._id,
       title: 'Variables and Types',
-      order: 1,
+      order: 2,
       blocks: [],
     });
     const javaLesson1_2 = await Lesson.create({
       milestoneId: javaMilestone1._id,
       title: 'Control Flow',
-      order: 2,
+      order: 3,
       blocks: [],
     });
     const javaLesson2_1 = await Lesson.create({
@@ -1315,6 +1577,91 @@ int main() {
     console.log('\n💪 Creating Java Exercises...');
 
     // Java Lesson 1.1 Block 1 — fill_blank
+    const javaExerciseSetupVsCode = await Exercise.create({
+      lessonId: javaLesson1_setup._id,
+      tagId: tagIds('Environment Setup'),
+      title: 'Install VS Code for Java',
+      instruction: 'What is VS Code mainly used for when learning Java?',
+      language: 'Java',
+      type: 'drag_drop',
+      level: 'easy',
+      data: {
+        expectedSlots: 1,
+        blocks: [
+          { id: 'block-0', code: 'code editor', indent: 0 },
+          { id: 'block-1', code: 'JDK', indent: 0 },
+          { id: 'block-2', code: 'compiler', indent: 0 },
+        ],
+      },
+      correctAnswer: {
+        '1': 'block-0',
+      },
+      explanation:
+        'VS Code is an editor for writing Java code. To compile and run Java, you still need to install the JDK.',
+      hints: {
+        '1': 'An editor is where you write code; it is not the Java toolchain.',
+      },
+      order: 1,
+    });
+
+    const javaExerciseSetupJdk = await Exercise.create({
+      lessonId: javaLesson1_setup._id,
+      tagId: tagIds('Environment Setup'),
+      title: 'Install the JDK',
+      instruction:
+        'Which toolchain do you need to compile and run Java programs?',
+      language: 'Java',
+      type: 'drag_drop',
+      level: 'easy',
+      data: {
+        expectedSlots: 1,
+        blocks: [
+          { id: 'block-0', code: 'JDK', indent: 0 },
+          { id: 'block-1', code: 'g++', indent: 0 },
+          { id: 'block-2', code: 'VS Code', indent: 0 },
+        ],
+      },
+      correctAnswer: {
+        '1': 'block-0',
+      },
+      explanation:
+        'The JDK includes java for running programs and javac for compiling .java files.',
+      hints: {
+        '1': 'The JDK includes the javac compiler.',
+      },
+      order: 2,
+    });
+
+    const javaExerciseSetup = await Exercise.create({
+      lessonId: javaLesson1_setup._id,
+      tagId: tagIds('Environment Setup', 'Input Output'),
+      title: 'Run Your First Java Program',
+      instruction:
+        'Choose the compile command first, then the run command for the sample Java program.',
+      language: 'Java',
+      type: 'drag_drop',
+      level: 'easy',
+      data: {
+        expectedSlots: 2,
+        blocks: [
+          { id: 'block-0', code: 'javac Main.java', indent: 0 },
+          { id: 'block-1', code: 'java Main', indent: 0 },
+          { id: 'block-2', code: 'g++ main.cpp -o main', indent: 0 },
+        ],
+      },
+      correctAnswer: {
+        '1': 'block-0',
+        '2': 'block-1',
+      },
+      explanation:
+        'To run Java, you need the JDK, a Main.java file, javac to compile it, and java to run the Main class.',
+      hints: {
+        '1': 'Java needs the JDK because it includes both javac and java.',
+        '2': 'Because the public class is Main, the file should be named Main.java.',
+      },
+      order: 3,
+    });
+
     const javaExercise1 = await Exercise.create({
       lessonId: javaLesson1_1._id,
       tagId: tagIds('Variables', 'Data Types'),
@@ -1354,7 +1701,7 @@ int main() {
       tagId: tagIds('Data Types'),
       title: 'Match Java Types',
       instruction:
-        'Kéo thả giá trị phù hợp cho từng kiểu dữ liệu Java: int, String, double, boolean',
+        'Kéo thả giá trị phù hợp cho từng kiểu dữ liệu Java theo tứ tự như sau: int, String, double, boolean',
       language: 'Java',
       type: 'drag_drop',
       level: 'easy',
@@ -1365,8 +1712,7 @@ int main() {
           { id: 'block-1', code: '"Bob"', indent: 0 },
           { id: 'block-2', code: '50000.50', indent: 0 },
           { id: 'block-3', code: 'true', indent: 0 },
-          { id: 'block-4', code: 'false', indent: 0 },
-          { id: 'block-5', code: 'abc', indent: 0 },
+          { id: 'block-4', code: 'abc', indent: 0 },
         ],
       },
       correctAnswer: {
@@ -1392,26 +1738,23 @@ int main() {
       tagId: tagIds('Type Conversion', 'Data Types'),
       title: 'Type Narrowing in Java',
       instruction:
-        'Điền kiểu dữ liệu phù hợp khi chuyển đổi từ double sang int',
+        'Điền từ khóa phù hợp để chuyển đổi đúng kiểu dữ liệu trong trường hợp sau',
       language: 'Java',
       type: 'fill_blank',
       level: 'medium',
       data: {
-        template: ['double d = 9.99;\n', ' i = (', ') d; // narrowing cast'],
+        template: ['double d = 9.99;\nint i = (', ') d; // narrowing cast'],
         placeholders: {
           input_1: 'int',
-          input_2: 'int',
         },
       },
       correctAnswer: {
         input_1: 'int',
-        input_2: 'int',
       },
       explanation:
         'Chuyển đổi từ double sang int cần ép kiểu tường minh "(int)". Phần thập phân (.99) bị cắt bỏ.',
       hints: {
-        '1': 'Kiểu của biến i',
-        '2': 'Kiểu trong dấu ngoặc để ép kiểu',
+        '1': 'Kiểu trong dấu ngoặc để ép kiểu',
       },
       order: 1,
     });
@@ -1421,7 +1764,8 @@ int main() {
       lessonId: javaLesson1_2._id,
       tagId: tagIds('Control Flow'),
       title: 'If-Else Structure',
-      instruction: 'Kéo thả từ khóa để hoàn thành if-else statement',
+      instruction:
+        'Hãy chọn từ khóa điều khiển luồng phù hợp cho biểu thức sau: "__ (score >= 60) { ... } __ { ... }"',
       language: 'Java',
       type: 'drag_drop',
       level: 'easy',
@@ -1453,7 +1797,7 @@ int main() {
       lessonId: javaLesson1_2._id,
       tagId: tagIds('Operators', 'Control Flow'),
       title: 'Ternary Operator',
-      instruction: 'Điền các ký tự của ternary operator (condition ? yes : no)',
+      instruction: 'Điền các ký tự phù hợp để hoàn thành biểu thức Ternary',
       language: 'Java',
       type: 'fill_blank',
       level: 'medium',
@@ -1483,7 +1827,7 @@ int main() {
       tagId: tagIds('Loops'),
       title: 'Loop Control Keywords',
       instruction:
-        'Từ khóa __ dùng để thoát vòng lặp ngay, __ để bỏ qua lần lặp hiện tại.',
+        'Trong các cấu trúc vòng lặp, từ khóa __ dùng để thoát vòng lặp ngay, __ để bỏ qua lần lặp hiện tại.',
       language: 'Java',
       type: 'drag_drop',
       level: 'medium',
@@ -1515,7 +1859,7 @@ int main() {
       lessonId: javaLesson2_1._id,
       tagId: tagIds('OOP'),
       title: 'Class Constructor',
-      instruction: 'Điền tên của constructor (phải trùng với tên class)',
+      instruction: 'Điền tên phù hợp cho constructor của class Car',
       language: 'Java',
       type: 'fill_blank',
       level: 'easy',
@@ -1552,15 +1896,15 @@ int main() {
       data: {
         expectedSlots: 1,
         blocks: [
-          { id: 'block-0', code: 'getName', indent: 0 },
+          { id: 'block-0', code: 'readName', indent: 0 },
           { id: 'block-1', code: 'getname', indent: 0 },
-          { id: 'block-2', code: 'readName', indent: 0 },
+          { id: 'block-2', code: 'getName', indent: 0 },
           { id: 'block-3', code: 'fetchName', indent: 0 },
           { id: 'block-4', code: 'name', indent: 0 },
         ],
       },
       correctAnswer: {
-        '1': 'block-0',
+        '1': 'block-2',
       },
       explanation:
         'Getter theo naming convention bắt đầu với "get" viết hoa chữ cái đầu thuộc tính. getName lấy giá trị name.',
@@ -1576,7 +1920,7 @@ int main() {
       tagId: tagIds('OOP'),
       title: 'Static Variable',
       instruction:
-        'Điền từ khóa để khai báo biến chia sẻ cho tất cả instances của class',
+        'Điền từ khóa phù hợp để khai báo biến int có khả năng chia sẻ cho tất cả instances của class',
       language: 'Java',
       type: 'fill_blank',
       level: 'medium',
@@ -1602,7 +1946,8 @@ int main() {
       lessonId: javaLesson2_2._id,
       tagId: tagIds('OOP'),
       title: 'Extends and Implements',
-      instruction: 'Hãy điền từ khóa phù hợp. Dog __ Animal, Cat __ Speakable.',
+      instruction:
+        'Hãy điền từ khóa phù hợp để biểu diễn mối quan hệ giữa các class. Dog __ Animal, Cat __ Speakable.',
       language: 'Java',
       type: 'drag_drop',
       level: 'medium',
@@ -1631,7 +1976,7 @@ int main() {
       tagId: tagIds('OOP'),
       title: 'Abstract Method',
       instruction:
-        'Điền từ khóa để khai báo phương thức abstract (không có body)',
+        'Điền từ khóa để khai báo phương thức không có cài đặt trong abstract class',
       language: 'Java',
       type: 'fill_blank',
       level: 'hard',
@@ -1681,11 +2026,162 @@ int main() {
       order: 1,
     });
 
-    console.log('✓ Java Exercises created: 12 exercises');
+    console.log('✓ Java Exercises created: 15 exercises');
 
     // ─── Java Blocks ─────────────────────────────────────────────────────────
 
     console.log('\n🧩 Creating Java Blocks...');
+
+    const javaBlock1_setup_vscode = await Block.create({
+      lessonId: javaLesson1_setup._id,
+      title: 'Install VS Code',
+      description: 'Download and open the editor used to write Java code',
+      content: asBlockContent([
+        {
+          type: 'theory',
+          data: {
+            order: 1,
+            text: 'VS Code is a code editor. It is where you create files, write Java code, open the terminal, and manage your project. VS Code is not the JDK, so it cannot compile Java by itself if the Java toolchain is missing.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 2,
+            code: `Step 1: Go to https://code.visualstudio.com/download
+Step 2: Choose the installer for your operating system
+Step 3: Install VS Code with the default options
+Step 4: Open VS Code after installation
+
+Self-check:
+VS Code opens and you can create a new file`,
+            explanation:
+              'Follow these steps to install VS Code and check that it opens correctly.',
+          },
+        },
+        {
+          type: 'practice',
+          data: {
+            order: 3,
+            exerciseId: javaExerciseSetupVsCode._id,
+            required: true,
+          },
+        },
+      ]),
+      feynmanQuestion:
+        'In your own words, what is VS Code used for when learning Java?',
+      feynmanPrompt:
+        'Check whether the user understands that VS Code is the editor used to write Java code.',
+    });
+
+    const javaBlock1_setup_jdk = await Block.create({
+      lessonId: javaLesson1_setup._id,
+      title: 'Install the JDK',
+      description: 'Install Java tools and verify java and javac',
+      content: asBlockContent([
+        {
+          type: 'theory',
+          data: {
+            order: 1,
+            text: 'The JDK is the Java Development Kit. It includes java for running Java programs and javac for compiling .java source files.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 2,
+            code: `Step 1: Go to https://adoptium.net/temurin/releases/
+Step 2: Choose the latest LTS JDK for your operating system
+Step 3: Install it with the default options
+Step 4: Open a new terminal and run:
+java --version
+Step 5: Run:
+javac --version
+
+Self-check:
+Both commands print version information`,
+            explanation:
+              'Follow these steps to install the JDK and verify java and javac.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 3,
+            code: `java --version
+javac --version`,
+            explanation:
+              'Run both commands in a new terminal. java checks the runtime, while javac checks the compiler.',
+          },
+        },
+        {
+          type: 'practice',
+          data: {
+            order: 4,
+            exerciseId: javaExerciseSetupJdk._id,
+            required: true,
+          },
+        },
+      ]),
+      feynmanQuestion:
+        'Explain the difference between java and javac in simple words.',
+      feynmanPrompt:
+        'Check whether the user understands that javac compiles Java code and java runs compiled Java classes.',
+    });
+
+    const javaBlock1_setup = await Block.create({
+      lessonId: javaLesson1_setup._id,
+      title: 'Run Your First Java Program',
+      description: 'Create Main.java, compile it, and run the class',
+      content: asBlockContent([
+        {
+          type: 'theory',
+          data: {
+            order: 1,
+            text: 'A basic Java program usually goes through three stages: write source code in a .java file, compile it with javac, then run the class with java.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 2,
+            code: `Step 1: Create a file named Main.java
+Step 2: Paste the sample code below
+Step 3: Open the terminal in the same folder
+Step 4: Compile:
+javac Main.java
+Step 5: Run:
+java Main
+
+Self-check:
+The terminal prints Hello, Java!`,
+            explanation:
+              'Follow these steps to compile and run your first Java program.',
+          },
+        },
+        {
+          type: 'code',
+          data: {
+            order: 3,
+            code: `public class Main {
+  public static void main(String[] args) {
+    System.out.println("Hello, Java!");
+  }
+}`,
+            explanation:
+              'Save this code as Main.java, compile it with javac Main.java, then run it with java Main.',
+          },
+        },
+        {
+          type: 'practice',
+          data: { order: 4, exerciseId: javaExerciseSetup._id, required: true },
+        },
+      ]),
+      feynmanQuestion:
+        'Briefly explain the process from Main.java to a running Java program.',
+      feynmanPrompt:
+        'Check whether the user understands that Java source code is compiled before being run by the JVM.',
+    });
 
     const javaBlock1_1 = await Block.create({
       lessonId: javaLesson1_1._id,
@@ -2294,11 +2790,16 @@ public class Main {
         'Verify the user understands the diamond problem and how Java resolves it by requiring an explicit override',
     });
 
-    console.log('✓ Java Blocks created: 12 blocks');
+    console.log('✓ Java Blocks created: 15 blocks');
 
     // ─── Link Java blocks to lessons ─────────────────────────────────────────
 
     console.log('\n🔗 Linking blocks to Java lessons...');
+    javaLesson1_setup.blocks = [
+      javaBlock1_setup_vscode._id,
+      javaBlock1_setup_jdk._id,
+      javaBlock1_setup._id,
+    ];
     javaLesson1_1.blocks = [
       javaBlock1_1._id,
       javaBlock1_1b._id,
@@ -2321,6 +2822,7 @@ public class Main {
     ];
 
     await Promise.all([
+      javaLesson1_setup.save(),
       javaLesson1_1.save(),
       javaLesson1_2.save(),
       javaLesson2_1.save(),
@@ -2335,9 +2837,9 @@ public class Main {
     console.log('  🌐 language_info : 2');
     console.log('  📚 Roadmaps      : 2 (C++, Java)');
     console.log('  🎯 Milestones    : 4');
-    console.log('  📖 Lessons       : 8');
-    console.log('  🧩 Blocks        : 24  (3 blocks per lesson)');
-    console.log('  💪 Exercises     : 25');
+    console.log('  📖 Lessons       : 10');
+    console.log('  🧩 Blocks        : 30');
+    console.log('  💪 Exercises     : 31');
 
     if (disconnectAfter) {
       await mongoose.disconnect();

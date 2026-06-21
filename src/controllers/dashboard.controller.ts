@@ -82,11 +82,7 @@ export const getDashboard = async (
       UserLessonProgress.countDocuments({
         userId,
         lessonId: { $in: lessonIds },
-        $or: [
-          { isCompleted: true },
-          { completionPercentage: { $gt: 0 } },
-          { status: 'active' },
-        ],
+        $or: [{ isCompleted: true }, { status: 'completed' }],
       }),
       ExerciseAttempt.countDocuments({
         userId,

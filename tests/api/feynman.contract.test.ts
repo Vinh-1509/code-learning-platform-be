@@ -219,10 +219,6 @@ describe('Feynman API Contract Tests', () => {
 
   beforeAll(async () => {
     await connectTestDB();
-    vi.spyOn(feynmanService, 'generateFeynmanFeedback').mockResolvedValue({
-      reply: 'Great explanation! You understand the concept well.',
-      isPassed: true,
-    });
   });
 
   afterAll(async () => {
@@ -243,6 +239,11 @@ describe('Feynman API Contract Tests', () => {
       testData.lesson._id,
       testData.blocks.map((b: any) => b._id),
     );
+
+    vi.spyOn(feynmanService, 'generateFeynmanFeedback').mockResolvedValue({
+      reply: 'Great explanation! You understand the concept well.',
+      isPassed: true,
+    });
   });
 
   // ─── GET /feynman/block/:blockId/question ──────────────────────────────────

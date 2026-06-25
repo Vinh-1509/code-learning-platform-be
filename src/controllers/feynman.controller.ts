@@ -31,6 +31,9 @@ import type {
   FeynmanStatsResponse,
 } from '../interfaces/feynman.interface';
 
+const FEYNMAN_MAX_CONSECUTIVE_FAILS = 10;
+const FEYNMAN_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+
 function authUserId(req: Request): string {
   return req.user!.id;
 }
@@ -149,6 +152,7 @@ function getOrCreateBlockProgress(
       isFeynmanPassed: false,
       status: getFallbackBlockStatus(lessonBlockIds, blockId),
       chatHistory: [],
+      feynmanFailCount: 0,
     };
     progress.blockProgress.push(blockProgress);
   }
@@ -167,6 +171,49 @@ function getOrCreateBlockProgress(
   }
 
   return blockProgress;
+}
+
+function getRemainingCooldownMs(cooldownUntil: Date): number {
+  return Math.max(0, cooldownUntil.getTime() - Date.now());
+}
+
+function formatRemainingCooldown(cooldownUntil: Date): string {
+  const remainingMs = getRemainingCooldownMs(cooldownUntil);
+  const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+
+  if (remainingMinutes < 60) {
+    return `${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}`;
+  }
+
+  const remainingHours = Math.ceil(remainingMinutes / 60);
+  return `${remainingHours} hour${remainingHours === 1 ? '' : 's'}`;
+}
+
+function isCooldownActive(cooldownUntil: Date): boolean {
+  const remainingMs = cooldownUntil.getTime() - Date.now();
+  return remainingMs > 0;
+}
+
+function ensureFeynmanCooldownExpired(
+  blockProgress: IBlockProgress,
+  res: Response,
+): boolean {
+  if (blockProgress.status === 'completed') return true;
+
+  const cooldownUntil = blockProgress.feynmanCooldownUntil;
+  if (!cooldownUntil) return true;
+
+  if (isCooldownActive(cooldownUntil)) {
+    const remainingTime = formatRemainingCooldown(cooldownUntil);
+    res.status(429).json({
+      message: `You have failed many times. Try again after ${remainingTime}.`,
+    });
+    return false;
+  }
+
+  blockProgress.feynmanFailCount = 0;
+  blockProgress.feynmanCooldownUntil = undefined;
+  return true;
 }
 
 function ensureBlockUnlocked(
@@ -300,6 +347,7 @@ async function completeBlockAfterFeynmanPass(
         isFeynmanPassed: false,
         status: 'locked',
         chatHistory: [],
+        feynmanFailCount: 0,
       };
       lessonProgress.blockProgress.push(nextBlockProgress);
     }
@@ -415,6 +463,7 @@ export const postBlockFeynmanChat = async (
     );
 
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
+    if (!ensureFeynmanCooldownExpired(blockProgress, res)) return;
 
     const aiResult = await generateFeynmanFeedback({
       contentSummary: buildBlockContentSummary(block),
@@ -433,6 +482,8 @@ export const postBlockFeynmanChat = async (
     }
 
     if (aiResult.isPassed) {
+      blockProgress.feynmanFailCount = 0;
+      blockProgress.feynmanCooldownUntil = undefined;
       await completeBlockAfterFeynmanPass(
         userId,
         lesson,
@@ -441,6 +492,23 @@ export const postBlockFeynmanChat = async (
         blockProgress,
       );
     } else {
+      blockProgress.feynmanFailCount =
+        (blockProgress.feynmanFailCount ?? 0) + 1;
+
+      if (blockProgress.feynmanFailCount >= FEYNMAN_MAX_CONSECUTIVE_FAILS) {
+        blockProgress.feynmanCooldownUntil = new Date(
+          Date.now() + FEYNMAN_COOLDOWN_MS,
+        );
+        progress.markModified('blockProgress');
+        await progress.save();
+
+        res.status(429).json({
+          message: `You have failed many times. Try again after ${formatRemainingCooldown(
+            blockProgress.feynmanCooldownUntil,
+          )}.`,
+        });
+        return;
+      }
       progress.markModified('blockProgress');
       await progress.save();
     }

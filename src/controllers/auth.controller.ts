@@ -50,7 +50,7 @@ export const register = async (
     const user = new User({
       email,
       password,
-      username: username || email.split('@')[0],
+      username: username || email,
       fullName: fullName || '',
     });
 

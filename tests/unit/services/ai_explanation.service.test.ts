@@ -123,8 +123,8 @@ describe('ai_explanation.service', () => {
     const result = await generateExerciseExplanation(mockInput);
 
     expect(result.isCorrect).toBe(false);
-    expect(result.feedback).toContain('chưa chính xác');
-    expect(result.items[0].explanation).toContain('chưa đúng');
+    expect(result.feedback).toContain('inaccuracies');
+    expect(result.items[0].explanation).toContain('inaccuracies');
   });
 
   it('should return fallback explanation if API returns invalid JSON', async () => {
@@ -145,7 +145,7 @@ describe('ai_explanation.service', () => {
 
     const result = await generateExerciseExplanation(mockInput);
 
-    expect(result.feedback).toContain('chưa chính xác');
+    expect(result.feedback).toContain('inaccuracies');
   });
 });
 

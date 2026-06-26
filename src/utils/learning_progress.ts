@@ -15,6 +15,8 @@ export type BlockProgressEntry = {
   isFeynmanPassed: boolean;
   status: ProgressStatus;
   chatHistory: { role: 'user' | 'assistant'; content: string }[];
+  feynmanFailCount?: number;
+  feynmanCooldownUntil?: Date;
 };
 
 export const SUPPORTED_LANGUAGES = ['C++', 'Java'] as const;
@@ -28,6 +30,7 @@ export function buildDefaultBlockProgress(
     isFeynmanPassed: false,
     status: index === 0 ? 'active' : 'locked',
     chatHistory: [],
+    feynmanFailCount: 0,
   }));
 }
 

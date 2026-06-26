@@ -43,7 +43,7 @@ function isValidMessage(value: unknown): value is string {
 }
 
 function getDefaultQuestion(): string {
-  return 'Hãy giải thích lại ý chính của block này bằng lời của bạn.';
+  return 'Please explain the main idea of this block in your own words.';
 }
 
 function getBlockQuestion(block: { feynmanQuestion?: string }): string {

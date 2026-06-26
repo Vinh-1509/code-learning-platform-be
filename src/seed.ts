@@ -124,16 +124,16 @@ export const seed = async (disconnectAfter = true) => {
 
     const roadmap = await Roadmap.create({
       language: 'C++',
-      title: 'Lộ trình C++',
+      title: 'C++ Learning Roadmap',
       description:
-        'Một lộ trình toàn diện để học lập trình C++ từ cơ bản đến nâng cao',
+        'A Comprehensive Roadmap to Learning C++ Programming from Beginner to Advanced',
     });
 
     const roadmapJava = await Roadmap.create({
       language: 'Java',
-      title: 'Lộ trình Java',
+      title: 'Java Learning Roadmap',
       description:
-        'Một lộ trình toàn diện để học lập trình Java từ cơ bản đến nâng cao',
+        'A Comprehensive Roadmap to Learning Java Programming from Beginner to Advanced',
     });
     console.log(
       `✓ Roadmaps created: C++ ${String(roadmap._id)}, Java ${String(roadmapJava._id)}`,
@@ -147,7 +147,7 @@ export const seed = async (disconnectAfter = true) => {
       title: 'C++ Fundamentals',
       order: 1,
       description:
-        'Học các khái niệm cơ bản của C++: biến, kiểu dữ liệu, toán tử, và điều khiển luồng',
+        'Learn the fundamental concepts of C++: variables, data types, operators, and control flow.',
     });
 
     const milestone2 = await Milestone.create({
@@ -155,7 +155,7 @@ export const seed = async (disconnectAfter = true) => {
       title: 'Object Oriented Programming',
       order: 2,
       description:
-        'Hiểu và áp dụng các nguyên tắc OOP: class, inheritance, polymorphism, encapsulation',
+        'Understand and apply the principles of OOP: class, inheritance, polymorphism, encapsulation',
     });
     console.log(
       `✓ Milestones created: ${String(milestone1._id)}, ${String(milestone2._id)}`,
@@ -296,7 +296,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Variables', 'Data Types'),
       title: 'Declare Student Variables',
       instruction:
-        'Khai báo các biến để lưu thông tin của một sinh viên: name (string), age (int), và score (double)',
+        'Declare variables to store information about a student: name (string), age (int), and score (double)',
       language: 'C++',
       type: 'fill_blank',
       level: 'easy',
@@ -314,11 +314,11 @@ export const seed = async (disconnectAfter = true) => {
         input_3: 'score',
       },
       explanation:
-        'Để lưu trữ tên ta sử dụng kiểu string, tuổi là int, và điểm là double. Cú pháp khai báo là: kiểu_dữ_liệu tên_biến = giá_trị;',
+        'To store a name, we use the string data type; for age, we use int; and for a score, we use double. The syntax for declaring a variable is: data_type variable_name = value;',
       hints: {
-        '1': 'Tên của người dùng nên là một chuỗi ký tự, sử dụng từ khóa gì để khai báo?',
-        '2': 'Tuổi là một số nguyên, sử dụng int',
-        '3': 'Điểm có thể có phần thập phân, sử dụng double',
+        '1': "A user's name should be a sequence of characters. Which keyword should be used to declare it?",
+        '2': 'Age is an integer, so use `int`.',
+        '3': 'A score can have a decimal part, so use `double`.',
       },
       order: 1,
     });
@@ -329,7 +329,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Input Output', 'Variables'),
       title: 'Output Variable Values',
       instruction:
-        'Viết mã để in ra giá trị của các biến: name, age, và score. Theo format mẫu sau: "Name: John\nAge: 25\nScore: 10"',
+        'Write code to print the values of the variables: name, age, and score. Follow the format template below: "Name: John\nAge: 25\nScore: 10"',
       language: 'C++',
       type: 'fill_blank',
       level: 'easy',
@@ -355,10 +355,10 @@ export const seed = async (disconnectAfter = true) => {
         input_4: 'cout << "Score: "',
       },
       explanation:
-        'Sử dụng cout để in ra các biến. Mỗi dòng thông tin nên kết thúc bằng endl hoặc "\\n" để xuống dòng.',
+        'Use cout to print the variables. Each line of information should end with endl or "\\n" to move to the next line.',
       hints: {
-        '1': 'Cần xuống dòng và in "Age: " trước khi in giá trị age',
-        '2': 'Tương tự, cần xuống dòng và in "Score: " trước khi in giá trị score',
+        '1': 'Need to move to the next line and print "Age: " before printing the value of age',
+        '2': 'Similarly, need to move to the next line and print "Score: " before printing the value of score',
       },
       order: 2,
     });
@@ -369,7 +369,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Data Types'),
       title: 'Match Data Types to Variables',
       instruction:
-        'Kéo thả các giá trị theo thứ tự để khớp với kiểu dữ liệu sau: int, double, char, bool',
+        'Drag and drop the values in order to match them with the following data types: int, double, char, bool',
       language: 'C++',
       type: 'drag_drop',
       level: 'easy',
@@ -389,12 +389,12 @@ export const seed = async (disconnectAfter = true) => {
         '4': 'block-1',
       },
       explanation:
-        "int chứa số nguyên (100), double chứa số thực (3.14159), char chứa ký tự đơn trong ngoặc đơn ('A'), bool chứa giá trị true/false.",
+        "int contains integers (100), double contains floating-point numbers (3.14159), char contains single characters in single quotes ('A'), bool contains true/false values.",
       hints: {
-        '1': 'Chọn số nguyên cho int',
-        '2': 'Chọn số có phần thập phân cho double',
-        '3': 'Ký tự phải được bao bởi dấu nháy đơn',
-        '4': 'bool chỉ có hai giá trị: true hoặc false',
+        '1': 'Select an integer for int',
+        '2': 'Select a number with a decimal part for double',
+        '3': 'Characters must be enclosed in single quotes',
+        '4': 'bool has only two values: true or false',
       },
       order: 1,
     });
@@ -405,7 +405,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Type Conversion', 'Data Types'),
       title: 'Identify Casting Types',
       instruction:
-        'Điền từ hai khóa sau vào vị trí phù hợp: implicit (ngầm định), explicit (tường minh)',
+        'Fill in the two keywords below in the appropriate positions: implicit (implicit), explicit (explicit)',
       language: 'C++',
       type: 'fill_blank',
       level: 'medium',
@@ -425,10 +425,10 @@ export const seed = async (disconnectAfter = true) => {
         input_2: 'explicit',
       },
       explanation:
-        'Chuyển đổi int → double tự động (không mất dữ liệu) nên gọi là ngầm định. Chuyển đổi double → int cần ép kiểu tường minh vì có nguy cơ mất phần thập phân.',
+        'Implicit conversion from int to double is automatic (no data loss), so it is called implicit. Explicit conversion from double to int requires casting because it may lose the fractional part.',
       hints: {
-        '1': 'Casting không cần ký tự đặc biệt được gọi là gì?',
-        '2': 'Casting cần dùng (type) được gọi là gì?',
+        '1': 'What is the term for casting that does not require special syntax?',
+        '2': 'What is the term for casting that requires the type to be specified in parentheses?',
       },
       order: 1,
     });
@@ -439,7 +439,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Operators', 'Control Flow'),
       title: 'Even or Odd Condition',
       instruction:
-        'Chọn toán tử đúng để kiểm tra xem một số có là số chẵn hay không',
+        'Select the correct operator to check if a number is even or odd',
       language: 'C++',
       type: 'drag_drop',
       level: 'easy',
@@ -456,9 +456,9 @@ export const seed = async (disconnectAfter = true) => {
         '1': 'block-0',
       },
       explanation:
-        'Toán tử modulo (%) trả về phần dư. Nếu phần dư bằng 0, số là chẵn. Ví dụ: 4 % 2 = 0 (chẵn), 5 % 2 = 1 (lẻ).',
+        'The modulo operator (%) returns the remainder. If the remainder is 0, the number is even. Example: 4 % 2 = 0 (even), 5 % 2 = 1 (odd).',
       hints: {
-        '1': 'Toán tử nào tính phần dư của phép chia?',
+        '1': 'Which operator calculates the remainder of a division?',
       },
       order: 1,
     });
@@ -469,7 +469,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Control Flow'),
       title: 'Complete Switch Statement',
       instruction:
-        'Chọn các từ khóa phù hợp để câu lệnh switch chạy đúng cho các ngày trong tuần',
+        'Select the appropriate keywords to make the switch statement work correctly for the days of the week',
       language: 'C++',
       type: 'fill_blank',
       level: 'medium',
@@ -492,10 +492,10 @@ export const seed = async (disconnectAfter = true) => {
         input_3: 'break',
       },
       explanation:
-        'case kiểm tra giá trị. break thoát khỏi switch để tránh fall-through (chạy tiếp code phía dưới).',
+        'case checks the value. break exits the switch to avoid fall-through (continuing to execute the next case).',
       hints: {
-        '1': 'Từ khóa để bắt đầu một nhánh là gì?',
-        '2': 'Từ khóa để thoát khỏi switch là gì?',
+        '1': 'What keyword is used to start a case block?',
+        '2': 'What keyword is used to exit a switch statement?',
       },
       order: 1,
     });
@@ -506,7 +506,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('Loops'),
       title: 'While Loop Syntax',
       instruction:
-        'Cấu trúc vòng lặp nào kiểm tra điều kiện trước khi thực thi khối lệnh?',
+        'Which loop structure checks the condition before executing the block of code?',
       language: 'C++',
       type: 'drag_drop',
       level: 'easy',
@@ -524,9 +524,9 @@ export const seed = async (disconnectAfter = true) => {
         '1': 'block-2',
       },
       explanation:
-        'while lặp lại khi điều kiện còn đúng. do-while cũng lặp nhưng kiểm tra điều kiện sau. for dùng khi biết số lần lặp.',
+        'while loops while the condition is true. do-while also loops but checks the condition after execution. for is used when the number of iterations is known.',
       hints: {
-        '1': 'Kiểm tra điều kiện trước khi thực thi được gọi là từ khóa nào?',
+        '1': 'What keyword is used to check the condition before executing a loop?',
       },
       order: 1,
     });
@@ -537,7 +537,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('OOP'),
       title: 'Access Modifiers',
       instruction:
-        'Hãy điền access modifier phù hợp vào: __ cho thuộc tính ẩn, __ cho phương thức công khai',
+        'Select the appropriate access modifiers: __ for private attributes, __ for public methods',
       language: 'C++',
       type: 'drag_drop',
       level: 'medium',
@@ -555,10 +555,10 @@ export const seed = async (disconnectAfter = true) => {
         '2': 'block-0',
       },
       explanation:
-        'private giới hạn truy cập chỉ trong class. public cho phép truy cập từ mọi nơi. protected cho phép class con truy cập.',
+        'private limits access to within the class. public allows access from anywhere. protected allows access from derived classes.',
       hints: {
-        '1': 'Dữ liệu thường được ẩn bằng access modifier nào?',
-        '2': 'Phương thức công khai dùng access modifier nào?',
+        '1': 'Which access modifier is used to hide data?',
+        '2': 'Which access modifier is used for public methods?',
       },
       order: 1,
     });
@@ -568,7 +568,7 @@ export const seed = async (disconnectAfter = true) => {
       lessonId: lesson2_1._id,
       tagId: tagIds('OOP'),
       title: 'Constructor Syntax',
-      instruction: 'Điền tên của constructor phù hợp cho class Car',
+      instruction: 'Fill in the appropriate constructor name for the Car class',
       language: 'C++',
       type: 'fill_blank',
       level: 'easy',
@@ -585,9 +585,9 @@ export const seed = async (disconnectAfter = true) => {
         input_1: 'Car',
       },
       explanation:
-        'Constructor phải có tên giống hệt tên class. Nó được gọi tự động khi tạo object để khởi tạo trạng thái ban đầu.',
+        'Constructor must have the same name as the class. It is called automatically when an object of the class is created to initialize the initial state.',
       hints: {
-        '1': 'Constructor phải có tên trùng với tên class nào?',
+        '1': 'Constructor must have a name that matches the class name?',
       },
       order: 1,
     });
@@ -598,7 +598,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('OOP'),
       title: 'Getter and Setter Methods',
       instruction:
-        'Kéo thả các tên phương thức phù hợp để truy cập (lấy) và cập nhật thuộc tính balance của một class',
+        'Drag and drop the appropriate method names to access (get) and update the balance attribute of a class',
       language: 'C++',
       type: 'drag_drop',
       level: 'medium',
@@ -618,10 +618,10 @@ export const seed = async (disconnectAfter = true) => {
         '2': 'block-4',
       },
       explanation:
-        'Getter bắt đầu với "get" để lấy giá trị thuộc tính. Setter bắt đầu với "set" để gán giá trị với kiểm tra hợp lệ.',
+        'Getter starts with "get" to retrieve the value of an attribute. Setter starts with "set" to assign a value with validation.',
       hints: {
-        '1': 'Phương thức lấy giá trị thường bắt đầu bằng từ gì?',
-        '2': 'Phương thức gán giá trị thường bắt đầu bằng từ gì?',
+        '1': 'What keyword is used to define a method that retrieves an attribute value?',
+        '2': 'What keyword is used to define a method that assigns a value to an attribute?',
       },
       order: 1,
     });
@@ -632,7 +632,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('OOP'),
       title: 'Inheritance Syntax',
       instruction:
-        'Điền từ khóa phù hợp để Dog kế thừa mọi thuộc tính và phương thức của Animal',
+        'Fill in the appropriate keyword for Dog to inherit all attributes and methods of Animal',
       language: 'C++',
       type: 'fill_blank',
       level: 'easy',
@@ -649,9 +649,9 @@ export const seed = async (disconnectAfter = true) => {
         input_1: ': public',
       },
       explanation:
-        'Dùng ": public" để kế thừa từ class cha. ": public" cho phép các public members của cha được thừa kế.',
+        'Use ": public" to inherit from a parent class. Public inheritance keeps the parent public members accessible through the child class.',
       hints: {
-        '1': 'Ký tự và từ khóa để kế thừa là gì?',
+        '1': 'What symbol and keyword are used for inheritance?',
       },
       order: 1,
     });
@@ -662,7 +662,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('OOP'),
       title: 'Virtual Function Override',
       instruction:
-        'Từ khóa __ cho phép compiler kiểm tra phương thức virtual từ class cha có được ghi đè đúng hay không',
+        'The __ keyword lets the compiler check whether a virtual method from the parent class is overridden correctly.',
       language: 'C++',
       type: 'drag_drop',
       level: 'medium',
@@ -680,9 +680,9 @@ export const seed = async (disconnectAfter = true) => {
         '1': 'block-0',
       },
       explanation:
-        'override cho phép compiler kiểm tra xem có phương thức virtual tương ứng trong class cha hay không. Giúp tránh lỗi typo.',
+        'override lets the compiler check whether a matching virtual method exists in the parent class. This helps prevent typo mistakes.',
       hints: {
-        '1': 'Từ khóa để ghi đè phương thức virtual là gì?',
+        '1': 'Which keyword marks a virtual method override?',
       },
       order: 1,
     });
@@ -693,7 +693,7 @@ export const seed = async (disconnectAfter = true) => {
       tagId: tagIds('OOP'),
       title: 'Pure Virtual Function',
       instruction:
-        'Điền ký tự để tạo pure virtual function (class trở thành abstract)',
+        'Fill in the syntax that makes a function pure virtual, turning the class abstract.',
       language: 'C++',
       type: 'fill_blank',
       level: 'hard',
@@ -710,9 +710,9 @@ export const seed = async (disconnectAfter = true) => {
         input_1: '= 0',
       },
       explanation:
-        'Pure virtual function được khai báo bằng "= 0". Class chứa pure virtual function không thể được khởi tạo (abstract).',
+        'A pure virtual function is declared with "= 0". A class containing a pure virtual function cannot be instantiated directly.',
       hints: {
-        '1': 'Ký tự để tạo pure virtual function là gì?',
+        '1': 'What syntax creates a pure virtual function?',
       },
       order: 1,
     });
@@ -883,7 +883,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Variables là những vùng bộ nhớ dùng để lưu trữ dữ liệu. Mỗi biến có một tên (identifier) và kiểu dữ liệu (data type). C++ là ngôn ngữ kiểu tĩnh, nghĩa là bạn phải khai báo kiểu dữ liệu trước khi sử dụng biến.',
+            text: 'Variables are named memory locations used to store data. Each variable has an identifier and a data type. C++ is statically typed, so you must declare a data type before using a variable.',
           },
         },
         {
@@ -903,7 +903,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Ví dụ này tạo ra ba biến: age (số nguyên), height (số thập phân), và name (chuỗi ký tự). Chúng được sử dụng để lưu trữ thông tin cá nhân.',
+              'This example creates three variables: age as a whole number, height as a decimal number, and name as text. They are used to store personal information.',
           },
         },
         {
@@ -915,9 +915,9 @@ int main() {
           data: { order: 4, exerciseId: exercise2._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Giải thích biến trong C++ bằng những từ của chính bạn',
+      feynmanQuestion: 'Explain variables in C++ in your own words',
       feynmanPrompt:
-        'Hãy kiểm tra xem người dùng có thực sự hiểu khái niệm biến không',
+        'Check whether the learner truly understands the concept of variables',
     });
 
     const block1_1b = await Block.create({
@@ -929,7 +929,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'C++ có các kiểu dữ liệu nguyên thủy (primitive types) được chia thành 4 nhóm: kiểu số nguyên (int, short, long, long long), kiểu số thực (float, double, long double), kiểu ký tự (char), và kiểu logic (bool). Mỗi kiểu có kích thước bộ nhớ và phạm vi giá trị khác nhau.',
+            text: 'C++ has primitive data types grouped into four main categories: integer types (int, short, long, long long), floating-point types (float, double, long double), character type (char), and boolean type (bool). Each type has a different memory size and value range.',
           },
         },
         {
@@ -955,7 +955,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Minh họa các kiểu dữ liệu cơ bản. int lưu số nguyên 32-bit, long long cho số nguyên 64-bit, double cho số thực với độ chính xác cao, char cho ký tự đơn, bool cho giá trị đúng/sai.',
+              'This demonstrates basic data types. int stores 32-bit whole numbers, long long stores 64-bit whole numbers, double stores high-precision decimal numbers, char stores a single character, and bool stores true/false values.',
           },
         },
         {
@@ -963,9 +963,9 @@ int main() {
           data: { order: 3, exerciseId: exercise3._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Khi nào bạn chọn int thay vì double?',
+      feynmanQuestion: 'When would you choose int instead of double?',
       feynmanPrompt:
-        'Kiểm tra xem người dùng hiểu sự khác biệt giữa các kiểu số nguyên và số thực',
+        'Check whether the learner understands the difference between integer and floating-point types',
     });
 
     const block1_1c = await Block.create({
@@ -977,7 +977,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Type casting cho phép chuyển đổi giá trị từ kiểu này sang kiểu khác. Implicit casting (ngầm định) xảy ra tự động khi không có mất dữ liệu (int → double). Explicit casting (tường minh) dùng static_cast<> khi có nguy cơ mất dữ liệu (double → int). Hằng số (constants) được khai báo bằng từ khóa const và không thể thay đổi sau khi gán.',
+            text: 'Type casting converts a value from one type to another. Implicit casting happens automatically when there is no data loss, such as int to double. Explicit casting uses static_cast<> when data may be lost, such as double to int. Constants are declared with const and cannot be changed after assignment.',
           },
         },
         {
@@ -999,7 +999,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'PI là hằng số không thể thay đổi. Khi nhân int với double, int được tự động chuyển sang double (implicit cast). static_cast<int> chuyển ngược lại và cắt bỏ phần thập phân.',
+              'PI is a constant and cannot be changed. When an int is multiplied by a double, the int is automatically converted to double through implicit casting. static_cast<int> converts back to int and removes the decimal part.',
           },
         },
         {
@@ -1007,9 +1007,9 @@ int main() {
           data: { order: 3, exerciseId: exercise4._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Tại sao explicit casting đôi khi gây mất dữ liệu?',
+      feynmanQuestion: 'Why can explicit casting sometimes lose data?',
       feynmanPrompt:
-        'Yêu cầu người dùng giải thích điều gì xảy ra với phần thập phân khi ép kiểu từ double sang int',
+        'Ask the learner to explain what happens to the decimal part when casting from double to int',
     });
 
     const block1_2 = await Block.create({
@@ -1021,7 +1021,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Điều khiển luồng (Control Flow) cho phép bạn quyết định những phần mã nào sẽ được thực thi. Có ba loại chính: if-else để rẽ nhánh, switch-case cho nhiều trường hợp, và vòng lặp (for, while) để lặp lại.',
+            text: 'Control flow lets you decide which parts of code will run. The main types are if-else for branching, switch-case for many fixed cases, and loops such as for and while for repetition.',
           },
         },
         {
@@ -1042,7 +1042,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Vòng lặp for lặp từ 1 đến 10. Mỗi lần lặp, kiểm tra xem số có chẵn (chia hết cho 2) hay lẻ bằng toán tử modulo (%).',
+              'The for loop runs from 1 to 10. On each iteration, it uses the modulo operator (%) to check whether the number is even or odd.',
           },
         },
         {
@@ -1050,9 +1050,9 @@ int main() {
           data: { order: 3, exerciseId: exercise5._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Tại sao chúng ta cần các câu lệnh điều khiển luồng?',
+      feynmanQuestion: 'Why do we need control flow statements?',
       feynmanPrompt:
-        'Kiểm tra xem người dùng có hiểu lợi ích của việc sử dụng if-else và vòng lặp không',
+        'Check whether the learner understands the benefits of using if-else and loops',
     });
 
     const block1_2b = await Block.create({
@@ -1064,7 +1064,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'switch-case là lựa chọn thay thế cho chuỗi if-else khi so sánh một biến với nhiều giá trị cố định. Mỗi case cần có break để tránh fall-through. default xử lý tất cả các trường hợp còn lại.',
+            text: 'switch-case is an alternative to a chain of if-else statements when comparing one variable against many fixed values. Each case needs break to avoid fall-through. default handles all remaining cases.',
           },
         },
         {
@@ -1087,7 +1087,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'switch kiểm tra giá trị của day và nhảy thẳng đến case tương ứng. break ngăn code chạy tiếp sang case kế. default bắt các giá trị nằm ngoài 1-5.',
+              'switch checks the value of day and jumps directly to the matching case. break prevents execution from continuing into the next case. default catches values outside 1-5.',
           },
         },
         {
@@ -1095,9 +1095,9 @@ int main() {
           data: { order: 3, exerciseId: exercise6._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Khi nào nên dùng switch thay vì if-else?',
+      feynmanQuestion: 'When should you use switch instead of if-else?',
       feynmanPrompt:
-        'Kiểm tra xem người dùng có biết khi nào switch rõ ràng hơn và khi nào if-else linh hoạt hơn',
+        'Check whether the learner knows when switch is clearer and when if-else is more flexible',
     });
 
     const block1_2c = await Block.create({
@@ -1109,7 +1109,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'while lặp lại khi điều kiện còn đúng, kiểm tra trước khi thực thi. do-while luôn thực thi ít nhất một lần vì kiểm tra điều kiện sau mỗi vòng. break thoát vòng lặp ngay lập tức, continue bỏ qua phần còn lại của vòng lặp hiện tại.',
+            text: 'while repeats while the condition is true and checks the condition before running the block. do-while always runs at least once because it checks the condition after each iteration. break exits a loop immediately, while continue skips the rest of the current iteration.',
           },
         },
         {
@@ -1134,7 +1134,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Vòng while cộng dồn đến khi sum vượt 50. Vòng do-while chạy một lần dù x=100 không thỏa điều kiện x<10.',
+              'The while loop accumulates values until sum exceeds 50. The do-while loop runs once even though x=100 does not satisfy x < 10.',
           },
         },
         {
@@ -1142,9 +1142,9 @@ int main() {
           data: { order: 3, exerciseId: exercise7._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Sự khác nhau giữa while và do-while là gì?',
+      feynmanQuestion: 'What is the difference between while and do-while?',
       feynmanPrompt:
-        'Yêu cầu người dùng mô tả tình huống thực tế mà do-while phù hợp hơn while',
+        'Ask the learner to describe a real situation where do-while fits better than while',
     });
 
     const block2_1 = await Block.create({
@@ -1156,7 +1156,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Một class là một khuôn mẫu (template) để tạo ra các objects. Nó chứa các thuộc tính (attributes) mô tả trạng thái và phương thức (methods) mô tả hành vi. Object là một instance cụ thể được tạo ra từ class đó.',
+            text: 'A class is a blueprint for creating objects. It contains attributes that describe state and methods that describe behavior. An object is a specific instance created from that class.',
           },
         },
         {
@@ -1184,7 +1184,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Đây là một class Student với thuộc tính private (name, age) và phương thức public (display). Constructor khởi tạo các giá trị khi tạo object.',
+              'This is a Student class with private fields (name, age) and a public method (display). The constructor initializes values when an object is created.',
           },
         },
         {
@@ -1192,9 +1192,10 @@ int main() {
           data: { order: 3, exerciseId: exercise8._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Class là gì và nó khác gì với object?',
+      feynmanQuestion:
+        'What is a class, and how is it different from an object?',
       feynmanPrompt:
-        'Kiểm tra sự hiểu biết về sự khác biệt giữa class definition và instance',
+        'Check the learner understanding of the difference between a class definition and an instance',
     });
 
     const block2_1b = await Block.create({
@@ -1206,7 +1207,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Constructor là phương thức đặc biệt được gọi tự động khi object được tạo ra. Có thể có nhiều constructor với các tham số khác nhau (constructor overloading). Destructor (~ClassName) được gọi khi object bị hủy, thường dùng để giải phóng bộ nhớ.',
+            text: 'A constructor is a special method called automatically when an object is created. A class can have multiple constructors with different parameters through constructor overloading. A destructor (~ClassName) is called when an object is destroyed and is often used to release resources.',
           },
         },
         {
@@ -1240,7 +1241,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Box có hai constructor: mặc định (1x1) và có tham số. Destructor in thông báo khi object bị hủy. Thứ tự hủy ngược với thứ tự tạo: b2 bị hủy trước b1.',
+              'Box has two constructors: a default constructor (1x1) and a parameterized constructor. The destructor prints a message when the object is destroyed. Destruction order is the reverse of creation order: b2 is destroyed before b1.',
           },
         },
         {
@@ -1248,9 +1249,9 @@ int main() {
           data: { order: 3, exerciseId: exercise9._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Khi nào destructor được gọi?',
+      feynmanQuestion: 'When is a destructor called?',
       feynmanPrompt:
-        'Kiểm tra hiểu biết về vòng đời object và tại sao destructor quan trọng khi dùng bộ nhớ động',
+        'Check understanding of the object lifecycle and why destructors matter when using dynamic memory',
     });
 
     const block2_1c = await Block.create({
@@ -1262,7 +1263,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Encapsulation (đóng gói) là việc ẩn dữ liệu bên trong class và chỉ cho phép truy cập qua các phương thức công khai. C++ có ba access modifier: public (truy cập từ mọi nơi), private (chỉ trong class), và protected (trong class và class con). Getter/setter là các phương thức dùng để đọc/ghi dữ liệu private.',
+            text: 'Encapsulation means hiding data inside a class and allowing access only through public methods. C++ has three access modifiers: public for access from anywhere, private for access only inside the class, and protected for access inside the class and subclasses. Getters and setters are methods used to read and update private data.',
           },
         },
         {
@@ -1302,7 +1303,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'balance là private — không ai có thể gán trực tiếp acc.balance = -9999. Chỉ deposit/withdraw mới thay đổi được số dư, và chúng kiểm tra tính hợp lệ trước khi cập nhật.',
+              'balance is private, so no one can directly assign acc.balance = -9999. Only deposit and withdraw can change the balance, and they validate the value before updating it.',
           },
         },
         {
@@ -1310,10 +1311,9 @@ int main() {
           data: { order: 3, exerciseId: exercise10._id, required: true },
         },
       ]),
-      feynmanQuestion:
-        'Tại sao chúng ta nên dùng private thay vì public cho dữ liệu?',
+      feynmanQuestion: 'Why should we use private instead of public for data?',
       feynmanPrompt:
-        'Yêu cầu người dùng giải thích lợi ích của encapsulation bằng ví dụ thực tế',
+        'Ask the learner to explain the benefit of encapsulation with a practical example',
     });
 
     const block2_2 = await Block.create({
@@ -1325,7 +1325,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Inheritance cho phép một class kế thừa các thuộc tính và phương thức từ class khác, giúp tái sử dụng code. Polymorphism cho phép các object của các class khác nhau phản ứng theo những cách khác nhau với cùng một lời gọi phương thức, thông qua virtual functions.',
+            text: 'Inheritance allows one class to inherit attributes and methods from another class, which helps reuse code. Polymorphism allows objects of different classes to respond differently to the same method call through virtual functions.',
           },
         },
         {
@@ -1364,7 +1364,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Dog và Cat kế thừa từ Animal. Mỗi class ghi đè (override) phương thức sound() để phát ra âm thanh khác nhau. Đây là ví dụ của polymorphism qua virtual functions.',
+              'Dog and Cat inherit from Animal. Each class overrides sound() to produce a different sound. This is an example of polymorphism through virtual functions.',
           },
         },
         {
@@ -1372,9 +1372,9 @@ int main() {
           data: { order: 3, exerciseId: exercise11._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Tại sao chúng ta sử dụng virtual functions ở đây?',
+      feynmanQuestion: 'Why do we use virtual functions here?',
       feynmanPrompt:
-        'Yêu cầu người dùng giải thích lợi ích của polymorphism và cho ví dụ thực tế',
+        'Ask the learner to explain the benefit of polymorphism and give a practical example',
     });
 
     const block2_2b = await Block.create({
@@ -1386,7 +1386,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'Abstract class là class không thể tạo object trực tiếp. Nó chứa ít nhất một pure virtual function (khai báo với = 0). Mọi class con đều phải override tất cả pure virtual functions để có thể được khởi tạo.',
+            text: 'An abstract class is a class that cannot be instantiated directly. It contains at least one pure virtual function declared with = 0. Every subclass must override all pure virtual functions before it can be instantiated.',
           },
         },
         {
@@ -1426,7 +1426,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'Shape không thể được khởi tạo vì area() là pure virtual. Circle và Rectangle đều bắt buộc phải cài đặt area(). describe() được thừa kế và dùng được ngay mà không cần override.',
+              'Shape cannot be instantiated because area() is pure virtual. Circle and Rectangle must both implement area(). describe() is inherited and can be used without overriding it.',
           },
         },
         {
@@ -1434,9 +1434,10 @@ int main() {
           data: { order: 3, exerciseId: exercise12._id, required: true },
         },
       ]),
-      feynmanQuestion: 'Tại sao không thể tạo object từ abstract class?',
+      feynmanQuestion:
+        'Why can you not create an object from an abstract class?',
       feynmanPrompt:
-        'Kiểm tra xem người dùng hiểu tại sao abstract class tồn tại và khác gì so với class thông thường',
+        'Check whether the learner understands why abstract classes exist and how they differ from regular classes',
     });
 
     const block2_2c = await Block.create({
@@ -1448,7 +1449,7 @@ int main() {
           type: 'theory',
           data: {
             order: 1,
-            text: 'C++ cho phép định nghĩa lại hành vi của các toán tử (+, -, *, ==, <<, v.v.) cho class tự tạo. Điều này giúp code trở nên trực quan hơn. Operator overloading là một dạng polymorphism tĩnh (static polymorphism).',
+            text: 'C++ allows you to redefine the behavior of operators (+, -, *, ==, <<, and others) for custom classes. This can make code more intuitive. Operator overloading is a form of static polymorphism.',
           },
         },
         {
@@ -1484,7 +1485,7 @@ int main() {
   return 0;
 }`,
             explanation:
-              'operator+ trả về Vector2D mới bằng cách cộng từng thành phần. operator<< được khai báo là friend để truy cập private members và cho phép dùng cout << v trực tiếp.',
+              'operator+ returns a new Vector2D by adding each component. operator<< is declared as friend so it can access private members and allow direct use of cout << v.',
           },
         },
         {
@@ -1493,9 +1494,9 @@ int main() {
         },
       ]),
       feynmanQuestion:
-        'Lợi ích của operator overloading so với việc dùng hàm thông thường là gì?',
+        'What is the benefit of operator overloading compared with using a normal function?',
       feynmanPrompt:
-        'Yêu cầu người dùng so sánh v1 + v2 với add(v1, v2) về mặt tính dễ đọc và sử dụng',
+        'Ask the learner to compare v1 + v2 with add(v1, v2) in terms of readability and usability',
     });
 
     console.log('✓ C++ Blocks created: 15 blocks');
@@ -1687,10 +1688,10 @@ int main() {
         input_2: 'double',
       },
       explanation:
-        'Biến int lưu số nguyên tuổi, double lưu số thực chiều cao. String lưu tên (tuy đã cho sẵn ở đây).',
+        'The int variable stores a whole-number age, the double variable stores a decimal height, and String stores a name, which is already provided here.',
       hints: {
-        '1': 'Từ khóa kiểu dữ liệu cho số nguyên',
-        '2': 'Từ khóa kiểu dữ liệu cho số thực',
+        '1': 'The data type keyword for whole numbers',
+        '2': 'The data type keyword for decimal numbers',
       },
       order: 1,
     });
@@ -1701,7 +1702,7 @@ int main() {
       tagId: tagIds('Data Types'),
       title: 'Match Java Types',
       instruction:
-        'Kéo thả giá trị phù hợp cho từng kiểu dữ liệu Java theo tứ tự như sau: int, String, double, boolean',
+        'Drag the correct value for each Java data type in this order: int, String, double, boolean.',
       language: 'Java',
       type: 'drag_drop',
       level: 'easy',
@@ -1722,12 +1723,12 @@ int main() {
         '4': 'block-3',
       },
       explanation:
-        'int nhận số nguyên (25), String nhận text trong dấu ngoặc kép ("Bob"), double nhận thập phân (50000.50), boolean nhận true/false.',
+        'int accepts a whole number (25), String accepts text in double quotes ("Bob"), double accepts a decimal number (50000.50), and boolean accepts true/false.',
       hints: {
-        '1': 'int chứa số nguyên',
-        '2': 'String chứa text',
-        '3': 'double chứa số thực',
-        '4': 'boolean chứa true/false',
+        '1': 'int stores whole numbers',
+        '2': 'String stores text',
+        '3': 'double stores decimal numbers',
+        '4': 'boolean stores true/false',
       },
       order: 1,
     });
@@ -1738,7 +1739,7 @@ int main() {
       tagId: tagIds('Type Conversion', 'Data Types'),
       title: 'Type Narrowing in Java',
       instruction:
-        'Điền từ khóa phù hợp để chuyển đổi đúng kiểu dữ liệu trong trường hợp sau',
+        'Fill in the correct keyword to perform the type conversion below.',
       language: 'Java',
       type: 'fill_blank',
       level: 'medium',
@@ -1752,9 +1753,9 @@ int main() {
         input_1: 'int',
       },
       explanation:
-        'Chuyển đổi từ double sang int cần ép kiểu tường minh "(int)". Phần thập phân (.99) bị cắt bỏ.',
+        'Converting from double to int requires an explicit cast with "(int)". The decimal part (.99) is truncated.',
       hints: {
-        '1': 'Kiểu trong dấu ngoặc để ép kiểu',
+        '1': 'The type written in parentheses for casting',
       },
       order: 1,
     });
@@ -1765,7 +1766,7 @@ int main() {
       tagId: tagIds('Control Flow'),
       title: 'If-Else Structure',
       instruction:
-        'Hãy chọn từ khóa điều khiển luồng phù hợp cho biểu thức sau: "__ (score >= 60) { ... } __ { ... }"',
+        'Choose the correct control-flow keywords for this expression: "__ (score >= 60) { ... } __ { ... }".',
       language: 'Java',
       type: 'drag_drop',
       level: 'easy',
@@ -1784,10 +1785,10 @@ int main() {
         '2': 'block-1',
       },
       explanation:
-        'if kiểm tra điều kiện. else xử lý trường hợp còn lại. if không thỏa, code chạy vào else.',
+        'if checks the condition. else handles the remaining case. If the condition is false, the code runs inside else.',
       hints: {
-        '1': 'Từ khóa để kiểm tra điều kiện',
-        '2': 'Từ khóa cho nhánh khác',
+        '1': 'The keyword used to check a condition',
+        '2': 'The keyword used for the alternative branch',
       },
       order: 1,
     });
@@ -1797,7 +1798,8 @@ int main() {
       lessonId: javaLesson1_2._id,
       tagId: tagIds('Operators', 'Control Flow'),
       title: 'Ternary Operator',
-      instruction: 'Điền các ký tự phù hợp để hoàn thành biểu thức Ternary',
+      instruction:
+        'Fill in the correct symbols to complete the ternary expression.',
       language: 'Java',
       type: 'fill_blank',
       level: 'medium',
@@ -1813,10 +1815,10 @@ int main() {
         input_2: ':',
       },
       explanation:
-        'Ternary operator viết gọn if-else: condition ? valueIfTrue : valueIfFalse. Nếu condition đúng trả valueIfTrue, sai trả valueIfFalse.',
+        'The ternary operator is a compact form of if-else: condition ? valueIfTrue : valueIfFalse. If the condition is true, it returns valueIfTrue; otherwise, it returns valueIfFalse.',
       hints: {
-        '1': 'Ký tự phân tách điều kiện và giá trị đúng',
-        '2': 'Ký tự phân tách giá trị đúng và sai',
+        '1': 'The symbol that separates the condition from the true value',
+        '2': 'The symbol that separates the true value from the false value',
       },
       order: 1,
     });
@@ -1827,7 +1829,7 @@ int main() {
       tagId: tagIds('Loops'),
       title: 'Loop Control Keywords',
       instruction:
-        'Trong các cấu trúc vòng lặp, từ khóa __ dùng để thoát vòng lặp ngay, __ để bỏ qua lần lặp hiện tại.',
+        'In loop structures, the keyword __ exits the loop immediately, and __ skips the current iteration.',
       language: 'Java',
       type: 'drag_drop',
       level: 'medium',
@@ -1846,10 +1848,10 @@ int main() {
         '2': 'block-1',
       },
       explanation:
-        'break thoát vòng lặp ngay (i=5 dừng). continue bỏ qua phần còn lại, nhảy sang lần lặp tiếp.',
+        'break exits the loop immediately, such as stopping at i=5. continue skips the rest of the current iteration and moves to the next one.',
       hints: {
-        '1': 'Từ khóa để thoát khỏi vòng lặp ngay lập tức',
-        '2': 'Từ khóa để bỏ qua lần lặp hiện tại',
+        '1': 'The keyword used to exit a loop immediately',
+        '2': 'The keyword used to skip the current iteration',
       },
       order: 1,
     });
@@ -1859,7 +1861,7 @@ int main() {
       lessonId: javaLesson2_1._id,
       tagId: tagIds('OOP'),
       title: 'Class Constructor',
-      instruction: 'Điền tên phù hợp cho constructor của class Car',
+      instruction: 'Fill in the correct constructor name for class Car.',
       language: 'Java',
       type: 'fill_blank',
       level: 'easy',
@@ -1876,9 +1878,9 @@ int main() {
         input_1: 'Car',
       },
       explanation:
-        'Constructor phải có tên giống class. Được gọi tự động khi tạo object bằng new Car(...).',
+        'A constructor must have the same name as the class. It is called automatically when an object is created with new Car(...).',
       hints: {
-        '1': 'Tên constructor phải giống tên class nào?',
+        '1': 'The constructor name must match which class name?',
       },
       order: 1,
     });
@@ -1888,8 +1890,7 @@ int main() {
       lessonId: javaLesson2_1._id,
       tagId: tagIds('OOP'),
       title: 'Getter Method Pattern',
-      instruction:
-        'Kéo thả tên getter phù hợp nhất để lấy giá trị thuộc tính name',
+      instruction: 'Drag the best getter name for reading the name field.',
       language: 'Java',
       type: 'drag_drop',
       level: 'easy',
@@ -1907,9 +1908,9 @@ int main() {
         '1': 'block-2',
       },
       explanation:
-        'Getter theo naming convention bắt đầu với "get" viết hoa chữ cái đầu thuộc tính. getName lấy giá trị name.',
+        'By convention, a getter starts with "get" and capitalizes the first letter of the field name. getName reads the name value.',
       hints: {
-        '1': 'Getter nên bắt đầu bằng từ gì?',
+        '1': 'What word should a getter start with?',
       },
       order: 1,
     });
@@ -1920,7 +1921,7 @@ int main() {
       tagId: tagIds('OOP'),
       title: 'Static Variable',
       instruction:
-        'Điền từ khóa phù hợp để khai báo biến int có khả năng chia sẻ cho tất cả instances của class',
+        'Fill in the correct keyword to declare an int variable shared by all instances of the class.',
       language: 'Java',
       type: 'fill_blank',
       level: 'medium',
@@ -1934,9 +1935,9 @@ int main() {
         input_1: 'static',
       },
       explanation:
-        'static biến thuộc class, không thuộc object. Tất cả instances chia sẻ cùng một biến static. Truy cập qua ClassName.field.',
+        'A static variable belongs to the class, not to an individual object. All instances share the same static variable. It can be accessed through ClassName.field.',
       hints: {
-        '1': 'Từ khóa để khai báo biến chia sẻ',
+        '1': 'The keyword used to declare a shared variable',
       },
       order: 1,
     });
@@ -1947,7 +1948,7 @@ int main() {
       tagId: tagIds('OOP'),
       title: 'Extends and Implements',
       instruction:
-        'Hãy điền từ khóa phù hợp để biểu diễn mối quan hệ giữa các class. Dog __ Animal, Cat __ Speakable.',
+        'Fill in the correct keywords to express the relationships between classes. Dog __ Animal, Cat __ Speakable.',
       language: 'Java',
       type: 'drag_drop',
       level: 'medium',
@@ -1962,10 +1963,10 @@ int main() {
       },
       correctAnswer: { '1': 'block-0', '2': 'block-1' },
       explanation:
-        'extends: kế thừa từ class cha. implements: triển khai interface. Dog là Dog (extends Animal), Cat phải implement Speakable.',
+        'extends means inheriting from a parent class. implements means fulfilling an interface contract. Dog extends Animal, and Cat implements Speakable.',
       hints: {
-        '1': 'Từ khóa để kế thừa từ class',
-        '2': 'Từ khóa để triển khai interface',
+        '1': 'The keyword used to inherit from a class',
+        '2': 'The keyword used to implement an interface',
       },
       order: 1,
     });
@@ -1976,7 +1977,7 @@ int main() {
       tagId: tagIds('OOP'),
       title: 'Abstract Method',
       instruction:
-        'Điền từ khóa để khai báo phương thức không có cài đặt trong abstract class',
+        'Fill in the keyword used to declare a method with no implementation in an abstract class.',
       language: 'Java',
       type: 'fill_blank',
       level: 'hard',
@@ -1990,9 +1991,9 @@ int main() {
         input_1: 'abstract',
       },
       explanation:
-        'abstract method là phương thức không có cài đặt. Class con bắt buộc phải override nó. Class chứa abstract method phải là abstract class.',
+        'An abstract method has no implementation. A subclass must override it. A class containing an abstract method must be an abstract class.',
       hints: {
-        '1': 'Từ khóa để khai báo phương thức không có body',
+        '1': 'The keyword used to declare a method with no body',
       },
       order: 1,
     });
@@ -2003,7 +2004,7 @@ int main() {
       tagId: tagIds('OOP'),
       title: 'Default Interface Method',
       instruction:
-        'Kéo thả access modifier đúng khi khai báo default method trong interface',
+        'Drag the correct access modifier for declaring a default method in an interface.',
       language: 'Java',
       type: 'drag_drop',
       level: 'hard',
@@ -2019,9 +2020,9 @@ int main() {
       },
       correctAnswer: { '1': 'block-0' },
       explanation:
-        'Interface method phải là public (interface là contract công khai). default method cho phép có cài đặt mà không buộc class con override.',
+        'An interface method must be public because an interface is a public contract. A default method can have an implementation without forcing implementing classes to override it.',
       hints: {
-        '1': 'Interface method phải có access modifier nào?',
+        '1': 'Which access modifier must an interface method have?',
       },
       order: 1,
     });

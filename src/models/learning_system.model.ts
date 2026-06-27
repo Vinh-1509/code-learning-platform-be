@@ -113,6 +113,8 @@ const blockProgressSchema = new Schema(
       default: 'locked',
     },
     chatHistory: { type: [chatMessageSchema], default: [] },
+    feynmanFailCount: { type: Number, default: 0, min: 0 },
+    feynmanCooldownUntil: { type: Date },
   },
   { _id: false },
 );

@@ -231,9 +231,10 @@ export const getPracticeExercises = async (
     const filter: mongoose.QueryFilter<IExercise> = {};
 
     if (query.q) {
+      const escapedQ = query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       filter.$or = [
-        { title: { $regex: query.q, $options: 'i' } },
-        { instruction: { $regex: query.q, $options: 'i' } },
+        { title: { $regex: escapedQ, $options: 'i' } },
+        { instruction: { $regex: escapedQ, $options: 'i' } },
       ];
     }
 

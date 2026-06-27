@@ -57,7 +57,7 @@ describe('Auth API Contract Tests', () => {
 
       // Verify username was auto-generated from email
       const user = await User.findOne({ email: 'autouser@example.com' });
-      expect(user?.username).toBe('autouser');
+      expect(user?.username).toBe('autouser@example.com');
     });
 
     test('should return 400 when email is missing', async () => {

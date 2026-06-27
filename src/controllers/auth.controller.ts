@@ -50,7 +50,7 @@ export const register = async (
     const user = new User({
       email,
       password,
-      username: username || email.split('@')[0],
+      username: username || email,
       fullName: fullName || '',
     });
 
@@ -74,13 +74,13 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(401).json({ message: 'Invalid credentials' });
+      res.status(401).json({ message: 'Incorrect email or password' });
       return;
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      res.status(401).json({ message: 'Invalid credentials' });
+      res.status(401).json({ message: 'Incorrect email or password' });
       return;
     }
 

@@ -65,7 +65,7 @@ describe('POST /api/auth/register', () => {
         .get('/api/auth/me')
         .set('Authorization', `Bearer ${token}`);
 
-      expect(meRes.body.username).toBe('test');
+      expect(meRes.body.username).toBe('test@example.com');
     });
   });
 

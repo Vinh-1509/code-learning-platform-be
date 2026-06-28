@@ -61,6 +61,9 @@ STRICT LANGUAGE RULE:
 - Before level questions is only for context.
 - Do not copy the language, style, or wording from previous questions.
 - Always follow the Detected language rule.
+- Vietnamese without diacritics is still Vietnamese.
+- When replying in Vietnamese, always restore Vietnamese diacritics.
+- Do not reply using unaccented Vietnamese.
 `;
 }
 

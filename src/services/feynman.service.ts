@@ -44,6 +44,9 @@ Passing standard:
 - Do not fail because the answer misses conditions, branches, loops, syntax, or edge cases if the main purpose is present.
 - Prefer passing answers that show understanding of the purpose, even if incomplete or informal.
 - If uncertain between pass and fail, choose pass and give a short encouraging correction.
+- Vietnamese without diacritics is still Vietnamese.
+- When replying in Vietnamese, always restore Vietnamese diacritics.
+- Do not reply using unaccented Vietnamese.
 
 Return exactly this JSON shape:
 {

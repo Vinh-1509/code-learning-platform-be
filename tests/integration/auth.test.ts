@@ -65,7 +65,7 @@ describe('POST /api/auth/register', () => {
         .get('/api/auth/me')
         .set('Authorization', `Bearer ${token}`);
 
-      expect(meRes.body.username).toBe('test');
+      expect(meRes.body.username).toBe('test@example.com');
     });
   });
 
@@ -193,14 +193,14 @@ describe('POST /api/auth/login', () => {
       );
 
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe('Invalid credentials');
+      expect(res.body.message).toBe('Incorrect email or password');
     });
 
     it('returns 401 when password is wrong', async () => {
       const res = await loginUser(validUser.email, 'WrongPassword1!');
 
       expect(res.status).toBe(401);
-      expect(res.body.message).toBe('Invalid credentials');
+      expect(res.body.message).toBe('Incorrect email or password');
     });
 
     it('returns the same 401 message for wrong user and wrong password (no enumeration)', async () => {

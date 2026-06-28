@@ -18,6 +18,7 @@ export interface FeynmanChatAiInput {
   contentSummary: string;
   userMessage: string;
   chatHistory: FeynmanChatMessage[];
+  languageDetected: string;
 }
 
 export interface FeynmanChatAiResult {

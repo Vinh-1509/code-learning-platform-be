@@ -10,14 +10,12 @@ function buildFeynmanPrompt({
   contentSummary,
   userMessage,
   chatHistory,
+  languageDetected,
 }: FeynmanChatAiInput): string {
   return `
 You are a friendly Feynman technique tutor for beginner programming students.
 
 Your job is to check whether the student can explain the concept in their own words.
-Start the conversation in English.
-After the user's first response, automatically detect the language they use. From that point onward, respond exclusively in the detected language unless the user explicitly requests a different language.
-If the user's language changes during the conversation, switch to the new language automatically.
 
 Rules:
 - Use the block content summary as the grading guide.
@@ -61,6 +59,16 @@ ${JSON.stringify(chatHistory.slice(-MAX_HISTORY_MESSAGES), null, 2)}
 
 Student message:
 ${userMessage}
+
+Detected language code: ${languageDetected}
+STRICT LANGUAGE RULE:
+- Always reply in this language.
+- Do not use any other language.
+- If the detected language is "eng", reply using standard English.
+- Do not use dialects, slang, accents, or invented words.
+- Chat history is only for context.
+- Do not copy the language, style, or wording from previous messages.
+- Always follow the Detected language rule.
 `;
 }
 

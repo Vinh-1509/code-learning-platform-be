@@ -133,6 +133,9 @@ export interface IBlockProgress {
   chatHistory: { role: 'user' | 'assistant'; content: string }[];
   feynmanFailCount?: number;
   feynmanCooldownUntil?: Date;
+  currentQuestionLevel?: number;
+  questionsAsked?: string[];
+  isFeynmanQuestionEnough?: boolean;
 }
 
 export interface IUserLessonProgress extends Document {

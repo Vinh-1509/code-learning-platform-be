@@ -115,6 +115,9 @@ const blockProgressSchema = new Schema(
     chatHistory: { type: [chatMessageSchema], default: [] },
     feynmanFailCount: { type: Number, default: 0, min: 0 },
     feynmanCooldownUntil: { type: Date },
+    currentQuestionLevel: { type: Number, default: 0, min: 0, max: 3 },
+    questionsAsked: { type: [String], default: [] },
+    isFeynmanQuestionEnough: { type: Boolean, default: false },
   },
   { _id: false },
 );

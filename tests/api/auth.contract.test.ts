@@ -293,7 +293,7 @@ describe('Auth API Contract Tests', () => {
 
       expect(response.status).toBe(401);
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toBe('Invalid credentials');
+      expect(response.body.message).toBe('Incorrect email or password');
     });
 
     test('should return 401 when user does not exist', async () => {
@@ -304,7 +304,7 @@ describe('Auth API Contract Tests', () => {
 
       expect(response.status).toBe(401);
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toBe('Invalid credentials');
+      expect(response.body.message).toBe('Incorrect email or password');
     });
 
     test('should return consistent error for both invalid user and invalid password', async () => {
@@ -333,7 +333,7 @@ describe('Auth API Contract Tests', () => {
       });
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Invalid credentials');
+      expect(response.body.message).toBe('Incorrect email or password');
     });
 
     test('should not expose user data in response', async () => {

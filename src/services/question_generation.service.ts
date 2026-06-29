@@ -7,7 +7,6 @@ import type {
 function buildPrompt({
   contentSummary,
   questions,
-  languageDetected,
   level,
 }: QSGenAiInput): string {
   return `
@@ -28,15 +27,12 @@ Rules:
 - The new question should gradually increase or adjust the difficulty without repeating the previous question.
 - If there is no previous question, generate an appropriate question for the Current level.
 - The question should be clear, concise, beginner-friendly, and answerable in 1-3 sentences.
-- Generate the question in the detected language from the given code. If unsure, return the question in English.
 - Return only one question.
 - Return JSON only.
 - Do not wrap the JSON in markdown.
-- Set "isEnough" to true if the generated question is sufficient to evaluate the student's understanding of the entire block.
-- Otherwise set "isEnough" to false.
-- Read all previously generated questions together with the current question.
-- If they collectively cover the block's main learning objectives, set "isEnough" to true.
-- Otherwise, set "isEnough" to false.
+- Set "isEnough" to true if the current question covers the block's main learning objective, even partially.
+- Prefer setting "isEnough" to true. Only set it to false if a major concept in the block is clearly left untested.
+- For single-concept blocks, almost always set "isEnough" to true.
 
 Return exactly this JSON shape:
 {
@@ -52,14 +48,9 @@ Current level: ${level}
 Before level questions:
 ${JSON.stringify(questions, null, 2)}
 
-Detected language code: ${languageDetected}
-IMPORTANT LANGUAGE RULE:
-- Evaluate the student's meaning, not their writing quality.
-- The student's message may contain typos, slang, mixed languages, or missing diacritics.
-- Never imitate those mistakes.
-- Always produce clean, natural output in the detected language.
-- If detected language is "vie", always use proper Vietnamese with diacritics.
-- If detected language is "eng", always use standard English.
+LANGUAGE RULE:
+- Always write the question in standard English, regardless of how the student previously wrote.
+- Always produce clean, natural English output.
 `;
 }
 

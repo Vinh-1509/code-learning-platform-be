@@ -1,7 +1,6 @@
 export interface QSGenAiInput {
   contentSummary: string;
   questions: string[];
-  languageDetected: string;
   level: number;
 }
 

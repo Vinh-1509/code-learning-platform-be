@@ -31,9 +31,8 @@ import type {
   FeynmanStatsResponse,
 } from '../interfaces/feynman.interface';
 import { generateQS } from '../services/question_generation.service';
-import { detectLanguage } from '../utils/language';
 
-const MAX_LEVEL = 2;
+const MAX_LEVEL = 1;
 
 const FEYNMAN_MAX_CONSECUTIVE_FAILS = 10;
 const FEYNMAN_COOLDOWN_MS = 12 * 60 * 60 * 1000;
@@ -395,7 +394,6 @@ async function generateFirstQuestion(
   const firstQuestion = await generateQS({
     contentSummary,
     questions: [],
-    languageDetected: 'eng',
     level: 1,
   });
 
@@ -516,7 +514,6 @@ export const postBlockFeynmanChat = async (
       contentSummary: contentSummary,
       userMessage: message.trim(),
       chatHistory: blockProgress.chatHistory,
-      languageDetected: detectLanguage(message),
     });
 
     if (aiResult.isPassed) {
@@ -530,7 +527,6 @@ export const postBlockFeynmanChat = async (
         const newQuestion = await generateQS({
           contentSummary: contentSummary,
           questions: questionsAsked,
-          languageDetected: detectLanguage(aiResult.reply),
           level: nextQuestionLevel,
         });
         aiResult.reply += `\nNext question: ${newQuestion.question}`;

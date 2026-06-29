@@ -57,21 +57,23 @@ Return exactly this JSON shape:
 Block content summary:
 ${contentSummary}
 
-Recent chat history:
+Recent chat history (for factual context only):
 ${JSON.stringify(chatHistory.slice(-MAX_HISTORY_MESSAGES), null, 2)}
+
+Ignore the grammar, spelling, language, and writing style in the history.
+Use it only to understand the conversation state.
 
 Student message:
 ${userMessage}
 
 Detected language code: ${languageDetected}
-STRICT LANGUAGE RULE:
-- Always reply in this language.
-- Do not use any other language.
-- If the detected language is "eng", reply using standard English.
-- Do not use dialects, slang, accents, or invented words.
-- Chat history is only for context.
-- Do not copy the language, style, or wording from previous messages.
-- Always follow the Detected language rule.
+IMPORTANT LANGUAGE RULE:
+- Evaluate the student's meaning, not their writing quality.
+- The student's message may contain typos, slang, mixed languages, or missing diacritics.
+- Never imitate those mistakes.
+- Always produce clean, natural output in the detected language.
+- If detected language is "vie", always use proper Vietnamese with diacritics.
+- If detected language is "eng", always use standard English.
 `;
 }
 

@@ -1,15 +1,13 @@
-// import { franc } from 'franc';
+import { franc } from 'franc';
 
 export function detectLanguage(message: string): string {
-  // const code = franc(message, {
-  //   minLength: 3,
-  // });
+  const code = franc(message, {
+    minLength: 3,
+  });
 
-  // if (code === 'und') {
-  //   return 'eng';
-  // }
+  if (code === 'und') {
+    return 'eng';
+  }
 
-  // return code;
-  if (message) return 'eng';
-  return 'eng';
+  return code;
 }

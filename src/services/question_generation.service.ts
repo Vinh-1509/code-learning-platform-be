@@ -53,17 +53,13 @@ Before level questions:
 ${JSON.stringify(questions, null, 2)}
 
 Detected language code: ${languageDetected}
-STRICT LANGUAGE RULE:
-- Always reply in this language.
-- Do not use any other language.
-- If the detected language is "eng", reply using standard English.
-- Do not use dialects, slang, accents, or invented words.
-- Before level questions is only for context.
-- Do not copy the language, style, or wording from previous questions.
-- Always follow the Detected language rule.
-- Vietnamese without diacritics is still Vietnamese.
-- When replying in Vietnamese, always restore Vietnamese diacritics.
-- Do not reply using unaccented Vietnamese.
+IMPORTANT LANGUAGE RULE:
+- Evaluate the student's meaning, not their writing quality.
+- The student's message may contain typos, slang, mixed languages, or missing diacritics.
+- Never imitate those mistakes.
+- Always produce clean, natural output in the detected language.
+- If detected language is "vie", always use proper Vietnamese with diacritics.
+- If detected language is "eng", always use standard English.
 `;
 }
 

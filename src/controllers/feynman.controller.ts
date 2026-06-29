@@ -30,6 +30,9 @@ import type {
   FeynmanResetHistoryResponse,
   FeynmanStatsResponse,
 } from '../interfaces/feynman.interface';
+import { generateQS } from '../services/question_generation.service';
+
+const MAX_LEVEL = 1;
 
 const FEYNMAN_MAX_CONSECUTIVE_FAILS = 10;
 const FEYNMAN_COOLDOWN_MS = 12 * 60 * 60 * 1000;
@@ -153,6 +156,8 @@ function getOrCreateBlockProgress(
       status: getFallbackBlockStatus(lessonBlockIds, blockId),
       chatHistory: [],
       feynmanFailCount: 0,
+      currentQuestionLevel: 0,
+      questionsAsked: [],
     };
     progress.blockProgress.push(blockProgress);
   }
@@ -348,6 +353,8 @@ async function completeBlockAfterFeynmanPass(
         status: 'locked',
         chatHistory: [],
         feynmanFailCount: 0,
+        currentQuestionLevel: 0,
+        questionsAsked: [],
       };
       lessonProgress.blockProgress.push(nextBlockProgress);
     }
@@ -380,6 +387,28 @@ async function findBlockAndLesson(blockId: string) {
   return { block, lesson };
 }
 
+async function generateFirstQuestion(
+  blockProgress: IBlockProgress,
+  contentSummary: string,
+): Promise<void> {
+  const firstQuestion = await generateQS({
+    contentSummary,
+    questions: [],
+    level: 1,
+  });
+
+  blockProgress.questionsAsked?.push(firstQuestion.question);
+
+  blockProgress.chatHistory = [];
+  blockProgress.chatHistory.push({
+    role: 'assistant',
+    content: firstQuestion.question,
+  });
+
+  blockProgress.currentQuestionLevel = 1;
+  blockProgress.isFeynmanQuestionEnough = firstQuestion.isEnough;
+}
+
 // api/feynman/block/:blockId/question
 export const getBlockFeynmanQuestion = async (
   req: Request,
@@ -410,6 +439,13 @@ export const getBlockFeynmanQuestion = async (
       blockId,
       getBlockQuestion(block),
     );
+
+    if (blockProgress.chatHistory.length === 1) {
+      await generateFirstQuestion(
+        blockProgress,
+        buildBlockContentSummary(block),
+      );
+    }
 
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
 
@@ -455,6 +491,7 @@ export const postBlockFeynmanChat = async (
       lesson._id,
       lesson.blocks,
     );
+
     const blockProgress = getOrCreateBlockProgress(
       progress,
       lesson.blocks,
@@ -462,35 +499,69 @@ export const postBlockFeynmanChat = async (
       getBlockQuestion(block),
     );
 
+    const contentSummary = buildBlockContentSummary(block);
+    const nextQuestionLevel = (blockProgress.currentQuestionLevel ?? 0) + 1;
+    const questionsAsked = blockProgress.questionsAsked ?? [];
+
+    if (blockProgress.chatHistory.length === 1) {
+      await generateFirstQuestion(blockProgress, contentSummary);
+    }
+
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
     if (!ensureFeynmanCooldownExpired(blockProgress, res)) return;
 
     const aiResult = await generateFeynmanFeedback({
-      contentSummary: buildBlockContentSummary(block),
+      contentSummary: contentSummary,
       userMessage: message.trim(),
       chatHistory: blockProgress.chatHistory,
     });
 
-    blockProgress.chatHistory.push({ role: 'user', content: message.trim() });
-    blockProgress.chatHistory.push({
-      role: 'assistant',
-      content: aiResult.reply,
-    });
-
-    if (aiResult.isPassed && !blockProgress.isFeynmanPassed) {
-      blockProgress.isFeynmanPassed = true;
-    }
-
     if (aiResult.isPassed) {
       blockProgress.feynmanFailCount = 0;
       blockProgress.feynmanCooldownUntil = undefined;
-      await completeBlockAfterFeynmanPass(
-        userId,
-        lesson,
-        block,
-        progress,
-        blockProgress,
-      );
+
+      if (
+        nextQuestionLevel <= MAX_LEVEL &&
+        !blockProgress.isFeynmanQuestionEnough
+      ) {
+        const newQuestion = await generateQS({
+          contentSummary: contentSummary,
+          questions: questionsAsked,
+          level: nextQuestionLevel,
+        });
+        aiResult.reply += `\nNext question: ${newQuestion.question}`;
+        aiResult.isPassed = false;
+        blockProgress.currentQuestionLevel = nextQuestionLevel;
+        blockProgress.questionsAsked?.push(newQuestion.question);
+        if (newQuestion.isEnough) {
+          blockProgress.isFeynmanQuestionEnough = true;
+        }
+      }
+
+      blockProgress.chatHistory.push({
+        role: 'user',
+        content: message.trim(),
+      });
+      blockProgress.chatHistory.push({
+        role: 'assistant',
+        content: aiResult.reply,
+      });
+
+      if (aiResult.isPassed && !blockProgress.isFeynmanPassed) {
+        blockProgress.isFeynmanPassed = true;
+      }
+
+      if (aiResult.isPassed) {
+        await completeBlockAfterFeynmanPass(
+          userId,
+          lesson,
+          block,
+          progress,
+          blockProgress,
+        );
+      } else {
+        await progress.save();
+      }
     } else {
       blockProgress.feynmanFailCount =
         (blockProgress.feynmanFailCount ?? 0) + 1;
@@ -509,6 +580,17 @@ export const postBlockFeynmanChat = async (
         });
         return;
       }
+
+      blockProgress.chatHistory.push({ role: 'user', content: message.trim() });
+      blockProgress.chatHistory.push({
+        role: 'assistant',
+        content: aiResult.reply,
+      });
+
+      if (aiResult.isPassed && !blockProgress.isFeynmanPassed) {
+        blockProgress.isFeynmanPassed = true;
+      }
+
       progress.markModified('blockProgress');
       await progress.save();
     }
@@ -556,6 +638,12 @@ export const getBlockFeynmanHistory = async (
       blockId,
       getBlockQuestion(block),
     );
+    if (blockProgress.chatHistory.length === 1) {
+      await generateFirstQuestion(
+        blockProgress,
+        buildBlockContentSummary(block),
+      );
+    }
 
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
 
@@ -605,6 +693,12 @@ export const resetBlockFeynmanHistory = async (
       blockId,
       question,
     );
+    if (blockProgress.chatHistory.length === 1) {
+      await generateFirstQuestion(
+        blockProgress,
+        buildBlockContentSummary(block),
+      );
+    }
 
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
 
@@ -621,6 +715,8 @@ export const resetBlockFeynmanHistory = async (
       isFeynmanPassed: blockProgress.isFeynmanPassed,
     };
 
+    progress.markModified('blockProgress');
+    await progress.save();
     res.json(response);
   } catch (err) {
     console.error('Reset Feynman history error:', err);
@@ -658,6 +754,12 @@ export const getBlockFeynmanStats = async (
       blockId,
       getBlockQuestion(block),
     );
+    if (blockProgress.chatHistory.length === 1) {
+      await generateFirstQuestion(
+        blockProgress,
+        buildBlockContentSummary(block),
+      );
+    }
 
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
 

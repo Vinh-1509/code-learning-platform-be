@@ -33,7 +33,12 @@ vi.mock('../../src/services/feynman.service', () => ({
   generateFeynmanFeedback: vi.fn(),
 }));
 
+vi.mock('../../src/services/question_generation.service', () => ({
+  generateQS: vi.fn(),
+}));
+
 import { generateFeynmanFeedback } from '../../src/services/feynman.service';
+import { generateQS } from '../../src/services/question_generation.service';
 
 // ─── DB Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -80,6 +85,11 @@ describe('Feynman Integration', () => {
   let exerciseId: string;
 
   beforeEach(async () => {
+    (generateQS as any).mockResolvedValue({
+      question: 'Explain a variable in your own words.',
+      isEnough: true,
+    });
+
     const user = await User.create({
       username: 'student',
       email: 'student@test.com',

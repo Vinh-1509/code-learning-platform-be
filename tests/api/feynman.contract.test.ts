@@ -25,6 +25,7 @@ import { Exercise } from '../../src/models/exercise.model';
 import { ExerciseAttempt } from '../../src/models/exercise_attempt.model';
 import { LanguageInfo } from '../../src/models/language_info.model';
 import * as feynmanService from '../../src/services/feynman.service';
+import * as qsService from '../../src/services/question_generation.service';
 import jwt from 'jsonwebtoken';
 import { ENV } from '../../src/config/env';
 
@@ -243,6 +244,11 @@ describe('Feynman API Contract Tests', () => {
     vi.spyOn(feynmanService, 'generateFeynmanFeedback').mockResolvedValue({
       reply: 'Great explanation! You understand the concept well.',
       isPassed: true,
+    });
+
+    vi.spyOn(qsService, 'generateQS').mockResolvedValue({
+      question: 'Can you explain what a variable is in your own words?',
+      isEnough: true,
     });
   });
 

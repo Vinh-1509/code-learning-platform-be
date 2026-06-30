@@ -33,6 +33,7 @@ Rules:
 - Keep "reply" to 1-3 sentences.
 - Return JSON only.
 - Do not wrap the JSON in markdown.
+- If passed, don't ask any follow-up questions, just end the conversation with a positive message.
 
 Passing standard:
 - This is a beginner checkpoint, not an exam. Default to passing.

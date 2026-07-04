@@ -8,3 +8,10 @@ export interface IAttack extends Document {
   isRead: boolean;
   createdAt: Date;
 }
+
+export interface rewardResponse {
+  prizeType: 'coin' | 'attack' | 'no prize';
+  amount: number;
+  currentCoin: number;
+  hasAttackSlot: boolean;
+}

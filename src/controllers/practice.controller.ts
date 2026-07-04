@@ -17,6 +17,8 @@ import type {
   SubmitExerciseRequestBody,
   SubmitExerciseResponse,
 } from '../interfaces/practice.interface';
+import User from '../models/user.model';
+import { rewardResponse } from '../interfaces/game_system.interface';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 15;
@@ -24,6 +26,9 @@ const MAX_LIMIT = 50;
 const SUPPORTED_LANGUAGES = ['C++', 'Java'] as const;
 const SUPPORTED_LEVELS = ['easy', 'medium', 'hard'] as const;
 const SUPPORTED_STATUSES = ['locked', 'active', 'completed'] as const;
+const MIN_REWARD = 20;
+const MAX_REWARD = 50;
+const REWARD_COOLDOWN_HOURS = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
 function authUserId(req: Request): string {
   return req.user!.id;
@@ -204,16 +209,58 @@ async function getExerciseStatusMap(
 async function getLatestAttemptState(
   userId: string,
   exerciseId: string,
-): Promise<{ attemptNumber: number; hintLevel: number; isPassed: boolean }> {
+): Promise<{
+  attemptNumber: number;
+  hintLevel: number;
+  isPassed: boolean;
+  lastRewardAt?: Date;
+}> {
   // One document stores the latest attempt, while attemptNumber preserves total tries.
   const attempt = await ExerciseAttempt.findOne({ userId, exerciseId })
-    .select('attemptNumber hintLevel isPassed')
+    .select('attemptNumber hintLevel isPassed lastRewardAt')
     .lean();
 
   return {
     attemptNumber: attempt?.attemptNumber ?? 0,
     hintLevel: attempt?.hintLevel ?? 0,
     isPassed: attempt?.isPassed ?? false,
+    lastRewardAt: attempt?.lastRewardAt,
+  };
+}
+
+async function rewardUserForCorrectAnswer(
+  userId: string,
+): Promise<rewardResponse> {
+  let update: Record<string, unknown>;
+  let amount = 0;
+  const rewardType = Math.random() < 0.7 ? 'coin' : 'attack';
+  if (rewardType === 'coin') {
+    const rewardCoins =
+      Math.floor(Math.random() * (MAX_REWARD - MIN_REWARD + 1)) + MIN_REWARD;
+    update = {
+      $inc: { coins: rewardCoins },
+    };
+    amount = rewardCoins;
+  } else {
+    update = {
+      $set: { hasAttackSlot: true },
+    };
+  }
+  const user = await User.findByIdAndUpdate(userId, update, {
+    new: true,
+    projection: {
+      coins: 1,
+      hasAttackSlot: 1,
+    },
+  });
+  if (!user) {
+    throw new Error('User not found');
+  }
+  return {
+    prizeType: rewardType,
+    amount: amount,
+    currentCoin: user.coins,
+    hasAttackSlot: user.hasAttackSlot,
   };
 }
 
@@ -388,10 +435,43 @@ export const submitPracticeExercise = async (
       grading.isCorrect,
     );
 
+    const user = await User.findById(userId)
+      .select('coins hasAttackSlot')
+      .lean();
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    let reward: rewardResponse = {
+      prizeType: 'no prize',
+      amount: 0,
+      currentCoin: user.coins ?? 0,
+      hasAttackSlot: user.hasAttackSlot ?? false,
+    };
+
+    if (
+      grading.isCorrect &&
+      (!latestAttempt.lastRewardAt ||
+        latestAttempt.lastRewardAt <
+          new Date(Date.now() - REWARD_COOLDOWN_HOURS))
+    ) {
+      reward = await rewardUserForCorrectAnswer(userId);
+      await ExerciseAttempt.findOneAndUpdate(
+        { userId, exerciseId },
+        { lastRewardAt: new Date() },
+      );
+    }
+
     const response: SubmitExerciseResponse = {
       correct: grading.isCorrect,
       items,
       attemptNumber,
+      prizeType: reward.prizeType,
+      amount: reward.amount,
+      currentCoin: reward.currentCoin,
+      hasAttackSlot: reward.hasAttackSlot,
     };
 
     res.json(response);

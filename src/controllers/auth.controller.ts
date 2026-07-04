@@ -124,6 +124,9 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       username: user.username || undefined,
       fullName: user.fullName || undefined,
       selectedLanguage: user.selectedLanguage || [],
+      coins: user.coins,
+      hasAttackSlot: user.hasAttackSlot,
+      hasSeenTour: user.hasSeenTour,
       createdAt: user.createdAt,
     };
 

@@ -37,6 +37,10 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    hasSeenTour: {
+      type: Boolean,
+      default: false,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

@@ -4,12 +4,14 @@ import { Attack } from '../models/game_system.model';
 import { AttackRequest } from '../types/game_system';
 import mongoose from 'mongoose';
 
+// api/action/targets
 export const getTargets = async (req: Request, res: Response) => {
   try {
     const currentUserId = req.user?.id;
 
     if (!currentUserId) {
-      return res.status(401).json({ message: 'User not authenticated' });
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
     }
 
     // First get current user's language
@@ -18,7 +20,8 @@ export const getTargets = async (req: Request, res: Response) => {
       .lean();
 
     if (!currentUser) {
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     // Get 5 random users with same language, exclude current user
@@ -52,6 +55,7 @@ export const getTargets = async (req: Request, res: Response) => {
   }
 };
 
+// api/action/attack
 export const attackTarget = async (
   req: Request<unknown, unknown, AttackRequest>,
   res: Response,
@@ -62,18 +66,20 @@ export const attackTarget = async (
 
     // Validate ObjectIds
     if (!mongoose.Types.ObjectId.isValid(targetId)) {
-      return res.status(400).json({
+      res.status(400).json({
         status: 'error',
         msg: 'Invalid target ID!',
       });
+      return;
     }
 
     // Check if trying to attack self
     if (attackerId === targetId) {
-      return res.status(400).json({
+      res.status(400).json({
         status: 'error',
         msg: 'Cannot attack yourself!',
       });
+      return;
     }
 
     // Use findByIdAndUpdate for atomic operations
@@ -88,21 +94,23 @@ export const attackTarget = async (
 
     // Check attack slot
     if (!attacker.hasAttackSlot) {
-      return res.status(400).json({
+      res.status(400).json({
         status: 'error',
         msg: 'No attack slots available',
         canAttack: false,
       });
+      return;
     }
 
     // Check if target exists and has coins
     const target = await UserModel.findById(targetId);
 
     if (!target) {
-      return res.status(404).json({
+      res.status(404).json({
         status: 'error',
         msg: 'Target not found!',
       });
+      return;
     }
 
     // Calculate coins to steal

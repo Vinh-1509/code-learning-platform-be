@@ -4,8 +4,14 @@ import { Types } from 'mongoose';
 export interface IAttack extends Document {
   attackerId: Types.ObjectId;
   targetId: Types.ObjectId;
+  attackerName: string;
+  targetName: string;
   coinsStolen: number;
-  isRead: boolean;
+  targetCoinsBefore: number;
+  targetCoinsAfter: number;
+  attackerCoinsBefore: number;
+  attackerCoinsAfter: number;
+  isRead: boolean; // target has read this (for notifications)
   createdAt: Date;
 }
 

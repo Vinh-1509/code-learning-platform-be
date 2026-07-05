@@ -49,6 +49,7 @@ export interface SubmitExerciseResponse {
   amount: number;
   currentCoin: number;
   hasAttackSlot: boolean;
+  nextRewardAvailableAt: Date | null;
 }
 
 export interface ExerciseAttemptItem {

@@ -28,7 +28,7 @@ const SUPPORTED_LEVELS = ['easy', 'medium', 'hard'] as const;
 const SUPPORTED_STATUSES = ['locked', 'active', 'completed'] as const;
 const MIN_REWARD = 20;
 const MAX_REWARD = 50;
-const REWARD_COOLDOWN_HOURS = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+const REWARD_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
 function authUserId(req: Request): string {
   return req.user!.id;
@@ -450,18 +450,30 @@ export const submitPracticeExercise = async (
       currentCoin: user.coins ?? 0,
       hasAttackSlot: user.hasAttackSlot ?? false,
     };
+    let nextRewardAvailableAt: Date | null = null;
+
+    if (latestAttempt.lastRewardAt) {
+      nextRewardAvailableAt = new Date(
+        latestAttempt.lastRewardAt.getTime() + REWARD_COOLDOWN_MS,
+      );
+    }
 
     if (
       grading.isCorrect &&
       (!latestAttempt.lastRewardAt ||
-        latestAttempt.lastRewardAt <
-          new Date(Date.now() - REWARD_COOLDOWN_HOURS))
+        latestAttempt.lastRewardAt < new Date(Date.now() - REWARD_COOLDOWN_MS))
     ) {
       reward = await rewardUserForCorrectAnswer(userId);
+      const rewardAt = new Date();
       await ExerciseAttempt.findOneAndUpdate(
         { userId, exerciseId },
-        { lastRewardAt: new Date() },
+        {
+          $set: {
+            lastRewardAt: rewardAt,
+          },
+        },
       );
+      nextRewardAvailableAt = new Date(rewardAt.getTime() + REWARD_COOLDOWN_MS);
     }
 
     const response: SubmitExerciseResponse = {
@@ -472,6 +484,7 @@ export const submitPracticeExercise = async (
       amount: reward.amount,
       currentCoin: reward.currentCoin,
       hasAttackSlot: reward.hasAttackSlot,
+      nextRewardAvailableAt: nextRewardAvailableAt,
     };
 
     res.json(response);

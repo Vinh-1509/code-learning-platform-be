@@ -8,6 +8,7 @@ export interface DashboardResponse {
     username?: string;
     fullName?: string;
     selectedLanguage: string[];
+    hasSeenTour: boolean;
   };
   roadmap: {
     _id: Types.ObjectId;

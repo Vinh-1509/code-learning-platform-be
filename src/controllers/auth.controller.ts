@@ -8,8 +8,10 @@ import {
   RegisterPayload,
   LoginPayload,
   UserResponse,
+  IUser,
 } from '../interfaces/auth.interface';
 import { validateEmail, validatePassword } from '../utils/validators';
+import { UpdateMeRequest } from '../interfaces/auth.interface';
 
 const jwtOptions: SignOptions = {
   expiresIn: ENV.JWT_EXPIRES_IN as SignOptions['expiresIn'],
@@ -134,6 +136,77 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   } catch (err) {
     console.error('GetMe error:', err);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const updateMe = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authenticated' });
+      return;
+    }
+
+    const { username, fullName, hasSeenTour } = req.body as UpdateMeRequest;
+
+    const update: Partial<IUser> = {};
+
+    if (username !== undefined) {
+      update.username = username.trim();
+    }
+
+    if (fullName !== undefined) {
+      update.fullName = fullName.trim();
+    }
+
+    if (hasSeenTour !== undefined) {
+      update.hasSeenTour = hasSeenTour;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $set: update,
+      },
+      {
+        new: true,
+        runValidators: true,
+        select: '-password',
+      },
+    );
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const response: UserResponse = {
+      _id: user._id.toString(),
+      email: user.email,
+      username: user.username || undefined,
+      fullName: user.fullName || undefined,
+      selectedLanguage: user.selectedLanguage || [],
+      coins: user.coins,
+      hasAttackSlot: user.hasAttackSlot,
+      hasSeenTour: user.hasSeenTour,
+      createdAt: user.createdAt,
+    };
+
+    res.json(response);
+  } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err && err.code === 11000) {
+      res.status(409).json({
+        message: 'Username already exists',
+      });
+      return;
+    }
+
+    console.error('UpdateMe error:', err);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
   }
 };
 

@@ -183,3 +183,61 @@ export const attackTarget = async (
     });
   }
 };
+
+// api/users/notifications
+export async function getNotifications(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        message: 'User not authenticated',
+      });
+      return;
+    }
+
+    const attacks = await Attack.find({
+      targetId: userId,
+      isRead: false,
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const notifications = attacks.map((attack) => ({
+      id: attack._id,
+      type: 'attack',
+      attackerName: attack.attackerName,
+      coinsLost: attack.coinsStolen,
+      message: `Bạn đã bị ${attack.attackerName} thả bug mất ${attack.coinsStolen} Coin!`,
+      createdAt: attack.createdAt,
+    }));
+
+    if (attacks.length > 0) {
+      await Attack.updateMany(
+        {
+          _id: {
+            $in: attacks.map((attack) => attack._id),
+          },
+        },
+        {
+          $set: {
+            isRead: true,
+          },
+        },
+      );
+    }
+
+    res.json({
+      hasNotification: notifications.length > 0,
+      notifications,
+    });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
+  }
+}

@@ -117,6 +117,7 @@ export const getDashboard = async (
         username: user.username,
         fullName: user.fullName,
         selectedLanguage,
+        hasSeenTour: user.hasSeenTour,
       },
       roadmap: {
         _id: roadmap._id,

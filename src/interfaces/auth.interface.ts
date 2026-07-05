@@ -52,3 +52,9 @@ export interface UserResponse {
   hasSeenTour: boolean;
   createdAt: Date;
 }
+
+export interface UpdateMeRequest {
+  username?: string;
+  fullName?: string;
+  hasSeenTour?: boolean;
+}

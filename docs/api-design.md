@@ -158,7 +158,88 @@ Get current authenticated user info.
   "username": "alice",
   "fullName": "Alice Nguyen",
   "selectedLanguage": ["C++"],
+  "coins": 100,
+  "hasAttackSlot": true,
+  "hasSeenTour": true,
   "createdAt": "2024-01-15T08:30:00.000Z"
+}
+```
+
+---
+
+### PATCH `/api/users/me`
+
+Update the authenticated user's profile information.
+
+**Authentication:** Required
+
+**Request Body**
+
+All fields are optional.
+
+```json
+{
+  "username": "quan_dev",
+  "fullName": "Đỗ Trung Quân",
+  "hasSeenTour": true
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `username` | `string` | New username. Must be unique. |
+| `fullName` | `string` | User's full name. |
+| `hasSeenTour` | `boolean` | Whether the user has completed the onboarding tour. |
+
+**Response `200`:**
+
+```json
+{
+  "_id": "6a157a618e93bffbaf3311c8",
+  "email": "quan@example.com",
+  "username": "quan_dev",
+  "fullName": "Đỗ Trung Quân",
+  "selectedLanguage": ["C++"],
+  "coins": 420,
+  "hasAttackSlot": true,
+  "hasSeenTour": true,
+  "createdAt": "2026-07-05T13:30:25.211Z"
+}
+```
+
+**Error Responses**
+
+**401 Unauthorized**
+
+```json
+{
+  "message": "Not authenticated"
+}
+```
+
+**404 Not Found**
+
+```json
+{
+  "message": "User not found"
+}
+```
+
+**409 Conflict**
+
+Returned when the requested username already exists.
+
+```json
+{
+  "message": "Username already exists"
+}
+```
+
+**500 Internal Server Error**
+
+```json
+{
+  "message": "Internal server error"
 }
 ```
 
@@ -1159,7 +1240,8 @@ Get general dashboard summary for the authenticated user.
     "email": "alice@example.com",
     "username": "alice",
     "fullName": "Alice Nguyen",
-    "selectedLanguage": ["C++"]
+    "selectedLanguage": ["C++"],
+    "hasSeenTour": false
   },
   "roadmap": {
     "_id": "64f1a2b3c4d5e6f7a8b9c099",

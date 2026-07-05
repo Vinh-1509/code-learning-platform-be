@@ -382,7 +382,12 @@ Submit an answer and get the grading result. The system stores only the latest a
       "isCorrect": true
     }
   ],
-  "attemptNumber": 4
+  "attemptNumber": 4,
+  "prizeType": "no prize",
+  "amount": 0,
+  "currentCoin": 86,
+  "hasAttackSlot": true,
+  "nextRewardAvailableAt": "2026-07-05T09:50:36.253Z"
 }
 ```
 
@@ -1199,3 +1204,266 @@ Get general dashboard summary for the authenticated user.
 { "message": "Roadmap not found for selected language" } // 404
 { "message": "Failed to fetch dashboard" } // 500
 ```
+
+## 8. Action & Leaderboard
+
+| Method | Endpoint                   | isAuth | Priority |
+| ------ | -------------------------- | ------ | -------- |
+| GET    | `/api/action/targets`      | Yes    | HIGH     |
+| POST   | `/api/action/attack`       | Yes    | HIGH     |
+| GET    | `/api/users/notifications` | Yes    | HIGH     |
+| GET    | `/api/users/leaderboard`   | No     | MEDIUM   |
+
+---
+
+### GET `/api/action/targets`
+
+Get 5 random users that use the same selected programming language as the current user. The current user is excluded, and only users with more than `0` coins are returned.
+
+**Authentication:** Required
+
+**Response `200`:**
+
+```json
+{
+  "language": "C++",
+  "count": 5,
+  "users": [
+    {
+      "_id": "6a157a618e93bffbaf3311c8",
+      "name": "Quan",
+      "coins": 250,
+      "selectedLanguage": "C++"
+    },
+    {
+      "_id": "6a088f9f27e56d7d422966e7",
+      "name": "Vinh",
+      "coins": 120,
+      "selectedLanguage": "C++"
+    }
+  ]
+}
+```
+
+**Error Responses**
+
+**401 Unauthorized**
+
+```json
+{
+  "message": "User not authenticated"
+}
+```
+
+**404 Not Found**
+
+```json
+{
+  "message": "User not found"
+}
+```
+
+**500 Internal Server Error**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+---
+
+### POST `/api/action/attack`
+
+Attack another user and steal up to **100 coins**. The attacker consumes one attack slot after a successful attack.
+
+**Authentication:** Required
+
+**Request Body**
+
+```json
+{
+  "targetId": "6a157a618e93bffbaf3311c8"
+}
+```
+
+**Response `200`:**
+
+```json
+{
+  "status": "success",
+  "msg": "Successfully bugged!",
+  "newCoins": 520,
+  "details": {
+    "coinsStolen": 100,
+    "targetName": "quan",
+    "targetCoinsRemaining": 180,
+    "attackerCoinsBefore": 420,
+    "attackerCoinsAfter": 520
+  }
+}
+```
+
+If the target has no coins remaining:
+
+```json
+{
+  "status": "success",
+  "msg": "Target has no coins left to steal!",
+  "newCoins": 420,
+  "details": {
+    "coinsStolen": 0,
+    "targetName": "quan",
+    "targetCoinsRemaining": 0,
+    "attackerCoinsBefore": 420,
+    "attackerCoinsAfter": 420
+  }
+}
+```
+
+**Error Responses**
+
+**400 Bad Request**
+
+Invalid target id.
+
+```json
+{
+  "status": "error",
+  "msg": "Invalid target ID!"
+}
+```
+
+Trying to attack yourself.
+
+```json
+{
+  "status": "error",
+  "msg": "Cannot attack yourself!"
+}
+```
+
+No attack slot available.
+
+```json
+{
+  "status": "error",
+  "msg": "No attack slots available",
+  "canAttack": false
+}
+```
+
+**404 Not Found**
+
+```json
+{
+  "status": "error",
+  "msg": "User not found!"
+}
+```
+
+```json
+{
+  "status": "error",
+  "msg": "Target not found!"
+}
+```
+
+**500 Internal Server Error**
+
+```json
+{
+  "status": "error",
+  "msg": "Internal server error"
+}
+```
+
+---
+
+### GET `/api/users/notifications`
+
+Get unread attack notifications for the authenticated user. Returned notifications are automatically marked as read.
+
+**Authentication:** Required
+
+**Response `200`:**
+
+```json
+{
+  "hasNotification": true,
+  "notifications": [
+    {
+      "id": "6a2d83d3dcb0c3f3d34c9321",
+      "type": "attack",
+      "attackerName": "Quan",
+      "coinsLost": 100,
+      "message": "Bạn đã bị Quan thả bug mất 100 Coin!",
+      "createdAt": "2026-07-05T13:30:25.211Z"
+    }
+  ]
+}
+```
+
+If there are no unread notifications:
+
+```json
+{
+  "hasNotification": false,
+  "notifications": []
+}
+```
+
+**Error Responses**
+
+**401 Unauthorized**
+
+```json
+{
+  "message": "User not authenticated"
+}
+```
+
+**500 Internal Server Error**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+---
+
+### GET `/api/users/leaderboard`
+
+Get the top 10 users ranked by coins (highest first). If users have the same number of coins, the older account ranks higher.
+
+**Authentication:** Not Required
+
+**Response `200`:**
+
+```json
+{
+  "topUsers": [
+    {
+      "_id": "6a157a618e93bffbaf3311c8",
+      "username": "quan",
+      "coins": 860
+    },
+    {
+      "_id": "6a088f9f27e56d7d422966e7",
+      "username": "vinh",
+      "coins": 740
+    }
+  ]
+}
+```
+
+**500 Internal Server Error**
+
+```json
+{
+  "message": "Internal server error"
+}
+```
+
+---

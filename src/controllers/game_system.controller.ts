@@ -241,3 +241,30 @@ export async function getNotifications(
     });
   }
 }
+
+// api/users/leaderboard
+export async function getLeaderboard(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  try {
+    const topUsers = await UserModel.find()
+      .sort({
+        coins: -1,
+        createdAt: 1,
+      })
+      .limit(10)
+      .select('username coins')
+      .lean();
+    const leaderboard = topUsers.map((user) => ({
+      ...user,
+      coins: user.coins ?? 0,
+    }));
+    res.json({ topUsers: leaderboard });
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
+  }
+}

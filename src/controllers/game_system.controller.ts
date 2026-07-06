@@ -28,7 +28,7 @@ export const getTargets = async (req: Request, res: Response) => {
     const randomUsers = await User.aggregate([
       {
         $match: {
-          _id: { $ne: currentUserId },
+          _id: { $ne: currentUser._id },
           selectedLanguage: currentUser.selectedLanguage, // same language
           coins: { $gt: 0 }, // coins > 0
         },

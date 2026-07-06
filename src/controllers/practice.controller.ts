@@ -26,8 +26,8 @@ const MAX_LIMIT = 50;
 const SUPPORTED_LANGUAGES = ['C++', 'Java'] as const;
 const SUPPORTED_LEVELS = ['easy', 'medium', 'hard'] as const;
 const SUPPORTED_STATUSES = ['locked', 'active', 'completed'] as const;
-const MIN_REWARD = 20;
-const MAX_REWARD = 50;
+const MIN_REWARD = 50;
+const MAX_REWARD = 200;
 const REWARD_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
 function authUserId(req: Request): string {

@@ -211,7 +211,7 @@ export async function getNotifications(
       type: 'attack',
       attackerName: attack.attackerName,
       coinsLost: attack.coinsStolen,
-      message: `Bạn đã bị ${attack.attackerName} thả bug mất ${attack.coinsStolen} Coin!`,
+      message: `Your submission was bugged by ${attack.attackerName}! You lost ${attack.coinsStolen} CS-poin!`,
       createdAt: attack.createdAt,
     }));
 
@@ -248,19 +248,42 @@ export async function getLeaderboard(
   res: Response,
 ): Promise<void> {
   try {
-    const topUsers = await User.find()
-      .sort({
-        coins: -1,
-        createdAt: 1,
-      })
-      .limit(10)
-      .select('username coins')
-      .lean();
+    const [topUsers, totalUsers, totalCoinsResult] = await Promise.all([
+      User.find()
+        .sort({
+          coins: -1,
+          createdAt: 1,
+        })
+        .limit(10)
+        .select('username coins')
+        .lean(),
+
+      User.countDocuments(),
+
+      User.aggregate<{ _id: null; totalCoins: number }>([
+        {
+          $group: {
+            _id: null,
+            totalCoins: {
+              $sum: '$coins',
+            },
+          },
+        },
+      ]),
+    ]);
+
     const leaderboard = topUsers.map((user) => ({
       ...user,
       coins: user.coins ?? 0,
     }));
-    res.json({ topUsers: leaderboard });
+
+    const totalCoins = totalCoinsResult[0]?.totalCoins ?? 0;
+
+    res.json({
+      totalUsers,
+      totalCoins,
+      topUsers: leaderboard,
+    });
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     res.status(500).json({

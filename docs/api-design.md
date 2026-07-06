@@ -1525,16 +1525,58 @@ Get the top 10 users ranked by coins (highest first). If users have the same num
 
 ```json
 {
+  "totalUsers": 1920,
+  "totalCoins": 835,
   "topUsers": [
     {
-      "_id": "6a157a618e93bffbaf3311c8",
-      "username": "quan",
-      "coins": 860
+      "_id": "6a4b73d15b99dd56a9e1b015",
+      "username": "duck@gmail.com",
+      "coins": 232
+    },
+    {
+      "_id": "6a4b362e0be594d06b3d141d",
+      "username": "shit@gmail.com",
+      "coins": 185
+    },
+    {
+      "_id": "6a4b791d8b0a7f3c4ec09cc3",
+      "username": "cow@gmail.com",
+      "coins": 103
+    },
+    {
+      "_id": "6a4b81fe8b0a7f3c4ec09cc8",
+      "username": "devcamp@gmail.com",
+      "coins": 72
+    },
+    {
+      "_id": "6a4b399b0be594d06b3d1424",
+      "username": "nohope@gmail.com",
+      "coins": 61
+    },
+    {
+      "_id": "6a4b83e18b0a7f3c4ec09ccc",
+      "username": "crab@gmail.com",
+      "coins": 52
+    },
+    {
+      "_id": "6a4b3f100be594d06b3d1427",
+      "username": "cat@gmail.com",
+      "coins": 45
+    },
+    {
+      "_id": "6a4b86878b0a7f3c4ec09cd0",
+      "username": "fish@gmail.com",
+      "coins": 43
+    },
+    {
+      "_id": "6a0f226edc2858d5bbc6e0b6",
+      "username": "minh",
+      "coins": 42
     },
     {
       "_id": "6a088f9f27e56d7d422966e7",
       "username": "vinh",
-      "coins": 740
+      "coins": 0
     }
   ]
 }

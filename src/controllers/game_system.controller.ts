@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import UserModel from '../models/user.model';
+import User from '../models/user.model';
 import { Attack } from '../models/game_system.model';
 import { AttackRequest } from '../types/game_system';
 import mongoose from 'mongoose';
@@ -15,7 +15,7 @@ export const getTargets = async (req: Request, res: Response) => {
     }
 
     // First get current user's language
-    const currentUser = await UserModel.findById(currentUserId)
+    const currentUser = await User.findById(currentUserId)
       .select('selectedLanguage')
       .lean();
 
@@ -25,7 +25,7 @@ export const getTargets = async (req: Request, res: Response) => {
     }
 
     // Get 5 random users with same language, exclude current user
-    const randomUsers = await UserModel.aggregate([
+    const randomUsers = await User.aggregate([
       {
         $match: {
           _id: { $ne: currentUserId },
@@ -37,7 +37,7 @@ export const getTargets = async (req: Request, res: Response) => {
       {
         $project: {
           _id: 1,
-          name: 1,
+          username: 1,
           coins: 1,
           selectedLanguage: 1,
         },
@@ -83,7 +83,7 @@ export const attackTarget = async (
     }
 
     // Use findByIdAndUpdate for atomic operations
-    const attacker = await UserModel.findById(attackerId);
+    const attacker = await User.findById(attackerId);
 
     if (!attacker) {
       return res.status(404).json({
@@ -103,7 +103,7 @@ export const attackTarget = async (
     }
 
     // Check if target exists and has coins
-    const target = await UserModel.findById(targetId);
+    const target = await User.findById(targetId);
 
     if (!target) {
       res.status(404).json({
@@ -127,10 +127,10 @@ export const attackTarget = async (
 
     // Update both users atomically
     await Promise.all([
-      UserModel.findByIdAndUpdate(targetId, {
+      User.findByIdAndUpdate(targetId, {
         $set: { coins: newTargetCoins },
       }),
-      UserModel.findByIdAndUpdate(attackerId, {
+      User.findByIdAndUpdate(attackerId, {
         $set: {
           coins: newAttackerCoins,
           hasAttackSlot: false,
@@ -248,7 +248,7 @@ export async function getLeaderboard(
   res: Response,
 ): Promise<void> {
   try {
-    const topUsers = await UserModel.find()
+    const topUsers = await User.find()
       .sort({
         coins: -1,
         createdAt: 1,

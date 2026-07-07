@@ -1294,7 +1294,7 @@ Get general dashboard summary for the authenticated user.
 | GET    | `/api/action/targets`      | Yes    | HIGH     |
 | POST   | `/api/action/attack`       | Yes    | HIGH     |
 | GET    | `/api/users/notifications` | Yes    | HIGH     |
-| GET    | `/api/users/leaderboard`   | No     | MEDIUM   |
+| GET    | `/api/users/leaderboard`   | Yes    | MEDIUM   |
 
 ---
 
@@ -1517,68 +1517,103 @@ If there are no unread notifications:
 
 ### GET `/api/users/leaderboard`
 
-Get the top 10 users ranked by coins (highest first). If users have the same number of coins, the older account ranks higher.
+Get the top 10 users ranked by coins (highest first), plus the authenticated caller's own rank. If users have the same number of coins, the older account ranks higher (same tie-break used for `me.rank`).
 
-**Authentication:** Not Required
+**Authentication:** Required
 
 **Response `200`:**
 
 ```json
 {
+  "me": {
+    "rank": 342,
+    "username": "alice",
+    "coins": 88
+  },
   "totalUsers": 1920,
   "totalCoins": 835,
   "topUsers": [
     {
       "_id": "6a4b73d15b99dd56a9e1b015",
-      "username": "duck@gmail.com",
-      "coins": 232
+      "username": "quan_dev",
+      "coins": 232,
+      "rank": 1
     },
     {
       "_id": "6a4b362e0be594d06b3d141d",
-      "username": "shit@gmail.com",
-      "coins": 185
+      "username": "vinh",
+      "coins": 185,
+      "rank": 2
     },
     {
       "_id": "6a4b791d8b0a7f3c4ec09cc3",
-      "username": "cow@gmail.com",
-      "coins": 103
+      "username": "minh",
+      "coins": 103,
+      "rank": 3
     },
     {
       "_id": "6a4b81fe8b0a7f3c4ec09cc8",
-      "username": "devcamp@gmail.com",
-      "coins": 72
+      "username": "devcamp",
+      "coins": 72,
+      "rank": 4
     },
     {
       "_id": "6a4b399b0be594d06b3d1424",
-      "username": "nohope@gmail.com",
-      "coins": 61
+      "username": "user5",
+      "coins": 61,
+      "rank": 5
     },
     {
       "_id": "6a4b83e18b0a7f3c4ec09ccc",
-      "username": "crab@gmail.com",
-      "coins": 52
+      "username": "user6",
+      "coins": 52,
+      "rank": 6
     },
     {
       "_id": "6a4b3f100be594d06b3d1427",
-      "username": "cat@gmail.com",
-      "coins": 45
+      "username": "user7",
+      "coins": 45,
+      "rank": 7
     },
     {
       "_id": "6a4b86878b0a7f3c4ec09cd0",
-      "username": "fish@gmail.com",
-      "coins": 43
+      "username": "user8",
+      "coins": 43,
+      "rank": 8
     },
     {
       "_id": "6a0f226edc2858d5bbc6e0b6",
-      "username": "minh",
-      "coins": 42
+      "username": "user9",
+      "coins": 42,
+      "rank": 9
     },
     {
       "_id": "6a088f9f27e56d7d422966e7",
-      "username": "vinh",
-      "coins": 0
+      "username": "user10",
+      "coins": 0,
+      "rank": 10
     }
   ]
+}
+```
+
+> `me` reflects the authenticated caller's own standing and is always present since this endpoint now requires authentication. `rank` on each `topUsers` entry mirrors its position (1-indexed), so clients don't need to infer rank from array order.
+
+**Error Responses**
+
+**401 Unauthorized**
+
+```json
+{
+  "message": "User not authenticated"
+}
+```
+
+**404 Not Found**
+
+```json
+{
+  "message": "User not found"
 }
 ```
 

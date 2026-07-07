@@ -242,13 +242,53 @@ export async function getNotifications(
   }
 }
 
+// Rank is 1-indexed: users with strictly more coins rank higher, and among
+// users with equal coins the older account (smaller createdAt) ranks higher,
+// matching the tie-break used by the topUsers sort below.
+async function getUserRank(
+  userId: string,
+): Promise<{ rank: number; username?: string; coins: number } | null> {
+  const user = await User.findById(userId)
+    .select('username coins createdAt')
+    .lean();
+
+  if (!user) {
+    return null;
+  }
+
+  const usersAhead = await User.countDocuments({
+    $or: [
+      { coins: { $gt: user.coins ?? 0 } },
+      {
+        coins: user.coins ?? 0,
+        createdAt: { $lt: user.createdAt },
+      },
+    ],
+  });
+
+  return {
+    rank: usersAhead + 1,
+    username: user.username,
+    coins: user.coins ?? 0,
+  };
+}
+
 // api/users/leaderboard
 export async function getLeaderboard(
   req: Request,
   res: Response,
 ): Promise<void> {
   try {
-    const [topUsers, totalUsers, totalCoinsResult] = await Promise.all([
+    const currentUserId = req.user?.id;
+
+    if (!currentUserId) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const [me, topUsers, totalUsers, totalCoinsResult] = await Promise.all([
+      getUserRank(currentUserId),
+
       User.find()
         .sort({
           coins: -1,
@@ -272,14 +312,21 @@ export async function getLeaderboard(
       ]),
     ]);
 
-    const leaderboard = topUsers.map((user) => ({
+    if (!me) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const leaderboard = topUsers.map((user, index) => ({
       ...user,
       coins: user.coins ?? 0,
+      rank: index + 1,
     }));
 
     const totalCoins = totalCoinsResult[0]?.totalCoins ?? 0;
 
     res.json({
+      me,
       totalUsers,
       totalCoins,
       topUsers: leaderboard,

@@ -49,10 +49,41 @@ export const register = async (
       return;
     }
 
+    let generatedUsername: string = '';
+    let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10; // Prevent infinite loop
+
+    // Extract the part before @
+    const emailPrefix = email.split('@')[0];
+
+    while (!isUnique && attempts < maxAttempts) {
+      // Generate random 4-digit number
+      const randomNum = Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, '0'); // 0-9999
+      generatedUsername = `${emailPrefix}${randomNum}`;
+
+      // Check if username already exists
+      const usernameExists = await User.findOne({
+        username: generatedUsername,
+      });
+      if (!usernameExists) {
+        isUnique = true;
+      }
+      attempts++;
+    }
+
+    if (!isUnique) {
+      // Fallback with more randomness if we couldn't find unique after max attempts
+      const timestamp = Date.now().toString().slice(-6);
+      generatedUsername = `${emailPrefix}${timestamp}`;
+    }
+
     const user = new User({
       email,
       password,
-      username: username || email,
+      username: generatedUsername || username,
       fullName: fullName || '',
     });
 

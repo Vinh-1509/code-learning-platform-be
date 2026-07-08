@@ -29,8 +29,7 @@ export const getTargets = async (req: Request, res: Response) => {
       {
         $match: {
           _id: { $ne: currentUser._id },
-          selectedLanguage: currentUser.selectedLanguage, // same language
-          coins: { $gt: 0 }, // coins > 0
+          coins: { $gt: 50 }, // coins > 50
         },
       },
       { $sample: { size: 5 } }, // random selection
@@ -114,7 +113,7 @@ export const attackTarget = async (
     }
 
     // Calculate coins to steal
-    const COINS_TO_STEAL = 100;
+    const COINS_TO_STEAL = Math.floor(Math.random() * 60) + 60;
     const coinsStolen = Math.min(COINS_TO_STEAL, target.coins);
 
     // Store balances before

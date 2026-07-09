@@ -445,6 +445,11 @@ export const getBlockFeynmanQuestion = async (
         blockProgress,
         buildBlockContentSummary(block),
       );
+      // Persist the generated question/level so subsequent requests (chat,
+      // history, stats) see this exact state instead of regenerating a new
+      // question from a stale, unsaved document.
+      progress.markModified('blockProgress');
+      await progress.save();
     }
 
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
@@ -500,20 +505,24 @@ export const postBlockFeynmanChat = async (
     );
 
     const contentSummary = buildBlockContentSummary(block);
-    const nextQuestionLevel = (blockProgress.currentQuestionLevel ?? 0) + 1;
-    const questionsAsked = blockProgress.questionsAsked ?? [];
 
     if (blockProgress.chatHistory.length === 1) {
       await generateFirstQuestion(blockProgress, contentSummary);
     }
 
+    const nextQuestionLevel = (blockProgress.currentQuestionLevel ?? 0) + 1;
+    const questionsAsked = blockProgress.questionsAsked ?? [];
+
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
     if (!ensureFeynmanCooldownExpired(blockProgress, res)) return;
+
+    const hasReceivedFollowUp = (blockProgress.feynmanFailCount ?? 0) >= 1;
 
     const aiResult = await generateFeynmanFeedback({
       contentSummary: contentSummary,
       userMessage: message.trim(),
       chatHistory: blockProgress.chatHistory,
+      hasReceivedFollowUp,
     });
 
     if (aiResult.isPassed) {
@@ -693,12 +702,12 @@ export const resetBlockFeynmanHistory = async (
       blockId,
       question,
     );
-    if (blockProgress.chatHistory.length === 1) {
-      await generateFirstQuestion(
-        blockProgress,
-        buildBlockContentSummary(block),
-      );
-    }
+
+    // Note: unlike the other endpoints, we deliberately do NOT call
+    // generateFirstQuestion here even if chatHistory.length === 1. Reset
+    // always overwrites chatHistory with the static block question below,
+    // so generating an AI question first would just be a wasted Groq call
+    // whose result is immediately discarded.
 
     if (!(await ensureFeynmanReady(userId, block, blockProgress, res))) return;
 
@@ -708,6 +717,9 @@ export const resetBlockFeynmanHistory = async (
         content: question,
       },
     ];
+    blockProgress.currentQuestionLevel = 0;
+    blockProgress.questionsAsked = [];
+    blockProgress.isFeynmanQuestionEnough = false;
 
     const response: FeynmanResetHistoryResponse = {
       blockId,

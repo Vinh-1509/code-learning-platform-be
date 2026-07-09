@@ -29,6 +29,18 @@ const userSchema = new Schema<IUser>(
       type: [String],
       default: [],
     },
+    coins: {
+      type: Number,
+      default: 0,
+    },
+    hasAttackSlot: {
+      type: Boolean,
+      default: false,
+    },
+    hasSeenTour: {
+      type: Boolean,
+      default: false,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

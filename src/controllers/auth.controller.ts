@@ -8,8 +8,10 @@ import {
   RegisterPayload,
   LoginPayload,
   UserResponse,
+  IUser,
 } from '../interfaces/auth.interface';
 import { validateEmail, validatePassword } from '../utils/validators';
+import { UpdateMeRequest } from '../interfaces/auth.interface';
 
 const jwtOptions: SignOptions = {
   expiresIn: ENV.JWT_EXPIRES_IN as SignOptions['expiresIn'],
@@ -47,10 +49,41 @@ export const register = async (
       return;
     }
 
+    let generatedUsername: string = '';
+    let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10; // Prevent infinite loop
+
+    // Extract the part before @
+    const emailPrefix = email.split('@')[0];
+
+    while (!isUnique && attempts < maxAttempts) {
+      // Generate random 4-digit number
+      const randomNum = Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, '0'); // 0-9999
+      generatedUsername = `${emailPrefix}${randomNum}`;
+
+      // Check if username already exists
+      const usernameExists = await User.findOne({
+        username: generatedUsername,
+      });
+      if (!usernameExists) {
+        isUnique = true;
+      }
+      attempts++;
+    }
+
+    if (!isUnique) {
+      // Fallback with more randomness if we couldn't find unique after max attempts
+      const timestamp = Date.now().toString().slice(-6);
+      generatedUsername = `${emailPrefix}${timestamp}`;
+    }
+
     const user = new User({
       email,
       password,
-      username: username || email,
+      username: generatedUsername || username,
       fullName: fullName || '',
     });
 
@@ -124,6 +157,9 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       username: user.username || undefined,
       fullName: user.fullName || undefined,
       selectedLanguage: user.selectedLanguage || [],
+      coins: user.coins,
+      hasAttackSlot: user.hasAttackSlot,
+      hasSeenTour: user.hasSeenTour,
       createdAt: user.createdAt,
     };
 
@@ -131,6 +167,77 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   } catch (err) {
     console.error('GetMe error:', err);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const updateMe = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authenticated' });
+      return;
+    }
+
+    const { username, fullName, hasSeenTour } = req.body as UpdateMeRequest;
+
+    const update: Partial<IUser> = {};
+
+    if (username !== undefined) {
+      update.username = username.trim();
+    }
+
+    if (fullName !== undefined) {
+      update.fullName = fullName.trim();
+    }
+
+    if (hasSeenTour !== undefined) {
+      update.hasSeenTour = hasSeenTour;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $set: update,
+      },
+      {
+        new: true,
+        runValidators: true,
+        select: '-password',
+      },
+    );
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const response: UserResponse = {
+      _id: user._id.toString(),
+      email: user.email,
+      username: user.username || undefined,
+      fullName: user.fullName || undefined,
+      selectedLanguage: user.selectedLanguage || [],
+      coins: user.coins,
+      hasAttackSlot: user.hasAttackSlot,
+      hasSeenTour: user.hasSeenTour,
+      createdAt: user.createdAt,
+    };
+
+    res.json(response);
+  } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err && err.code === 11000) {
+      res.status(409).json({
+        message: 'Username already exists',
+      });
+      return;
+    }
+
+    console.error('UpdateMe error:', err);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
   }
 };
 

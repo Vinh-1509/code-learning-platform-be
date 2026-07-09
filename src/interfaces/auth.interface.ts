@@ -7,6 +7,9 @@ export interface IUser extends Document {
   username?: string;
   fullName?: string;
   selectedLanguage?: string[];
+  coins: number;
+  hasAttackSlot: boolean;
+  hasSeenTour: boolean;
   createdAt: Date;
 
   comparePassword(password: string): Promise<boolean>;
@@ -44,5 +47,14 @@ export interface UserResponse {
   username?: string;
   fullName?: string;
   selectedLanguage?: string[];
+  coins: number;
+  hasAttackSlot: boolean;
+  hasSeenTour: boolean;
   createdAt: Date;
+}
+
+export interface UpdateMeRequest {
+  username?: string;
+  fullName?: string;
+  hasSeenTour?: boolean;
 }

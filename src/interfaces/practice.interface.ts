@@ -45,6 +45,11 @@ export interface SubmitExerciseResponse {
   correct: boolean;
   items: ExerciseAttemptItem[];
   attemptNumber: number;
+  prizeType: 'coin' | 'attack' | 'no prize';
+  amount: number;
+  currentCoin: number;
+  hasAttackSlot: boolean;
+  nextRewardAvailableAt: Date | null;
 }
 
 export interface ExerciseAttemptItem {

@@ -12,6 +12,7 @@ export interface IExerciseAttempt extends Document {
   userAnswer?: Record<string, unknown>;
   attemptNumber: number;
   attemptedAt: Date;
+  lastRewardAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -62,6 +63,9 @@ const exerciseAttemptSchema = new Schema<IExerciseAttempt>(
     attemptedAt: {
       type: Date,
       default: Date.now,
+    },
+    lastRewardAt: {
+      type: Date,
     },
   },
   { timestamps: true },

@@ -2,7 +2,7 @@
 
 ## 1. Project Overview
 
-This project is a TypeScript/Express backend for a code learning platform focused on beginner programming students. The platform currently supports C++ and Java learning paths, structured lessons, practice exercises, AI explanations, Feynman-style concept checks, weakness tracking by exercise tags, and a dashboard summary for learners.
+This project is a TypeScript/Express backend for a code learning platform focused on beginner programming students. The platform currently supports C++ and Java learning paths, structured lessons, practice exercises, AI explanations, Feynman-style concept checks, weakness tracking by exercise tags, a dashboard summary for learners, and a lightweight gamification layer (attacks + leaderboard).
 
 The main learning idea is:
 
@@ -32,19 +32,20 @@ The main learning idea is:
 
 | Folder/File Area | Purpose |
 | --- | --- |
-| `src/app.ts` | Creates the Express app, enables CORS/JSON parsing, and mounts all API route groups. |
+| `src/app.ts` | Creates the Express app, enables CORS/JSON parsing, and mounts all API route groups (including the gamification routes). |
 | `src/index.ts` | Connects MongoDB, auto-runs seed when the roadmap collection is empty, and starts the server. |
 | `src/config` | Stores environment and MongoDB connection configuration. |
-| `src/controllers` | Contains request handlers for auth, learning system, practice, AI explanation, Feynman, tags, and dashboard. |
+| `src/controllers` | Contains request handlers for auth, learning system, practice, AI explanation, Feynman, tags, dashboard, and the gamification/attack system. |
 | `src/routes` | Defines Express route paths and middleware wiring. |
-| `src/models` | Defines Mongoose schemas for users, roadmap data, exercises, attempts, tags, and tag stats. |
+| `src/models` | Defines Mongoose schemas for users, roadmap data, exercises, attempts, tags, tag stats, and attack records. |
 | `src/interfaces` | Defines TypeScript request/response/data types. |
 | `src/middlewares` | Handles JWT auth, language selection checks, ObjectId validation, and lesson access checks. |
-| `src/services` | Contains AI-related service logic for exercise explanation and Feynman chat. |
+| `src/services` | Contains AI-related service logic for exercise explanation, Feynman chat, and Feynman follow-up question generation. |
 | `src/utils` | Contains reusable grading, progress, tag-stat, and validation helpers. |
+| `src/types` | Express `Request` augmentation (`req.user`) and shared request-body types (e.g. attack payload). |
 | `src/seed.ts` | Seeds roadmaps, milestones, lessons, blocks, exercises, exercise tags, and language information. |
 | `docs` | Contains API/database/platform planning documents. |
-| `tests` | Contains integration tests for the backend APIs. |
+| `tests` | Contains unit, integration, and API-contract tests for the backend. |
 
 ## 4. Authentication
 
@@ -58,6 +59,7 @@ Implemented APIs:
 | `POST` | `/api/auth/login` | Login and receive an access token. |
 | `POST` | `/api/auth/logout` | Returns logout success for authenticated users. |
 | `GET` | `/api/auth/me` | Returns the authenticated user profile. |
+| `PATCH` | `/api/users/me` | Update the authenticated user's `username`, `fullName`, and/or `hasSeenTour`. |
 
 Current behavior:
 
@@ -66,6 +68,7 @@ Current behavior:
 - Protected APIs use `Authorization: Bearer <token>`.
 - The project intentionally uses access token login only at the moment.
 - Logout does not invalidate the token server-side; the frontend should remove the stored access token.
+- Profile updates return `409` if the requested `username` is already taken.
 
 ## 5. Learning System
 
@@ -152,7 +155,7 @@ Current exercise behavior:
 
 - The backend grades answers deterministically using `correctAnswer`.
 - Each placeholder/field is graded independently.
-- Submit returns `correct`, `items`, and `attemptNumber`.
+- Submit returns `correct`, `items`, and `attemptNumber`, plus a reward payload (`prizeType`, `amount`, `currentCoin`, `hasAttackSlot`) on a correct answer, rate-limited to once per 6-hour cooldown per exercise.
 - `ExerciseAttempt` stores only the latest attempt per user and exercise.
 - `attemptNumber` still tracks how many times the user has submitted.
 - Once an exercise is passed, later wrong submits do not remove the passed state.
@@ -211,6 +214,7 @@ Current behavior:
 - If the block has required practice exercises, all required exercises must be passed before Feynman starts.
 - Groq is used to evaluate the explanation.
 - The prompt is intentionally beginner-friendly and grades generously.
+- After 10 consecutive failed attempts on a block, a 12-hour cooldown is applied before the learner can try again.
 - If Feynman passes, the backend:
   - marks `isFeynmanPassed` as true,
   - marks the block as `completed`,
@@ -246,9 +250,35 @@ Current behavior:
 - `failAttempts` increments when the submit is wrong.
 - A tag becomes weak when it has at least 3 attempts and failure rate is at least 60%.
 - Weak tags are sorted by highest failure rate first, then by failed attempts.
-- Practice exercise list can filter by `tagId`.
+- Practice exercise list can filter by `tagId`, but the list endpoint itself does not automatically re-rank or flag exercises as "recommended" based on weakness — that combination is left to the client.
 
-## 10. Dashboard
+## 10. Gamification — Attacks & Leaderboard
+
+The project includes a lightweight competitive layer on top of the core learning loop, backed by a coin balance and attack slots on the `User` model.
+
+Implemented model:
+
+| Model | Purpose |
+| --- | --- |
+| `Attack` | Records each attack: attacker/target ids and names, coins stolen, before/after balances for both sides, and whether the target has read the notification. |
+
+Implemented APIs:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/action/targets` | Get up to 5 random users (same language pool, excluding self) with more than 50 coins to attack. |
+| `POST` | `/api/action/attack` | Spend an attack slot to steal coins (60–120, capped at the target's balance) from a chosen target. |
+| `GET` | `/api/users/notifications` | Get unread "you were attacked" notifications for the current user; marks them read as a side effect. |
+| `GET` | `/api/users/leaderboard` | Get the top 10 users by coins plus the caller's own rank. |
+
+Current behavior:
+
+- `attackTarget` rejects invalid/missing `targetId`, self-attacks, and attacks with no available attack slot (`hasAttackSlot: false`).
+- A successful attack updates both users' coin balances and consumes the attacker's attack slot in two separate `findByIdAndUpdate` calls (not a single transaction).
+- Leaderboard rank (`me.rank` and each `topUsers[].rank`) uses the same tie-break: coins descending, then account creation date ascending (older account ranks higher on ties).
+- **This module currently has no automated test coverage** (no unit, integration, or contract tests reference `game_system.controller.ts`), unlike every other controller in the codebase.
+
+## 11. Dashboard
 
 The project includes a learner dashboard API.
 
@@ -273,7 +303,9 @@ Dashboard currently returns:
 | `milestones` | Milestone status and completion percentages. |
 | `dailyReview.pendingCount` | Currently returns `0` as a placeholder. |
 
-## 11. Seed Data
+Note: the dashboard does not currently surface coins, attack slots, or leaderboard rank — that data must be fetched separately via `/api/auth/me` and `/api/users/leaderboard`.
+
+## 12. Seed Data
 
 The seed script currently creates:
 
@@ -293,9 +325,9 @@ Seeded learning paths include:
 - Beginner lessons for variables, data types, control flow, loops, classes, objects, inheritance, polymorphism, and interfaces.
 - Exercise tags such as variables, control flow, loops, OOP, inheritance, input/output, and environment setup.
 
-The seed script clears and recreates learning data, exercise attempts, tags, tag stats, and language info. It does not clear users.
+The seed script clears and recreates learning data, exercise attempts, tags, tag stats, and language info. It does not clear users, attack records, or coin balances.
 
-## 12. Main Learning Flow
+## 13. Main Learning Flow
 
 Current intended user flow:
 
@@ -306,7 +338,7 @@ Current intended user flow:
 5. Open active lesson.
 6. Read the active block theory/code.
 7. Submit required practice exercise.
-8. If the exercise is correct, the exercise attempt becomes passed.
+8. If the exercise is correct, the exercise attempt becomes passed (and may award a coin/attack-slot reward).
 9. Start Feynman for the block.
 10. If Feynman passes, the block becomes completed.
 11. The next block unlocks.
@@ -314,29 +346,36 @@ Current intended user flow:
 13. Milestone progress updates based on completed lessons.
 14. When a milestone reaches 100%, the next milestone unlocks.
 
-## 13. Environment Variables
+The attack/leaderboard loop (Section 10) runs independently of this core flow and is not gated by learning progress beyond having coins and an attack slot.
 
-The backend uses environment variables for database, auth, and AI providers.
+## 14. Environment Variables
+
+The backend uses environment variables for server config, database, auth, and AI providers.
 
 Important variables:
 
 | Variable | Purpose |
 | --- | --- |
-| `DB_STRING` | MongoDB connection string. |
+| `PORT` | HTTP port the server listens on (defaults to `3000`). |
+| `DB_STRING` | MongoDB connection string. May contain a literal `DB_PASSWORD` placeholder that gets substituted at connect time. |
+| `DB_PASSWORD` | Optional password substituted into `DB_STRING`'s `DB_PASSWORD` placeholder, if present. |
 | `JWT_SECRET` | Secret for signing access tokens. |
 | `JWT_EXPIRES_IN` | Access token lifetime. |
 | `REFRESH_SECRET` | Present in config, but refresh-token flow is not currently implemented. |
 | `REFRESH_EXPIRES_IN` | Present in config, but refresh-token flow is not currently implemented. |
 | `GEMINI_API_KEY` | Gemini API key for AI exercise explanation. |
 | `GEMINI_MODEL` | Gemini model name. |
-| `GROQ_API_KEY` | Groq API key for fallback explanation and Feynman chat. |
+| `GROQ_API_KEY` | Groq API key for fallback explanation, Feynman chat, and Feynman follow-up question generation. |
 | `GROQ_MODEL` | Groq model name. |
 
-## 14. What Is Already Done
+`JWT_SECRET`, `REFRESH_SECRET`, and `DB_STRING` are required at startup — the app throws immediately if any is missing.
+
+## 15. What Is Already Done
 
 The backend currently has these completed capabilities:
 
 - User registration and login with JWT.
+- Profile fetch and update (`GET`/`PATCH` on `me`).
 - Language selection.
 - Roadmap/milestone/lesson/block content APIs.
 - Per-user milestone, lesson, and block progress.
@@ -345,19 +384,21 @@ The backend currently has these completed capabilities:
 - Backend grading for both fill-blank and drag-drop style answers.
 - Per-field correctness result for exercises.
 - Exercise status returned to frontend as locked/active/completed.
+- Coin/attack-slot rewards on a correct exercise submission, rate-limited per exercise.
 - AI explanation endpoint for exercise answers.
 - Gemini plus Groq fallback for AI explanation.
-- Feynman chatbot per block.
+- Feynman chatbot per block, including a fail-cooldown mechanism.
 - Feynman pass unlocks next block and updates lesson/milestone progress.
 - Exercise tags.
 - User tag weakness tracking.
 - Weakness tag APIs.
 - Dashboard API with learning and exercise totals.
+- Gamification: random targets, attacking, attack notifications, and a coin leaderboard.
 - Seed data for C++ and Java learning paths.
-- Integration test setup.
+- Test setup covering unit, integration, and API-contract layers for every controller except the gamification module.
 - API/database/platform documentation files.
 
-## 15. Current Limitations And Notes
+## 16. Current Limitations And Notes
 
 These are important current limitations:
 
@@ -365,12 +406,13 @@ These are important current limitations:
 - Refresh-token login is not implemented, even though refresh env variables exist.
 - Exercise submit does not directly unlock blocks or lessons; Feynman pass is responsible for block completion and unlock flow.
 - Exercise attempt history stores only the latest attempt document, not a full list of all previous answers.
-- Daily review is not implemented yet; dashboard currently returns `pendingCount: 0`.
+- Daily review is not implemented yet; dashboard currently returns `pendingCount: 0`, and no `/api/repetition/*` routes are mounted.
 - AI features depend on external provider availability and API keys.
 - Feynman currently uses Groq only.
+- The gamification module (`game_system.controller.ts` — targets, attack, notifications, leaderboard) has no automated test coverage, and `attackTarget` updates both users' balances in two separate, non-atomic writes.
 - Some older docs may still describe planned features that are not fully implemented.
 
-## 16. How To Run
+## 17. How To Run
 
 Common commands:
 
@@ -396,3 +438,4 @@ Typical local test order:
 9. Call AI explanation if needed.
 10. Call Feynman question/chat.
 11. Check dashboard and progress APIs.
+12. Optionally call `/api/action/targets`, `/api/action/attack`, and `/api/users/leaderboard` to exercise the gamification flow.

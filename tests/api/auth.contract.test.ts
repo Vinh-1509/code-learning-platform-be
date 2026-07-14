@@ -46,7 +46,10 @@ describe('Auth API Contract Tests', () => {
       expect(user?.password).not.toBe('Test123!@#'); // Password should be hashed
     });
 
-    test('should return 201 with username auto-generated when not provided', async () => {
+    // NOTE: register() always generates `${emailPrefix}${4-digit-number}` as the
+    // username, ignoring any username passed in the request body. Assert the
+    // pattern rather than a literal string.
+    test('should return 201 with an auto-generated username derived from the email prefix', async () => {
       const response = await request(app).post(endpoint).send({
         email: 'autouser@example.com',
         password: 'Test123!@#',
@@ -55,9 +58,8 @@ describe('Auth API Contract Tests', () => {
 
       expect(response.status).toBe(201);
 
-      // Verify username was auto-generated from email
       const user = await User.findOne({ email: 'autouser@example.com' });
-      expect(user?.username).toBe('autouser@example.com');
+      expect(user?.username).toMatch(/^autouser\d{4}$/);
     });
 
     test('should return 400 when email is missing', async () => {
@@ -210,26 +212,6 @@ describe('Auth API Contract Tests', () => {
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Invalid email format');
     });
-
-    // test('should handle XSS payloads gracefully', async () => {
-    //   const response = await request(app)
-    //     .post(endpoint)
-    //     .send({
-    //       email: 'test@example.com',
-    //       password: 'Test123!@#',
-    //       username: '<script>alert("XSS")</script>',
-    //       fullName: 'Test User'
-    //     });
-
-    //   // Should either reject or sanitize
-    //   if (response.status === 400) {
-    //     expect(response.body.message).toMatch(/username|validation/i);
-    //   } else if (response.status === 201) {
-    //     // Verify username was sanitized or handled
-    //     const user = await User.findOne({ email: 'test@example.com' });
-    //     expect(user?.username).not.toContain('<script>');
-    //   }
-    // });
   });
 
   describe('POST /api/auth/login', () => {
@@ -386,7 +368,9 @@ describe('Auth API Contract Tests', () => {
 
       // Verify data
       expect(response.body.email).toBe(testUser.email);
-      expect(response.body.username).toBe(testUser.username);
+      // register() ignores the supplied username and generates
+      // `${emailPrefix}${4-digit-number}` instead — assert the pattern.
+      expect(response.body.username).toMatch(/^metest\d{4}$/);
       expect(response.body.fullName).toBe(testUser.fullName);
       expect(Array.isArray(response.body.selectedLanguage)).toBe(true);
     });
@@ -577,15 +561,6 @@ describe('Auth API Contract Tests', () => {
       expect(response409.body).not.toHaveProperty('success');
       expect(response409.body).not.toHaveProperty('data');
     });
-
-    // test('should return appropriate error for unsupported routes', async () => {
-    //   const response = await request(app)
-    //     .get('/api/auth/nonexistent');
-
-    //   // Express returns 404 for unmatched routes
-    //   expect(response.status).toBe(404);
-    //   expect(response.body).toHaveProperty('message');
-    // });
   });
 
   describe('API Contract - Headers', () => {

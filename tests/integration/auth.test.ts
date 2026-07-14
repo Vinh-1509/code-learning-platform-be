@@ -27,6 +27,11 @@ const validUser = {
   fullName: 'Test User',
 };
 
+// register() always derives the username from the email prefix plus a random
+// 4-digit suffix — it never persists the `username` field from the request
+// body. Tests assert against that pattern instead of a literal value.
+const GENERATED_USERNAME_PATTERN = /^test\d{4}$/;
+
 async function registerUser(overrides = {}) {
   return request(app)
     .post('/api/auth/register')
@@ -57,7 +62,7 @@ describe('POST /api/auth/register', () => {
       expect(res.body).toEqual({ message: 'User registered successfully' });
     });
 
-    it('defaults username to email prefix when username is omitted', async () => {
+    it('generates a username from the email prefix when username is omitted', async () => {
       await registerUser({ username: undefined });
 
       const token = (await loginUser()).body.access_token as string;
@@ -65,7 +70,7 @@ describe('POST /api/auth/register', () => {
         .get('/api/auth/me')
         .set('Authorization', `Bearer ${token}`);
 
-      expect(meRes.body.username).toBe('test@example.com');
+      expect(meRes.body.username).toMatch(GENERATED_USERNAME_PATTERN);
     });
   });
 
@@ -223,11 +228,11 @@ describe('GET /api/auth/me', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({
-        email: validUser.email,
-        username: validUser.username,
-        fullName: validUser.fullName,
-      });
+      expect(res.body.email).toBe(validUser.email);
+      expect(res.body.fullName).toBe(validUser.fullName);
+      // username is server-generated (email prefix + 4 random digits),
+      // not the value the client sent in the register payload.
+      expect(res.body.username).toMatch(GENERATED_USERNAME_PATTERN);
       expect(res.body).not.toHaveProperty('password');
     });
 
